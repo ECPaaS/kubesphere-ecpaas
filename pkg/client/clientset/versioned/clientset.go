@@ -29,6 +29,7 @@ import (
 	clusterv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/cluster/v1alpha1"
 	devopsv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha1"
 	devopsv1alpha3 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha3"
+	gatewayv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/gateway/v1alpha1"
 	iamv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/iam/v1alpha2"
 	networkv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/network/v1alpha1"
 	notificationv2beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/notification/v2beta1"
@@ -38,6 +39,7 @@ import (
 	tenantv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/tenant/v1alpha1"
 	tenantv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/tenant/v1alpha2"
 	typesv1beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta1"
+	k8sv1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/vpc/v1"
 )
 
 type Interface interface {
@@ -47,6 +49,7 @@ type Interface interface {
 	ClusterV1alpha1() clusterv1alpha1.ClusterV1alpha1Interface
 	DevopsV1alpha1() devopsv1alpha1.DevopsV1alpha1Interface
 	DevopsV1alpha3() devopsv1alpha3.DevopsV1alpha3Interface
+	GatewayV1alpha1() gatewayv1alpha1.GatewayV1alpha1Interface
 	IamV1alpha2() iamv1alpha2.IamV1alpha2Interface
 	NetworkV1alpha1() networkv1alpha1.NetworkV1alpha1Interface
 	NotificationV2beta1() notificationv2beta1.NotificationV2beta1Interface
@@ -56,6 +59,7 @@ type Interface interface {
 	TenantV1alpha1() tenantv1alpha1.TenantV1alpha1Interface
 	TenantV1alpha2() tenantv1alpha2.TenantV1alpha2Interface
 	TypesV1beta1() typesv1beta1.TypesV1beta1Interface
+	K8sV1() k8sv1.K8sV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -67,6 +71,7 @@ type Clientset struct {
 	clusterV1alpha1     *clusterv1alpha1.ClusterV1alpha1Client
 	devopsV1alpha1      *devopsv1alpha1.DevopsV1alpha1Client
 	devopsV1alpha3      *devopsv1alpha3.DevopsV1alpha3Client
+	gatewayV1alpha1     *gatewayv1alpha1.GatewayV1alpha1Client
 	iamV1alpha2         *iamv1alpha2.IamV1alpha2Client
 	networkV1alpha1     *networkv1alpha1.NetworkV1alpha1Client
 	notificationV2beta1 *notificationv2beta1.NotificationV2beta1Client
@@ -76,6 +81,7 @@ type Clientset struct {
 	tenantV1alpha1      *tenantv1alpha1.TenantV1alpha1Client
 	tenantV1alpha2      *tenantv1alpha2.TenantV1alpha2Client
 	typesV1beta1        *typesv1beta1.TypesV1beta1Client
+	k8sV1               *k8sv1.K8sV1Client
 }
 
 // ApplicationV1alpha1 retrieves the ApplicationV1alpha1Client
@@ -101,6 +107,11 @@ func (c *Clientset) DevopsV1alpha1() devopsv1alpha1.DevopsV1alpha1Interface {
 // DevopsV1alpha3 retrieves the DevopsV1alpha3Client
 func (c *Clientset) DevopsV1alpha3() devopsv1alpha3.DevopsV1alpha3Interface {
 	return c.devopsV1alpha3
+}
+
+// GatewayV1alpha1 retrieves the GatewayV1alpha1Client
+func (c *Clientset) GatewayV1alpha1() gatewayv1alpha1.GatewayV1alpha1Interface {
+	return c.gatewayV1alpha1
 }
 
 // IamV1alpha2 retrieves the IamV1alpha2Client
@@ -148,6 +159,11 @@ func (c *Clientset) TypesV1beta1() typesv1beta1.TypesV1beta1Interface {
 	return c.typesV1beta1
 }
 
+// K8sV1 retrieves the K8sV1Client
+func (c *Clientset) K8sV1() k8sv1.K8sV1Interface {
+	return c.k8sV1
+}
+
 // Discovery retrieves the DiscoveryClient
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	if c == nil {
@@ -189,6 +205,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.gatewayV1alpha1, err = gatewayv1alpha1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.iamV1alpha2, err = iamv1alpha2.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -225,6 +245,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.k8sV1, err = k8sv1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 
 	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(&configShallowCopy)
 	if err != nil {
@@ -242,6 +266,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.clusterV1alpha1 = clusterv1alpha1.NewForConfigOrDie(c)
 	cs.devopsV1alpha1 = devopsv1alpha1.NewForConfigOrDie(c)
 	cs.devopsV1alpha3 = devopsv1alpha3.NewForConfigOrDie(c)
+	cs.gatewayV1alpha1 = gatewayv1alpha1.NewForConfigOrDie(c)
 	cs.iamV1alpha2 = iamv1alpha2.NewForConfigOrDie(c)
 	cs.networkV1alpha1 = networkv1alpha1.NewForConfigOrDie(c)
 	cs.notificationV2beta1 = notificationv2beta1.NewForConfigOrDie(c)
@@ -251,6 +276,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.tenantV1alpha1 = tenantv1alpha1.NewForConfigOrDie(c)
 	cs.tenantV1alpha2 = tenantv1alpha2.NewForConfigOrDie(c)
 	cs.typesV1beta1 = typesv1beta1.NewForConfigOrDie(c)
+	cs.k8sV1 = k8sv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -264,6 +290,7 @@ func New(c rest.Interface) *Clientset {
 	cs.clusterV1alpha1 = clusterv1alpha1.New(c)
 	cs.devopsV1alpha1 = devopsv1alpha1.New(c)
 	cs.devopsV1alpha3 = devopsv1alpha3.New(c)
+	cs.gatewayV1alpha1 = gatewayv1alpha1.New(c)
 	cs.iamV1alpha2 = iamv1alpha2.New(c)
 	cs.networkV1alpha1 = networkv1alpha1.New(c)
 	cs.notificationV2beta1 = notificationv2beta1.New(c)
@@ -273,6 +300,7 @@ func New(c rest.Interface) *Clientset {
 	cs.tenantV1alpha1 = tenantv1alpha1.New(c)
 	cs.tenantV1alpha2 = tenantv1alpha2.New(c)
 	cs.typesV1beta1 = typesv1beta1.New(c)
+	cs.k8sV1 = k8sv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

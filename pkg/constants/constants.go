@@ -142,6 +142,9 @@ const (
 	NotificationManagedLabel    = "notification.kubesphere.io/managed"
 
 	DashboardTag = "Dashboard"
+	// accton extension
+	VpcNetworkTag = "VPC Network"
+	VpcSubnetTag  = "VPC Subnet"
 )
 
 var (

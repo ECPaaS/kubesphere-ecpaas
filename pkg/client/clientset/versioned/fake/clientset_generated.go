@@ -35,6 +35,8 @@ import (
 	fakedevopsv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha1/fake"
 	devopsv1alpha3 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha3"
 	fakedevopsv1alpha3 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha3/fake"
+	gatewayv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/gateway/v1alpha1"
+	fakegatewayv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/gateway/v1alpha1/fake"
 	iamv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/iam/v1alpha2"
 	fakeiamv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/iam/v1alpha2/fake"
 	networkv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/network/v1alpha1"
@@ -53,6 +55,8 @@ import (
 	faketenantv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/tenant/v1alpha2/fake"
 	typesv1beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta1"
 	faketypesv1beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta1/fake"
+	k8sv1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/vpc/v1"
+	fakek8sv1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/vpc/v1/fake"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.
@@ -127,6 +131,11 @@ func (c *Clientset) DevopsV1alpha3() devopsv1alpha3.DevopsV1alpha3Interface {
 	return &fakedevopsv1alpha3.FakeDevopsV1alpha3{Fake: &c.Fake}
 }
 
+// GatewayV1alpha1 retrieves the GatewayV1alpha1Client
+func (c *Clientset) GatewayV1alpha1() gatewayv1alpha1.GatewayV1alpha1Interface {
+	return &fakegatewayv1alpha1.FakeGatewayV1alpha1{Fake: &c.Fake}
+}
+
 // IamV1alpha2 retrieves the IamV1alpha2Client
 func (c *Clientset) IamV1alpha2() iamv1alpha2.IamV1alpha2Interface {
 	return &fakeiamv1alpha2.FakeIamV1alpha2{Fake: &c.Fake}
@@ -170,4 +179,9 @@ func (c *Clientset) TenantV1alpha2() tenantv1alpha2.TenantV1alpha2Interface {
 // TypesV1beta1 retrieves the TypesV1beta1Client
 func (c *Clientset) TypesV1beta1() typesv1beta1.TypesV1beta1Interface {
 	return &faketypesv1beta1.FakeTypesV1beta1{Fake: &c.Fake}
+}
+
+// K8sV1 retrieves the K8sV1Client
+func (c *Clientset) K8sV1() k8sv1.K8sV1Interface {
+	return &fakek8sv1.FakeK8sV1{Fake: &c.Fake}
 }

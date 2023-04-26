@@ -19,11 +19,10 @@ package resource
 import (
 	"errors"
 
-	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/volumesnapshotcontent"
-
-	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/volumesnapshotclass"
-
+	vpcv1 "kubesphere.io/api/vpc/v1"
 	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/persistentvolume"
+	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/volumesnapshotclass"
+	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/volumesnapshotcontent"
 
 	snapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -87,6 +86,8 @@ import (
 	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/statefulset"
 	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/user"
 	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/volumesnapshot"
+	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/vpcnetwork"
+	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/vpcsubnets"
 	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/workspace"
 	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/workspacerole"
 	"kubesphere.io/kubesphere/pkg/models/resources/v1alpha3/workspacerolebinding"
@@ -158,6 +159,10 @@ func NewResourceGetter(factory informers.InformerFactory, cache cache.Cache) *Re
 	namespacedResourceGetters[typesv1beta1.SchemeGroupVersion.WithResource(typesv1beta1.ResourcePluralFederatedStatefulSet)] = federatedstatefulset.New(factory.KubeSphereSharedInformerFactory())
 	namespacedResourceGetters[typesv1beta1.SchemeGroupVersion.WithResource(typesv1beta1.ResourcePluralFederatedIngress)] = federatedingress.New(factory.KubeSphereSharedInformerFactory())
 	namespacedResourceGetters[monitoringdashboardv1alpha2.GroupVersion.WithResource("dashboards")] = dashboard.New(cache)
+
+	// accton extension resources
+	clusterResourceGetters[vpcv1.SchemeGroupVersion.WithResource(vpcv1.ResourcePluralVpcNetworks)] = vpcnetwork.New(factory.KubeSphereSharedInformerFactory())
+	namespacedResourceGetters[vpcv1.SchemeGroupVersion.WithResource(vpcv1.ResourcePluralVpcSubnets)] = vpcsubnets.New(factory.KubeSphereSharedInformerFactory())
 
 	return &ResourceGetter{
 		namespacedResourceGetters: namespacedResourceGetters,

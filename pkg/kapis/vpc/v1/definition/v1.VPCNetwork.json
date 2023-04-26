@@ -1,0 +1,11 @@
+{
+	"apiVersion": "k8s.ovn.org/v1",
+	"kind": "VPCNetwork",
+	"metadata": {
+		"name": "good"
+	},
+	"spec": {
+		"cidr": "10.144.0.0/12",
+		"subnetLength": 24
+	}
+}

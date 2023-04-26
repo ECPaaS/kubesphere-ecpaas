@@ -818,10 +818,6 @@ github.com/rubenv/sql-migrate/sqlparse
 github.com/russross/blackfriday
 # github.com/sergi/go-diff v1.1.0 => github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
-# github.com/shirou/gopsutil v0.0.0-20180427012116-c95755e4bcd7
-## explicit
-# github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4
-## explicit
 # github.com/sirupsen/logrus v1.8.1 => github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
 # github.com/sony/sonyflake v0.0.0-20181109022403-6d5bd6181009 => github.com/sony/sonyflake v0.0.0-20181109022403-6d5bd6181009
@@ -2004,6 +2000,7 @@ kubesphere.io/api/tenant/crdinstall
 kubesphere.io/api/tenant/v1alpha1
 kubesphere.io/api/tenant/v1alpha2
 kubesphere.io/api/types/v1beta1
+kubesphere.io/api/vpc/v1
 # kubesphere.io/client-go v0.0.0 => ./staging/src/kubesphere.io/client-go
 ## explicit
 kubesphere.io/client-go/client
