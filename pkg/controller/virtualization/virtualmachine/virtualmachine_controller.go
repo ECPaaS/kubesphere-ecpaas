@@ -188,6 +188,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
+	// update status, refresh the status even when the virtualmachine is not ready
+	if !reflect.DeepEqual(vm.Status, vm_instance.Status) {
+		if err := r.Status().Update(rootCtx, vm_instance); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	if !vm_instance.Status.Ready {
 		klog.V(2).Infof("VirtualMachine %s/%s is not ready", req.Namespace, req.Name)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
@@ -362,28 +369,36 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 
 	if virtzSpec.DiskVolumes != nil {
 		for _, volume := range virtzSpec.DiskVolumes {
-			newVolume := kvapi.Volume{
-				Name: volume,
-				VolumeSource: kvapi.VolumeSource{
-					PersistentVolumeClaim: &kvapi.PersistentVolumeClaimVolumeSource{
-						PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: pvcNamePrefix + volume,
-						},
-					},
-				},
-			}
-			kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
-
 			// check boot order from spec.diskvolumeTemplates label
 			bootorder := uint(0)
+			isMappingTodiskVolumeTemplate := false
 			for _, diskVolumeTemplate := range virtzSpec.DiskVolumeTemplates {
 				if diskVolumeTemplate.Name == volume {
+					isMappingTodiskVolumeTemplate = true
+
 					if diskVolumeTemplate.Labels != nil {
-						if diskVolumeTemplate.Labels["virtualization.ecpaas.io/bootorder"] == "1" {
+						if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationBootOrder] == "1" {
 							bootorder = uint(1)
 						}
 					}
 				}
+			}
+
+			newVolume := kvapi.Volume{
+				Name: volume,
+				VolumeSource: kvapi.VolumeSource{
+					PersistentVolumeClaim: &kvapi.PersistentVolumeClaimVolumeSource{
+						PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{},
+					},
+				},
+			}
+
+			if isMappingTodiskVolumeTemplate {
+				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcNamePrefix + volume
+				kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
+			} else {
+				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = "new-" + volume
+				kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
 			}
 
 			newDisk := kvapi.Disk{
