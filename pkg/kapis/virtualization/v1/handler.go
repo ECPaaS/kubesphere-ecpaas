@@ -93,7 +93,7 @@ func (h *virtzhandler) getVirtualMachineResponse(vm *virtzv1alpha1.VirtualMachin
 		ID:          vm.Name,
 		Namespace:   vm.Namespace,
 		Description: vm.Annotations[virtzv1alpha1.VirtualizationDescription],
-		CpuCores:    vm.Spec.Hardware.Domain.Cpu.Cores,
+		CpuCores:    vm.Spec.Hardware.Domain.CPU.Cores,
 		Memory:      vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(),
 		Disks:       h.getDisksResponse(vm),
 		Status:      status,

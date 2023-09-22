@@ -48,7 +48,7 @@ type DiskSpec struct {
 
 type VirtualMachine struct {
 	Name        string     `json:"name" description:"Virtual machine name"`
-	CpuCores    int32      `json:"cpu_cores" description:"Virtual machine cpu cores, range from 1 to 4"`
+	CpuCores    uint32     `json:"cpu_cores" description:"Virtual machine cpu cores, range from 1 to 4"`
 	Memory      string     `json:"memory" description:"Virtual machine memory size, range from 1Gi to 8Gi"`
 	Description string     `json:"description,omitempty" description:"Virtual machine description"`
 	Disk        []DiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
@@ -66,7 +66,7 @@ type VirtualMachineResponse struct {
 	ID          string     `json:"id" description:"Virtual machine id"`
 	Namespace   string     `json:"namespace" description:"Virtual machine namespace"`
 	Description string     `json:"description" description:"Virtual machine description"`
-	CpuCores    int32      `json:"cpu_cores" description:"Virtual machine cpu cores"`
+	CpuCores    uint32     `json:"cpu_cores" description:"Virtual machine cpu cores"`
 	Memory      string     `json:"memory" description:"Virtual machine memory size"`
 	Disks       []DiskSpec `json:"disks" description:"Virtual machine disks"`
 	Status      VMStatus   `json:"status" description:"Virtual machine status"`

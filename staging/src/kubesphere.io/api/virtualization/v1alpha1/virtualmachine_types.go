@@ -37,8 +37,8 @@ type ResourceRequirements struct {
 	Limits v1.ResourceList `json:"limits,omitempty"`
 }
 
-type Cpu struct {
-	Cores int32 `json:"cores,omitempty"`
+type CPU struct {
+	Cores uint32 `json:"cores,omitempty"`
 }
 
 type MacVtap struct {
@@ -73,7 +73,7 @@ type Devices struct {
 }
 
 type Domain struct {
-	Cpu       Cpu                  `json:"cpu,omitempty"`
+	CPU       CPU                  `json:"cpu,omitempty"`
 	Devices   Devices              `json:"devices,omitempty"`
 	Resources ResourceRequirements `json:"resources,omitempty"`
 }

@@ -77,7 +77,7 @@ func ApplyVMSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, vm_uuid 
 	vm.Name = "vm-" + vm_uuid
 
 	vm.Spec.Hardware.Domain = v1alpha1.Domain{
-		Cpu: v1alpha1.Cpu{
+		CPU: v1alpha1.CPU{
 			Cores: virtz_vm.CpuCores,
 		},
 		Devices: v1alpha1.Devices{
@@ -256,8 +256,8 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		vm.Annotations[v1alpha1.VirtualizationDescription] = virtz_vm.Description
 	}
 
-	if virtz_vm.CpuCores != vm.Spec.Hardware.Domain.Cpu.Cores {
-		vm.Spec.Hardware.Domain.Cpu.Cores = virtz_vm.CpuCores
+	if virtz_vm.CpuCores != vm.Spec.Hardware.Domain.CPU.Cores {
+		vm.Spec.Hardware.Domain.CPU.Cores = virtz_vm.CpuCores
 	}
 
 	if virtz_vm.Memory != vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() {
