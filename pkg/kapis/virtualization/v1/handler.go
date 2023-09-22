@@ -1,6 +1,7 @@
 package virtualization
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/emicklei/go-restful"
@@ -88,6 +89,8 @@ func (h *virtzhandler) getVirtualMachineResponse(vm *virtzv1alpha1.VirtualMachin
 	status.Ready = vm.Status.Ready
 	status.State = string(vm.Status.PrintableStatus)
 
+	imageSpec := h.getImageResponse(vm)
+
 	return ui_virtz.VirtualMachineResponse{
 		Name:        vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
 		ID:          vm.Name,
@@ -95,8 +98,26 @@ func (h *virtzhandler) getVirtualMachineResponse(vm *virtzv1alpha1.VirtualMachin
 		Description: vm.Annotations[virtzv1alpha1.VirtualizationDescription],
 		CpuCores:    vm.Spec.Hardware.Domain.CPU.Cores,
 		Memory:      vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(),
+		Image:       &imageSpec,
 		Disks:       h.getDisksResponse(vm),
 		Status:      status,
+	}
+}
+
+func (h *virtzhandler) getImageResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageSpec {
+	jsonImageInfo := vm.Annotations[virtzv1alpha1.VirtualizationImageInfo]
+
+	var imageInfo ui_virtz.ImageInfo
+
+	err := json.Unmarshal([]byte(jsonImageInfo), &imageInfo)
+	if err != nil {
+		klog.Error(err)
+		return ui_virtz.ImageSpec{}
+	}
+
+	return ui_virtz.ImageSpec{
+		Name: imageInfo.Name,
+		Size: vm.Annotations[virtzv1alpha1.VirtualizationSystemSize],
 	}
 }
 

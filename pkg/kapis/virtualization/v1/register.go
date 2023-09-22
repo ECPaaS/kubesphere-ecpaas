@@ -32,7 +32,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface)
 		Reads(ui_virtz.VirtualMachine{}).
 		Doc("Create virtual machine").
 		Returns(http.StatusOK, api.StatusOK, nil).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMahcineTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualizationTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/virtualmachine/{id}").
 		To(handler.UpdateVirtualMahcine).
@@ -41,7 +41,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface)
 		Reads(ui_virtz.VirtualMachine{}).
 		Doc("Update virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachine{}).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMahcineTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualizationTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/virtualmachine/{id}").
 		To(handler.GetVirtualMachine).
@@ -49,27 +49,27 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface)
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Get virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineResponse{}).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMahcineTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualizationTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/virtualmachine").
 		To(handler.ListVirtualMachineWithNamespace).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all virtual machine with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListVirtualMachineResponse{}).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMahcineTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualizationTag}))
 
 	webservice.Route(webservice.GET("/virtualmachine").
 		To(handler.ListVirtualMachine).
 		Doc("List all virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListVirtualMachineResponse{}).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMahcineTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualizationTag}))
 
 	webservice.Route(webservice.DELETE("/namespace/{namespace}/virtualmachine/{id}").
 		To(handler.DeleteVirtualMachine).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Delete virtual machine").
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMahcineTag}).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualizationTag}).
 		Returns(http.StatusOK, api.StatusOK, errors.Error{}))
 
 	container.Add(webservice)

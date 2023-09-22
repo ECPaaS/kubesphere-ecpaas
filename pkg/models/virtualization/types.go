@@ -25,34 +25,25 @@ type ImageSpec struct {
 }
 
 type GuestSpec struct {
-	Username string `json:"username" description:"Guest operating system username"`
-	Password string `json:"password" description:"Guest operating system password"`
-}
-
-type AddDiskSpec struct {
-	Size string `json:"size" description:"Disk size, range from 10Gi to 80Gi"`
-}
-
-type MountDiskSpec struct {
-	Name      string `json:"name" description:"Disk name"`
-	Namespace string `json:"namespace" description:"Disk namespace"`
+	Username string `json:"username,omitempty" description:"Guest operating system username"`
+	Password string `json:"password,omitempty" description:"Guest operating system password"`
 }
 
 type DiskSpec struct {
-	Name      string `json:"name" description:"Disk name"`
-	ID        string `json:"id" description:"Disk id"`
-	Namespace string `json:"namespace" description:"Disk namespace"`
-	Type      string `json:"type" description:"Disk type, system or data"`
-	Size      string `json:"size" description:"Disk size"`
+	Name      string `json:"name,omitempty" description:"Disk name"`
+	ID        string `json:"id,omitempty" description:"Disk id"`
+	Namespace string `json:"namespace,omitempty" description:"Disk namespace"`
+	Type      string `json:"type,omitempty" description:"Disk type, system or data"`
+	Size      string `json:"size,omitempty" description:"Disk size"`
 }
 
 type VirtualMachine struct {
 	Name        string     `json:"name" description:"Virtual machine name"`
-	CpuCores    uint32     `json:"cpu_cores" description:"Virtual machine cpu cores, range from 1 to 4"`
+	CpuCores    uint32     `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores, range from 1 to 4"`
 	Memory      string     `json:"memory" description:"Virtual machine memory size, range from 1Gi to 8Gi"`
 	Description string     `json:"description,omitempty" description:"Virtual machine description"`
+	Image       *ImageSpec `json:"image" description:"Virtual machine image source"`
 	Disk        []DiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
-	Image       *ImageSpec `json:"image,omitempty" description:"Virtual machine image source"`
 	Guest       *GuestSpec `json:"guest,omitempty" description:"Virtual machine guest operating system"`
 }
 
@@ -68,6 +59,7 @@ type VirtualMachineResponse struct {
 	Description string     `json:"description" description:"Virtual machine description"`
 	CpuCores    uint32     `json:"cpu_cores" description:"Virtual machine cpu cores"`
 	Memory      string     `json:"memory" description:"Virtual machine memory size"`
+	Image       *ImageSpec `json:"image" description:"Virtual machine image source"`
 	Disks       []DiskSpec `json:"disks" description:"Virtual machine disks"`
 	Status      VMStatus   `json:"status" description:"Virtual machine status"`
 }

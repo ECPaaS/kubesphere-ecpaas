@@ -145,7 +145,7 @@ const (
 	// accton extension
 	VpcNetworkTag     = "VPC Network"
 	VpcSubnetTag      = "VPC Subnet"
-	VirtualMahcineTag = "Virtual Machine"
+	VirtualizationTag = "Virtualization"
 
 	MinioImageTag = "Minio Images"
 )

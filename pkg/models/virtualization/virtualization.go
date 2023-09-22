@@ -74,6 +74,7 @@ func ApplyVMSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, vm_uuid 
 	vm.Annotations = make(map[string]string)
 	vm.Annotations[v1alpha1.VirtualizationAliasName] = virtz_vm.Name
 	vm.Annotations[v1alpha1.VirtualizationDescription] = virtz_vm.Description
+	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = virtz_vm.Image.Size
 	vm.Name = "vm-" + vm_uuid
 
 	vm.Spec.Hardware.Domain = v1alpha1.Domain{
@@ -205,14 +206,14 @@ func ApplyImageSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, image
 func ApplyVMDiskSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine) {
 	for _, disk := range virtz_vm.Disk {
 		if disk.Name == "" {
-			ApplyAddDiskSpec(virtz_vm, vm, &disk)
+			ApplyAddDisk(virtz_vm, vm, &disk)
 		} else {
-			ApplyMountDiskSpec(virtz_vm, vm, &disk)
+			ApplyMountDisk(virtz_vm, vm, &disk)
 		}
 	}
 }
 
-func ApplyAddDiskSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *DiskSpec) {
+func ApplyAddDisk(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *DiskSpec) {
 	disk_uuid := uuid.New().String()[:8]
 	vm.Spec.DiskVolumeTemplates = append(vm.Spec.DiskVolumeTemplates, v1alpha1.DiskVolume{
 		ObjectMeta: metav1.ObjectMeta{
@@ -238,7 +239,7 @@ func ApplyAddDiskSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, dis
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, diskVolumeNamePrefix+disk_uuid)
 }
 
-func ApplyMountDiskSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *DiskSpec) {
+func ApplyMountDisk(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *DiskSpec) {
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, disk.Name)
 }
 
@@ -264,8 +265,8 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] = resource.MustParse(virtz_vm.Memory)
 	}
 
-	if virtz_vm.Image != nil {
-		return nil, errors.NewBadRequest("Image cannot be updated")
+	if virtz_vm.Image.Size != vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] {
+		vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = virtz_vm.Image.Size
 	}
 
 	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
