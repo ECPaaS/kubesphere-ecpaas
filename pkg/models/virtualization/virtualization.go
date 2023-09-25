@@ -23,9 +23,9 @@ import (
 
 type Interface interface {
 	// VirtualMachine
-	CreateVirtualMachine(namespace string, virtz_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error)
+	CreateVirtualMachine(namespace string, ui_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error)
 	GetVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
-	UpdateVirtualMachine(namespace string, name string, virtz_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error)
+	UpdateVirtualMachine(namespace string, name string, ui_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error)
 	ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error)
 	DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	// DiskVolume
@@ -43,24 +43,24 @@ func New(ksclient kubesphere.Interface) Interface {
 	}
 }
 
-func (v *virtualizationOperator) CreateVirtualMachine(namespace string, virtz_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error) {
+func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error) {
 	vm := v1alpha1.VirtualMachine{}
 	vm_uuid := uuid.New().String()[:8]
 
-	ApplyVMSpec(virtz_vm, &vm, vm_uuid)
+	ApplyVMSpec(ui_vm, &vm, vm_uuid)
 
-	if virtz_vm.Image != nil {
-		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), virtz_vm.Image.Name, metav1.GetOptions{})
+	if ui_vm.Image != nil {
+		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), ui_vm.Image.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
-		err = ApplyImageSpec(virtz_vm, &vm, imagetemplate, namespace, vm_uuid)
+		err = ApplyImageSpec(ui_vm, &vm, imagetemplate, namespace, vm_uuid)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	ApplyVMDiskSpec(virtz_vm, &vm)
+	ApplyVMDiskSpec(ui_vm, &vm)
 
 	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Create(context.Background(), &vm, metav1.CreateOptions{})
 	if err != nil {
@@ -70,16 +70,16 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, virtz_vm
 	return v1alpha1VM, nil
 }
 
-func ApplyVMSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, vm_uuid string) {
+func ApplyVMSpec(ui_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, vm_uuid string) {
 	vm.Annotations = make(map[string]string)
-	vm.Annotations[v1alpha1.VirtualizationAliasName] = virtz_vm.Name
-	vm.Annotations[v1alpha1.VirtualizationDescription] = virtz_vm.Description
-	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = virtz_vm.Image.Size
+	vm.Annotations[v1alpha1.VirtualizationAliasName] = ui_vm.Name
+	vm.Annotations[v1alpha1.VirtualizationDescription] = ui_vm.Description
+	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = ui_vm.Image.Size
 	vm.Name = "vm-" + vm_uuid
 
 	vm.Spec.Hardware.Domain = v1alpha1.Domain{
 		CPU: v1alpha1.CPU{
-			Cores: virtz_vm.CpuCores,
+			Cores: ui_vm.CpuCores,
 		},
 		Devices: v1alpha1.Devices{
 			Interfaces: []v1alpha1.Interface{
@@ -93,7 +93,7 @@ func ApplyVMSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, vm_uuid 
 		},
 		Resources: v1alpha1.ResourceRequirements{
 			Requests: v1.ResourceList{
-				v1.ResourceMemory: resource.MustParse(virtz_vm.Memory),
+				v1.ResourceMemory: resource.MustParse(ui_vm.Memory),
 			},
 		},
 	}
@@ -105,10 +105,10 @@ func ApplyVMSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, vm_uuid 
 			},
 		},
 	}
-	vm.Spec.Hardware.Hostname = virtz_vm.Name
+	vm.Spec.Hardware.Hostname = ui_vm.Name
 }
 
-func ApplyImageSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
+func ApplyImageSpec(ui_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
 
 	imageInfo := ImageInfo{}
 	imageInfo.Name = imagetemplate.Name
@@ -134,7 +134,7 @@ func ApplyImageSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, image
 			ObjectMeta: metav1.ObjectMeta{
 				Name: diskVolumeNamePrefix + vm_uuid,
 				Annotations: map[string]string{
-					v1alpha1.VirtualizationAliasName: virtz_vm.Name,
+					v1alpha1.VirtualizationAliasName: ui_vm.Name,
 				},
 				Labels: map[string]string{
 					v1alpha1.VirtualizationBootOrder: "1",
@@ -145,12 +145,12 @@ func ApplyImageSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, image
 				Source: v1alpha1.DiskVolumeSource{
 					Image: &v1alpha1.DataVolumeSourceImage{
 						Namespace: namespace,
-						Name:      virtz_vm.Image.Name,
+						Name:      ui_vm.Image.Name,
 					},
 				},
 				Resources: v1alpha1.ResourceRequirements{
 					Requests: v1.ResourceList{
-						v1.ResourceStorage: resource.MustParse(virtz_vm.Image.Size),
+						v1.ResourceStorage: resource.MustParse(ui_vm.Image.Size),
 					},
 				},
 			},
@@ -163,9 +163,9 @@ func ApplyImageSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, image
 	username := "root"
 	password := "123456"
 
-	if virtz_vm.Guest != nil {
-		username = virtz_vm.Guest.Username
-		password = virtz_vm.Guest.Password
+	if ui_vm.Guest != nil {
+		username = ui_vm.Guest.Username
+		password = ui_vm.Guest.Password
 	}
 
 	userDataString := `#cloud-config
@@ -203,23 +203,23 @@ func ApplyImageSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, image
 	return nil
 }
 
-func ApplyVMDiskSpec(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine) {
-	for _, disk := range virtz_vm.Disk {
-		if disk.Name == "" {
-			ApplyAddDisk(virtz_vm, vm, &disk)
+func ApplyVMDiskSpec(ui_vm *VirtualMachine, vm *v1alpha1.VirtualMachine) {
+	for _, uiDisk := range ui_vm.Disk {
+		if uiDisk.ID != "" {
+			ApplyMountDisk(vm, &uiDisk)
 		} else {
-			ApplyMountDisk(virtz_vm, vm, &disk)
+			ApplyAddDisk(ui_vm, vm, &uiDisk)
 		}
 	}
 }
 
-func ApplyAddDisk(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *DiskSpec) {
+func ApplyAddDisk(ui_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
 	disk_uuid := uuid.New().String()[:8]
 	vm.Spec.DiskVolumeTemplates = append(vm.Spec.DiskVolumeTemplates, v1alpha1.DiskVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: diskVolumeNamePrefix + disk_uuid,
 			Annotations: map[string]string{
-				v1alpha1.VirtualizationAliasName: virtz_vm.Name,
+				v1alpha1.VirtualizationAliasName: ui_vm.Name,
 			},
 			Labels: map[string]string{
 				v1alpha1.VirtualizationDiskType: "data",
@@ -231,7 +231,7 @@ func ApplyAddDisk(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *D
 			},
 			Resources: v1alpha1.ResourceRequirements{
 				Requests: v1.ResourceList{
-					v1.ResourceStorage: resource.MustParse(disk.Size),
+					v1.ResourceStorage: resource.MustParse(uiDisk.Size),
 				},
 			},
 		},
@@ -239,64 +239,64 @@ func ApplyAddDisk(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *D
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, diskVolumeNamePrefix+disk_uuid)
 }
 
-func ApplyMountDisk(virtz_vm *VirtualMachine, vm *v1alpha1.VirtualMachine, disk *DiskSpec) {
-	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, disk.Name)
+func ApplyMountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
+	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, uiDisk.ID)
 }
 
-func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, virtz_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error) {
+func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *VirtualMachine) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	if virtz_vm.Name != vm.Annotations[v1alpha1.VirtualizationAliasName] {
-		vm.Annotations[v1alpha1.VirtualizationAliasName] = virtz_vm.Name
+	if ui_vm.Name != vm.Annotations[v1alpha1.VirtualizationAliasName] {
+		vm.Annotations[v1alpha1.VirtualizationAliasName] = ui_vm.Name
 	}
 
-	if virtz_vm.Description != vm.Annotations[v1alpha1.VirtualizationDescription] {
-		vm.Annotations[v1alpha1.VirtualizationDescription] = virtz_vm.Description
+	if ui_vm.Description != vm.Annotations[v1alpha1.VirtualizationDescription] {
+		vm.Annotations[v1alpha1.VirtualizationDescription] = ui_vm.Description
 	}
 
-	if virtz_vm.CpuCores != vm.Spec.Hardware.Domain.CPU.Cores {
-		vm.Spec.Hardware.Domain.CPU.Cores = virtz_vm.CpuCores
+	if ui_vm.CpuCores != vm.Spec.Hardware.Domain.CPU.Cores {
+		vm.Spec.Hardware.Domain.CPU.Cores = ui_vm.CpuCores
 	}
 
-	if virtz_vm.Memory != vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() {
-		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] = resource.MustParse(virtz_vm.Memory)
+	if ui_vm.Memory != vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() {
+		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] = resource.MustParse(ui_vm.Memory)
 	}
 
-	if virtz_vm.Image.Size != vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] {
-		vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = virtz_vm.Image.Size
+	if ui_vm.Image.Size != vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] {
+		vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = ui_vm.Image.Size
 	}
 
-	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
+	updated_vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return v1alpha1VM, nil
+	return updated_vm, nil
 }
 
 func (v *virtualizationOperator) GetVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error) {
-	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return v1alpha1VM, nil
+	return vm, nil
 }
 
 func (v *virtualizationOperator) ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error) {
-	v1alpha1VMlist, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).List(context.Background(), metav1.ListOptions{})
+	vmList, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return v1alpha1VMlist, nil
+	return vmList, nil
 }
 
 func (v *virtualizationOperator) DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error) {
-	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, err
 	}
@@ -306,23 +306,23 @@ func (v *virtualizationOperator) DeleteVirtualMachine(namespace string, name str
 		return nil, err
 	}
 
-	return v1alpha1VM, nil
+	return vm, nil
 }
 
 func (v *virtualizationOperator) GetDiskVolume(namespace string, name string) (*v1alpha1.DiskVolume, error) {
-	v1alpha1DiskVolume, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	diskVolume, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return v1alpha1DiskVolume, nil
+	return diskVolume, nil
 }
 
 func (v *virtualizationOperator) ListDiskVolume(namespace string) (*v1alpha1.DiskVolumeList, error) {
-	v1alpha1DiskVolumelist, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).List(context.Background(), metav1.ListOptions{})
+	diskVolumelist, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return v1alpha1DiskVolumelist, nil
+	return diskVolumelist, nil
 }

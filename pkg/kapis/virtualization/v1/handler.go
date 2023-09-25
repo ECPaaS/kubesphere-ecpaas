@@ -27,14 +27,14 @@ func newHandler(ksclient kubesphere.Interface) virtzhandler {
 func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.Response) {
 	namespace := req.PathParameter("namespace")
 
-	var virtz_vm ui_virtz.VirtualMachine
-	err := req.ReadEntity(&virtz_vm)
+	var ui_vm ui_virtz.VirtualMachine
+	err := req.ReadEntity(&ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	_, err = h.virtz.CreateVirtualMachine(namespace, &virtz_vm)
+	_, err = h.virtz.CreateVirtualMachine(namespace, &ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
@@ -47,14 +47,14 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	namespace := req.PathParameter("namespace")
 	vmName := req.PathParameter("id")
 
-	var virtz_vm ui_virtz.VirtualMachine
-	err := req.ReadEntity(&virtz_vm)
+	var ui_vm ui_virtz.VirtualMachine
+	err := req.ReadEntity(&ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	_, err = h.virtz.UpdateVirtualMachine(namespace, vmName, &virtz_vm)
+	_, err = h.virtz.UpdateVirtualMachine(namespace, vmName, &ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
@@ -78,18 +78,18 @@ func (h *virtzhandler) GetVirtualMachine(req *restful.Request, resp *restful.Res
 		return
 	}
 
-	ui_virtz_vm_resp := h.getVirtualMachineResponse(vm)
+	ui_virtz_vm_resp := h.getUIVirtualMachineResponse(vm)
 
 	resp.WriteEntity(ui_virtz_vm_resp)
 }
 
-func (h *virtzhandler) getVirtualMachineResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.VirtualMachineResponse {
+func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.VirtualMachineResponse {
 
-	status := ui_virtz.VMStatus{}
-	status.Ready = vm.Status.Ready
-	status.State = string(vm.Status.PrintableStatus)
+	ui_vm_status := ui_virtz.VMStatus{}
+	ui_vm_status.Ready = vm.Status.Ready
+	ui_vm_status.State = string(vm.Status.PrintableStatus)
 
-	imageSpec := h.getImageResponse(vm)
+	ui_image_spec := h.getUIImageResponse(vm)
 
 	return ui_virtz.VirtualMachineResponse{
 		Name:        vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
@@ -98,30 +98,30 @@ func (h *virtzhandler) getVirtualMachineResponse(vm *virtzv1alpha1.VirtualMachin
 		Description: vm.Annotations[virtzv1alpha1.VirtualizationDescription],
 		CpuCores:    vm.Spec.Hardware.Domain.CPU.Cores,
 		Memory:      vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(),
-		Image:       &imageSpec,
-		Disks:       h.getDisksResponse(vm),
-		Status:      status,
+		Image:       &ui_image_spec,
+		Disks:       h.getUIDisksResponse(vm),
+		Status:      ui_vm_status,
 	}
 }
 
-func (h *virtzhandler) getImageResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageSpec {
+func (h *virtzhandler) getUIImageResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageSpec {
 	jsonImageInfo := vm.Annotations[virtzv1alpha1.VirtualizationImageInfo]
 
-	var imageInfo ui_virtz.ImageInfo
+	var uiImageInfo ui_virtz.ImageInfo
 
-	err := json.Unmarshal([]byte(jsonImageInfo), &imageInfo)
+	err := json.Unmarshal([]byte(jsonImageInfo), &uiImageInfo)
 	if err != nil {
 		klog.Error(err)
 		return ui_virtz.ImageSpec{}
 	}
 
 	return ui_virtz.ImageSpec{
-		Name: imageInfo.Name,
+		Name: uiImageInfo.Name,
 		Size: vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize],
 	}
 }
 
-func (h *virtzhandler) getDisksResponse(vm *virtzv1alpha1.VirtualMachine) []ui_virtz.DiskSpec {
+func (h *virtzhandler) getUIDisksResponse(vm *virtzv1alpha1.VirtualMachine) []ui_virtz.DiskSpec {
 	diskvolumeList, err := h.virtz.ListDiskVolume("")
 	if err != nil {
 		klog.Error(err)
@@ -139,14 +139,14 @@ func (h *virtzhandler) getDisksResponse(vm *virtzv1alpha1.VirtualMachine) []ui_v
 
 	ui_virtz_diskvolume_resp := make([]ui_virtz.DiskSpec, 0)
 	for _, diskvolume := range diskvolumes {
-		diskvolume_resp := getDiskVolumeResponse(&diskvolume)
+		diskvolume_resp := getUIDiskVolumeResponse(&diskvolume)
 		ui_virtz_diskvolume_resp = append(ui_virtz_diskvolume_resp, diskvolume_resp)
 	}
 
 	return ui_virtz_diskvolume_resp
 }
 
-func getDiskVolumeResponse(diskvolume *virtzv1alpha1.DiskVolume) ui_virtz.DiskSpec {
+func getUIDiskVolumeResponse(diskvolume *virtzv1alpha1.DiskVolume) ui_virtz.DiskSpec {
 	return ui_virtz.DiskSpec{
 		Name:      diskvolume.Annotations[virtzv1alpha1.VirtualizationAliasName],
 		ID:        diskvolume.Name,
@@ -166,7 +166,7 @@ func (h *virtzhandler) ListVirtualMachine(req *restful.Request, resp *restful.Re
 
 	ui_virtz_vm_resp := make([]ui_virtz.VirtualMachineResponse, 0)
 	for _, vm := range vms.Items {
-		vm_resp := h.getVirtualMachineResponse(&vm)
+		vm_resp := h.getUIVirtualMachineResponse(&vm)
 		ui_virtz_vm_resp = append(ui_virtz_vm_resp, vm_resp)
 	}
 
@@ -190,7 +190,7 @@ func (h *virtzhandler) ListVirtualMachineWithNamespace(req *restful.Request, res
 
 	ui_virtz_vm_resp := make([]ui_virtz.VirtualMachineResponse, 0)
 	for _, vm := range vms.Items {
-		vm_resp := h.getVirtualMachineResponse(&vm)
+		vm_resp := h.getUIVirtualMachineResponse(&vm)
 		ui_virtz_vm_resp = append(ui_virtz_vm_resp, vm_resp)
 	}
 
