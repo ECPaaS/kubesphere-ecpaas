@@ -117,7 +117,7 @@ func (h *virtzhandler) getImageResponse(vm *virtzv1alpha1.VirtualMachine) ui_vir
 
 	return ui_virtz.ImageSpec{
 		Name: imageInfo.Name,
-		Size: vm.Annotations[virtzv1alpha1.VirtualizationSystemSize],
+		Size: vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize],
 	}
 }
 
