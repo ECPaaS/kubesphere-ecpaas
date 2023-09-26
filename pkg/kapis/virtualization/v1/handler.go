@@ -27,7 +27,7 @@ func newHandler(ksclient kubesphere.Interface) virtzhandler {
 func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.Response) {
 	namespace := req.PathParameter("namespace")
 
-	var ui_vm ui_virtz.VirtualMachine
+	var ui_vm ui_virtz.VirtualMachineRequest
 	err := req.ReadEntity(&ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -47,7 +47,7 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	namespace := req.PathParameter("namespace")
 	vmName := req.PathParameter("id")
 
-	var ui_vm ui_virtz.VirtualMachine
+	var ui_vm ui_virtz.VirtualMachineRequest
 	err := req.ReadEntity(&ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -121,8 +121,8 @@ func (h *virtzhandler) getUIImageResponse(vm *virtzv1alpha1.VirtualMachine) ui_v
 	}
 }
 
-func (h *virtzhandler) getUIDisksResponse(vm *virtzv1alpha1.VirtualMachine) []ui_virtz.DiskSpec {
-	diskvolumeList, err := h.virtz.ListDiskVolume("")
+func (h *virtzhandler) getUIDisksResponse(vm *virtzv1alpha1.VirtualMachine) []ui_virtz.DiskResponse {
+	diskvolumeList, err := h.virtz.ListDisk("")
 	if err != nil {
 		klog.Error(err)
 		return nil
@@ -137,55 +137,57 @@ func (h *virtzhandler) getUIDisksResponse(vm *virtzv1alpha1.VirtualMachine) []ui
 		}
 	}
 
-	ui_virtz_diskvolume_resp := make([]ui_virtz.DiskSpec, 0)
+	ui_virtz_disk_resp := make([]ui_virtz.DiskResponse, 0)
 	for _, diskvolume := range diskvolumes {
-		diskvolume_resp := getUIDiskVolumeResponse(&diskvolume)
-		ui_virtz_diskvolume_resp = append(ui_virtz_diskvolume_resp, diskvolume_resp)
+		ui_virtz_disk_resp = append(ui_virtz_disk_resp, getUIDiskResponse(&diskvolume))
 	}
 
-	return ui_virtz_diskvolume_resp
+	return ui_virtz_disk_resp
 }
 
-func getUIDiskVolumeResponse(diskvolume *virtzv1alpha1.DiskVolume) ui_virtz.DiskSpec {
-	return ui_virtz.DiskSpec{
-		Name:      diskvolume.Annotations[virtzv1alpha1.VirtualizationAliasName],
-		ID:        diskvolume.Name,
-		Namespace: diskvolume.Namespace,
-		Type:      diskvolume.Labels[virtzv1alpha1.VirtualizationDiskType],
-		Size:      diskvolume.Spec.Resources.Requests.Storage().String(),
+func getUIDiskResponse(diskvolume *virtzv1alpha1.DiskVolume) ui_virtz.DiskResponse {
+
+	ui_disk_status := ui_virtz.DiskStatus{}
+	ui_disk_status.Ready = diskvolume.Status.Ready
+	ui_disk_status.Owner = diskvolume.Status.Owner
+
+	return ui_virtz.DiskResponse{
+		Name:        diskvolume.Annotations[virtzv1alpha1.VirtualizationAliasName],
+		ID:          diskvolume.Name,
+		Namespace:   diskvolume.Namespace,
+		Description: diskvolume.Annotations[virtzv1alpha1.VirtualizationDescription],
+		Type:        diskvolume.Labels[virtzv1alpha1.VirtualizationDiskType],
+		Size:        diskvolume.Spec.Resources.Requests.Storage().String(),
+		Status:      ui_disk_status,
 	}
 }
 
 func (h *virtzhandler) ListVirtualMachine(req *restful.Request, resp *restful.Response) {
-	vms, err := h.virtz.ListVirtualMachine("")
+	ui_list_vm_resp, err := h.listVirtualMachine("", resp)
 	if err != nil {
-		klog.Error(err)
-		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ui_virtz_vm_resp := make([]ui_virtz.VirtualMachineResponse, 0)
-	for _, vm := range vms.Items {
-		vm_resp := h.getUIVirtualMachineResponse(&vm)
-		ui_virtz_vm_resp = append(ui_virtz_vm_resp, vm_resp)
-	}
-
-	ui_list_virtz_vm_resp := ui_virtz.ListVirtualMachineResponse{
-		TotalCount: len(ui_virtz_vm_resp),
-		Items:      ui_virtz_vm_resp,
-	}
-
-	resp.WriteEntity(ui_list_virtz_vm_resp)
+	resp.WriteEntity(ui_list_vm_resp)
 }
 
 func (h *virtzhandler) ListVirtualMachineWithNamespace(req *restful.Request, resp *restful.Response) {
 	namespace := req.PathParameter("namespace")
 
+	ui_list_vm_resp, err := h.listVirtualMachine(namespace, resp)
+	if err != nil {
+		return
+	}
+
+	resp.WriteEntity(ui_list_vm_resp)
+}
+
+func (h *virtzhandler) listVirtualMachine(namespace string, resp *restful.Response) (*ui_virtz.ListVirtualMachineResponse, error) {
 	vms, err := h.virtz.ListVirtualMachine(namespace)
 	if err != nil {
 		klog.Error(err)
 		resp.WriteError(http.StatusInternalServerError, err)
-		return
+		return nil, err
 	}
 
 	ui_virtz_vm_resp := make([]ui_virtz.VirtualMachineResponse, 0)
@@ -199,7 +201,7 @@ func (h *virtzhandler) ListVirtualMachineWithNamespace(req *restful.Request, res
 		Items:      ui_virtz_vm_resp,
 	}
 
-	resp.WriteEntity(ui_list_virtz_vm_resp)
+	return &ui_list_virtz_vm_resp, nil
 }
 
 func (h *virtzhandler) DeleteVirtualMachine(req *restful.Request, resp *restful.Response) {
@@ -207,6 +209,122 @@ func (h *virtzhandler) DeleteVirtualMachine(req *restful.Request, resp *restful.
 	vmName := req.PathParameter("id")
 
 	_, err := h.virtz.DeleteVirtualMachine(namespace, vmName)
+	if err != nil {
+		klog.Error(err)
+		if errors.IsNotFound(err) {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) CreateDisk(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+
+	var ui_disk ui_virtz.DiskRequest
+	err := req.ReadEntity(&ui_disk)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = h.virtz.CreateDisk(namespace, &ui_disk)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) UpdateDisk(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	diskName := req.PathParameter("id")
+
+	var ui_disk ui_virtz.DiskRequest
+	err := req.ReadEntity(&ui_disk)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = h.virtz.UpdateDisk(namespace, diskName, &ui_disk)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) GetDisk(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	diskName := req.PathParameter("id")
+
+	disk, err := h.virtz.GetDisk(namespace, diskName)
+	if err != nil {
+		klog.Error(err)
+		if errors.IsNotFound(err) {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteEntity(getUIDiskResponse(disk))
+}
+
+func (h *virtzhandler) ListDiskWithNamespace(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+
+	ui_list_disk_resp, err := h.listDisk(namespace, resp)
+	if err != nil {
+		return
+	}
+
+	resp.WriteEntity(ui_list_disk_resp)
+}
+
+func (h *virtzhandler) ListDisk(req *restful.Request, resp *restful.Response) {
+	ui_list_disk_resp, err := h.listDisk("", resp)
+	if err != nil {
+		return
+	}
+
+	resp.WriteEntity(ui_list_disk_resp)
+}
+
+func (h *virtzhandler) listDisk(namespace string, resp *restful.Response) (*ui_virtz.ListDiskResponse, error) {
+	disks, err := h.virtz.ListDisk(namespace)
+	if err != nil {
+		klog.Error(err)
+		resp.WriteError(http.StatusInternalServerError, err)
+		return nil, err
+	}
+
+	ui_disk_resp := make([]ui_virtz.DiskResponse, 0)
+	for _, disk := range disks.Items {
+		ui_disk_resp = append(ui_disk_resp, getUIDiskResponse(&disk))
+	}
+
+	ui_list_disk_resp := ui_virtz.ListDiskResponse{
+		TotalCount: len(ui_disk_resp),
+		Items:      ui_disk_resp,
+	}
+
+	return &ui_list_disk_resp, nil
+}
+
+func (h *virtzhandler) DeleteDisk(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	diskName := req.PathParameter("id")
+
+	_, err := h.virtz.DeleteDisk(namespace, diskName)
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {

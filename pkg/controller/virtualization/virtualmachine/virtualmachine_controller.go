@@ -32,11 +32,12 @@ import (
 )
 
 const (
-	controllerName          = "virtualmachine-controller"
-	successSynced           = "Synced"
-	messageResourceSynced   = "VirtualMachine synced successfully"
-	pvcNamePrefix           = "tpl-" // tpl: template
-	volumeSnapshotClassName = "cstor-csi-disk"
+	controllerName                        = "virtualmachine-controller"
+	successSynced                         = "Synced"
+	messageResourceSynced                 = "VirtualMachine synced successfully"
+	pvcCreateByDiskVolumeTemplatePrefix   = "tpl-" // tpl: template
+	pvcCreateByDiskVolumeControllerPrefix = "new-"
+	volumeSnapshotClassName               = "cstor-csi-disk"
 )
 
 // Reconciler reconciles a cnat object
@@ -147,7 +148,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 				diskVolume.Namespace = namespace
 				diskVolume.Annotations = diskVolumeTemplate.Annotations
 				diskVolume.Labels = diskVolumeTemplate.Labels
-				diskVolume.Spec.PVCName = pvcNamePrefix + diskVolumeTemplate.Name
+				diskVolume.Spec.PVCName = pvcCreateByDiskVolumeTemplatePrefix + diskVolumeTemplate.Name
 				diskVolume.Spec.Resources = diskVolumeTemplate.Spec.Resources
 				diskVolume.Spec.Source = diskVolumeTemplate.Spec.Source
 
@@ -209,7 +210,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			}
 
 			for _, volumesnapshotcontent := range volumesnapshotcontents.Items {
-				if strings.HasPrefix(volumesnapshotcontent.Spec.VolumeSnapshotRef.Name, pvcNamePrefix+diskVolumeTemplate.Name) {
+				if strings.HasPrefix(volumesnapshotcontent.Spec.VolumeSnapshotRef.Name, pvcCreateByDiskVolumeTemplatePrefix+diskVolumeTemplate.Name) {
 					klog.Infof("Deleting VolumeSnapshotContent %s", volumesnapshotcontent.Name)
 					if err := r.Delete(rootCtx, &volumesnapshotcontent); err != nil {
 						return ctrl.Result{}, err
@@ -396,10 +397,10 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 			}
 
 			if isMappingTodiskVolumeTemplate {
-				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcNamePrefix + volume
+				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcCreateByDiskVolumeTemplatePrefix + volume
 				kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
 			} else {
-				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = "new-" + volume
+				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcCreateByDiskVolumeControllerPrefix + volume
 				kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
 			}
 
