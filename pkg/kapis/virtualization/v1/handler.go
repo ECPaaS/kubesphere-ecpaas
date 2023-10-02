@@ -117,7 +117,7 @@ func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) 
 	}
 
 	return ui_virtz.ImageInfoResponse{
-		Name: uiImageInfo.Name,
+		ID:   uiImageInfo.ID,
 		Size: vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize],
 	}
 }
@@ -377,14 +377,79 @@ func (h *virtzhandler) GetImage(req *restful.Request, resp *restful.Response) {
 }
 
 func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageResponse {
+
+	status := ui_virtz.ImageStatus{}
+	status.Ready = image.Status.Ready
+
 	return ui_virtz.ImageResponse{
-		Name:        image.Name,
+		ID:          image.Name,
 		Namespace:   image.Namespace,
-		OSFamily:    image.Annotations[virtzv1alpha1.VirtualizationOSFamily],
-		Version:     image.Annotations[virtzv1alpha1.VirtualizationOSVersion],
-		CpuCores:    image.Annotations[virtzv1alpha1.VirtualizationCpuCores],
-		Memory:      image.Annotations[virtzv1alpha1.VirtualizationImageMemory],
-		Size:        image.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize],
+		OSFamily:    image.Labels[virtzv1alpha1.VirtualizationOSFamily],
+		Version:     image.Labels[virtzv1alpha1.VirtualizationOSVersion],
+		CpuCores:    image.Labels[virtzv1alpha1.VirtualizationCpuCores],
+		Memory:      image.Labels[virtzv1alpha1.VirtualizationImageMemory],
+		Size:        image.Labels[virtzv1alpha1.VirtualizationImageStorage],
 		Description: image.Annotations[virtzv1alpha1.VirtualizationDescription],
+		Shared:      image.Spec.Attributes.Public,
+		Status:      status,
 	}
+}
+
+func (h *virtzhandler) ListIamgeWithNamespace(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+
+	ui_list_image_resp, err := h.listImage(namespace, resp)
+	if err != nil {
+		return
+	}
+
+	resp.WriteEntity(ui_list_image_resp)
+}
+
+func (h *virtzhandler) ListImage(req *restful.Request, resp *restful.Response) {
+	ui_list_image_resp, err := h.listImage("", resp)
+	if err != nil {
+		return
+	}
+
+	resp.WriteEntity(ui_list_image_resp)
+}
+
+func (h *virtzhandler) listImage(namespace string, resp *restful.Response) (*ui_virtz.ListImageResponse, error) {
+	images, err := h.virtz.ListImage(namespace)
+	if err != nil {
+		klog.Error(err)
+		resp.WriteError(http.StatusInternalServerError, err)
+		return nil, err
+	}
+
+	ui_image_resp := make([]ui_virtz.ImageResponse, 0)
+	for _, image := range images.Items {
+		ui_image_resp = append(ui_image_resp, getUIImageResponse(&image))
+	}
+
+	ui_list_image_resp := ui_virtz.ListImageResponse{
+		TotalCount: len(ui_image_resp),
+		Items:      ui_image_resp,
+	}
+
+	return &ui_list_image_resp, nil
+}
+
+func (h *virtzhandler) DeleteImage(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	imageName := req.PathParameter("id")
+
+	_, err := h.virtz.DeleteImage(namespace, imageName)
+	if err != nil {
+		klog.Error(err)
+		if errors.IsNotFound(err) {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
 }

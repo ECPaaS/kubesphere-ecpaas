@@ -147,6 +147,27 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
+	webservice.Route(webservice.GET("/namespace/{namespace}/image").
+		To(handler.ListIamgeWithNamespace).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Doc("List all image with namespace").
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListImageResponse{}).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
+
+	webservice.Route(webservice.GET("/image").
+		To(handler.ListImage).
+		Doc("List all image").
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListImageResponse{}).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
+
+	webservice.Route(webservice.DELETE("/namespace/{namespace}/image/{id}").
+		To(handler.DeleteImage).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Param(webservice.PathParameter("id", "image id")).
+		Doc("Delete image").
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}).
+		Returns(http.StatusOK, api.StatusOK, errors.Error{}))
+
 	container.Add(webservice)
 
 	return nil

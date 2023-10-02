@@ -101,7 +101,7 @@ type ListDiskResponse struct {
 
 // Image
 type ImageInfo struct {
-	Name      string `json:"name" description:"Image name"`
+	ID        string `json:"id" description:"Image id"`
 	Namespace string `json:"namespace" description:"Image namespace"`
 	System    string `json:"system" description:"Image system"`
 	Version   string `json:"version" description:"Image version"`
@@ -112,12 +112,12 @@ type ImageInfo struct {
 }
 
 type ImageInfoResponse struct {
-	Name string `json:"name" description:"Image name"`
+	ID   string `json:"id" description:"Image id"`
 	Size string `json:"size" default:"20Gi" description:"Image size, range from 10Gi to 80Gi"`
 }
 
 type ImageRequest struct {
-	Name           string `json:"name" description:"Image name"`
+	ID             string `json:"id" description:"Image id"`
 	OSFamily       string `json:"os_family" default:"ubuntu" description:"Image operating system"`
 	Version        string `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
 	CpuCores       string `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4"`
@@ -129,13 +129,23 @@ type ImageRequest struct {
 }
 
 type ImageResponse struct {
-	Name        string `json:"name" description:"Image name"`
-	Namespace   string `json:"namespace" description:"Image namespace"`
-	OSFamily    string `json:"os_family" default:"ubuntu" description:"Image operating system"`
-	Version     string `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
-	CpuCores    string `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4"`
-	Memory      string `json:"memory" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
-	Size        string `json:"size" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi"`
-	Description string `json:"description" default:"" description:"Image description"`
-	Shared      bool   `json:"shared" default:"false" description:"Image shared or not"`
+	ID          string      `json:"id" description:"Image id"`
+	Namespace   string      `json:"namespace" description:"Image namespace"`
+	OSFamily    string      `json:"os_family" default:"ubuntu" description:"Image operating system"`
+	Version     string      `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
+	CpuCores    string      `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4"`
+	Memory      string      `json:"memory" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
+	Size        string      `json:"size" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi"`
+	Description string      `json:"description" default:"" description:"Image description"`
+	Shared      bool        `json:"shared" default:"false" description:"Image shared or not"`
+	Status      ImageStatus `json:"status" description:"Image status"`
+}
+
+type ImageStatus struct {
+	Ready bool `json:"ready" description:"Image is ready or not"`
+}
+
+type ListImageResponse struct {
+	TotalCount int             `json:"total_count" description:"Total number of images"`
+	Items      []ImageResponse `json:"items" description:"List of images"`
 }

@@ -43,6 +43,8 @@ type Interface interface {
 	// Image
 	CreateImage(namespace string, ui_image *ImageRequest) (*v1alpha1.ImageTemplate, error)
 	GetImage(namespace string, name string) (*v1alpha1.ImageTemplate, error)
+	ListImage(namespace string) (*v1alpha1.ImageTemplateList, error)
+	DeleteImage(namespace string, name string) (*v1alpha1.ImageTemplate, error)
 }
 
 type virtualizationOperator struct {
@@ -64,7 +66,7 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	ApplyVMSpec(ui_vm, &vm, vm_uuid)
 
 	if ui_vm.Image != nil {
-		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), ui_vm.Image.Name, metav1.GetOptions{})
+		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), ui_vm.Image.ID, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +127,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
 
 	imageInfo := ImageInfo{}
-	imageInfo.Name = imagetemplate.Name
+	imageInfo.ID = imagetemplate.Name
 	imageInfo.Namespace = imagetemplate.Namespace
 	// annotations
 	imageInfo.AliasName = imagetemplate.Annotations[v1alpha1.VirtualizationAliasName]
@@ -159,7 +161,7 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 				Source: v1alpha1.DiskVolumeSource{
 					Image: &v1alpha1.DataVolumeSourceImage{
 						Namespace: namespace,
-						Name:      ui_vm.Image.Name,
+						Name:      ui_vm.Image.ID,
 					},
 				},
 				Resources: v1alpha1.ResourceRequirements{
@@ -407,10 +409,10 @@ func (v *virtualizationOperator) DeleteDisk(namespace string, name string) (*v1a
 func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRequest) (*v1alpha1.ImageTemplate, error) {
 	imageTemplate := v1alpha1.ImageTemplate{}
 
-	imageTemplate.Name = ui_image.Name
+	imageTemplate.Name = ui_image.ID
 	imageTemplate.Namespace = namespace
 	imageTemplate.Annotations = map[string]string{
-		v1alpha1.VirtualizationAliasName:   ui_image.Name,
+		v1alpha1.VirtualizationAliasName:   ui_image.ID,
 		v1alpha1.VirtualizationDescription: ui_image.Description,
 	}
 	imageTemplate.Labels = map[string]string{
@@ -470,6 +472,29 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 
 func (v *virtualizationOperator) GetImage(namespace string, name string) (*v1alpha1.ImageTemplate, error) {
 	imageTemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return imageTemplate, nil
+}
+
+func (v *virtualizationOperator) ListImage(namespace string) (*v1alpha1.ImageTemplateList, error) {
+	imageTemplateList, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return imageTemplateList, nil
+}
+
+func (v *virtualizationOperator) DeleteImage(namespace string, name string) (*v1alpha1.ImageTemplate, error) {
+	imageTemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		return nil, err
+	}
+
+	err = v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
