@@ -2,10 +2,12 @@ package virtualization
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 	"kubesphere.io/kubesphere/pkg/server/errors"
@@ -20,11 +22,20 @@ const (
 	GroupName = "virtualization.ecpaas.io"
 )
 
+var vmPutNotes = `Any parameters which are not provied will not be changed.
+When the cpu cores or memory parameter changed, the virtual machine need be restarted.`
+
+var diskPutNotes = `Any parameters which are not provied will not be changed.
+The disk size only can be increased.`
+
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
-func AddToContainer(container *restful.Container, ksclient kubesphere.Interface) error {
+func AddToContainer(container *restful.Container, ksclient kubesphere.Interface, k8sclient kubernetes.Interface) error {
 	webservice := runtime.NewWebService(GroupVersion)
-	handler := newHandler(ksclient)
+	handler := newHandler(ksclient, k8sclient)
+
+	vmPutNotes = strings.ReplaceAll(vmPutNotes, "\n", " ")
+	diskPutNotes = strings.ReplaceAll(diskPutNotes, "\n", " ")
 
 	webservice.Route(webservice.POST("/namespace/{namespace}/virtualmachine").
 		To(handler.CreateVirtualMahcine).
@@ -38,10 +49,10 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface)
 		To(handler.UpdateVirtualMahcine).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("id", "virtual machine id")).
-		Reads(ui_virtz.VirtualMachineRequest{}).
+		Reads(ui_virtz.ModifyVirtualMachineRequest{}).
 		Doc("Update virtual machine").
-		Notes("Any parameters which are not provied will not be changed.").
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineRequest{}).
+		Notes(vmPutNotes).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/virtualmachine/{id}").
@@ -77,7 +88,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface)
 		To(handler.CreateDisk).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.DiskRequest{}).
-		Doc("Create disk").
+		Doc("Create data disk").
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
@@ -85,10 +96,10 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface)
 		To(handler.UpdateDisk).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("id", "disk id")).
-		Reads(ui_virtz.DiskRequest{}).
+		Reads(ui_virtz.ModifyDiskRequest{}).
 		Doc("Update disk").
-		Notes("Any parameters which are not provied will not be changed.").
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskRequest{}).
+		Notes(diskPutNotes).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/disk/{id}").
@@ -119,6 +130,22 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface)
 		Doc("Delete disk").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}).
 		Returns(http.StatusOK, api.StatusOK, errors.Error{}))
+
+	webservice.Route(webservice.POST("/namespace/{namespace}/image").
+		To(handler.CreateImage).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Reads(ui_virtz.ImageRequest{}).
+		Doc("Create image").
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
+
+	webservice.Route(webservice.GET("/namespace/{namespace}/image/{id}").
+		To(handler.GetImage).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Param(webservice.PathParameter("id", "image id")).
+		Doc("Get image").
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageResponse{}).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	container.Add(webservice)
 

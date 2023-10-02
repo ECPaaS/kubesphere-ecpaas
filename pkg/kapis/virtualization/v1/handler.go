@@ -6,6 +6,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
@@ -18,9 +19,9 @@ type virtzhandler struct {
 	virtz ui_virtz.Interface
 }
 
-func newHandler(ksclient kubesphere.Interface) virtzhandler {
+func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) virtzhandler {
 	return virtzhandler{
-		virtz: ui_virtz.New(ksclient),
+		virtz: ui_virtz.New(ksclient, k8sclient),
 	}
 }
 
@@ -89,7 +90,7 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 	ui_vm_status.Ready = vm.Status.Ready
 	ui_vm_status.State = string(vm.Status.PrintableStatus)
 
-	ui_image_spec := h.getUIImageResponse(vm)
+	ui_image_spec := h.getUIImageInfoResponse(vm)
 
 	return ui_virtz.VirtualMachineResponse{
 		Name:        vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
@@ -104,7 +105,7 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 	}
 }
 
-func (h *virtzhandler) getUIImageResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageSpec {
+func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {
 	jsonImageInfo := vm.Annotations[virtzv1alpha1.VirtualizationImageInfo]
 
 	var uiImageInfo ui_virtz.ImageInfo
@@ -112,10 +113,10 @@ func (h *virtzhandler) getUIImageResponse(vm *virtzv1alpha1.VirtualMachine) ui_v
 	err := json.Unmarshal([]byte(jsonImageInfo), &uiImageInfo)
 	if err != nil {
 		klog.Error(err)
-		return ui_virtz.ImageSpec{}
+		return ui_virtz.ImageInfoResponse{}
 	}
 
-	return ui_virtz.ImageSpec{
+	return ui_virtz.ImageInfoResponse{
 		Name: uiImageInfo.Name,
 		Size: vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize],
 	}
@@ -336,4 +337,54 @@ func (h *virtzhandler) DeleteDisk(req *restful.Request, resp *restful.Response) 
 	}
 
 	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) CreateImage(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+
+	var ui_image ui_virtz.ImageRequest
+	err := req.ReadEntity(&ui_image)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = h.virtz.CreateImage(namespace, &ui_image)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) GetImage(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	imageName := req.PathParameter("id")
+
+	image, err := h.virtz.GetImage(namespace, imageName)
+	if err != nil {
+		klog.Error(err)
+		if errors.IsNotFound(err) {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteEntity(getUIImageResponse(image))
+}
+
+func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageResponse {
+	return ui_virtz.ImageResponse{
+		Name:        image.Name,
+		Namespace:   image.Namespace,
+		OSFamily:    image.Annotations[virtzv1alpha1.VirtualizationOSFamily],
+		Version:     image.Annotations[virtzv1alpha1.VirtualizationOSVersion],
+		CpuCores:    image.Annotations[virtzv1alpha1.VirtualizationCpuCores],
+		Memory:      image.Annotations[virtzv1alpha1.VirtualizationImageMemory],
+		Size:        image.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize],
+		Description: image.Annotations[virtzv1alpha1.VirtualizationDescription],
+	}
 }

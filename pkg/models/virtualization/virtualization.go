@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -15,11 +16,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 	"kubesphere.io/api/virtualization/v1alpha1"
 	kvapi "kubevirt.io/api/core/v1"
+	cdiv1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 )
+
+var bucketName = "ecpaas-images"
 
 type Interface interface {
 	// VirtualMachine
@@ -28,21 +34,26 @@ type Interface interface {
 	UpdateVirtualMachine(namespace string, name string, ui_vm *VirtualMachineRequest) (*v1alpha1.VirtualMachine, error)
 	ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error)
 	DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
-	// DiskVolume
+	// Disk
 	CreateDisk(namespace string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error)
 	UpdateDisk(namespace string, name string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error)
 	GetDisk(namespace string, name string) (*v1alpha1.DiskVolume, error)
 	ListDisk(namespace string) (*v1alpha1.DiskVolumeList, error)
 	DeleteDisk(namespace string, name string) (*v1alpha1.DiskVolume, error)
+	// Image
+	CreateImage(namespace string, ui_image *ImageRequest) (*v1alpha1.ImageTemplate, error)
+	GetImage(namespace string, name string) (*v1alpha1.ImageTemplate, error)
 }
 
 type virtualizationOperator struct {
-	ksclient kubesphere.Interface
+	ksclient  kubesphere.Interface
+	k8sclient kubernetes.Interface
 }
 
-func New(ksclient kubesphere.Interface) Interface {
+func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interface {
 	return &virtualizationOperator{
-		ksclient: ksclient,
+		ksclient:  ksclient,
+		k8sclient: k8sclient,
 	}
 }
 
@@ -208,15 +219,15 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 
 func ApplyVMDiskSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine) {
 	for _, uiDisk := range ui_vm.Disk {
-		if uiDisk.ID != "" {
-			ApplyMountDisk(vm, &uiDisk)
-		} else {
+		if uiDisk.Action == "add" {
 			ApplyAddDisk(ui_vm, vm, &uiDisk)
+		} else if uiDisk.Action == "mount" {
+			ApplyMountDisk(vm, &uiDisk)
 		}
 	}
 }
 
-func ApplyAddDisk(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, uiDisk *DiskRequest) {
+func ApplyAddDisk(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
 	disk_uuid := uuid.New().String()[:8]
 	vm.Spec.DiskVolumeTemplates = append(vm.Spec.DiskVolumeTemplates, v1alpha1.DiskVolume{
 		ObjectMeta: metav1.ObjectMeta{
@@ -225,7 +236,7 @@ func ApplyAddDisk(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, uiD
 				v1alpha1.VirtualizationAliasName: ui_vm.Name,
 			},
 			Labels: map[string]string{
-				v1alpha1.VirtualizationDiskType: "data",
+				v1alpha1.VirtualizationDiskType: uiDisk.Type,
 			},
 		},
 		Spec: v1alpha1.DiskVolumeSpec{
@@ -242,7 +253,7 @@ func ApplyAddDisk(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, uiD
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, diskVolumeNamePrefix+disk_uuid)
 }
 
-func ApplyMountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskRequest) {
+func ApplyMountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, uiDisk.ID)
 }
 
@@ -391,4 +402,77 @@ func (v *virtualizationOperator) DeleteDisk(namespace string, name string) (*v1a
 	}
 
 	return diskVolume, nil
+}
+
+func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRequest) (*v1alpha1.ImageTemplate, error) {
+	imageTemplate := v1alpha1.ImageTemplate{}
+
+	imageTemplate.Name = ui_image.Name
+	imageTemplate.Namespace = namespace
+	imageTemplate.Annotations = map[string]string{
+		v1alpha1.VirtualizationAliasName:   ui_image.Name,
+		v1alpha1.VirtualizationDescription: ui_image.Description,
+	}
+	imageTemplate.Labels = map[string]string{
+		v1alpha1.VirtualizationOSFamily:     ui_image.OSFamily,
+		v1alpha1.VirtualizationOSVersion:    ui_image.Version,
+		v1alpha1.VirtualizationImageMemory:  ui_image.Memory,
+		v1alpha1.VirtualizationCpuCores:     ui_image.CpuCores,
+		v1alpha1.VirtualizationImageStorage: ui_image.Size,
+	}
+
+	// get minio ip and port
+	minioServiceName := "minio"
+
+	serviceList, err := v.k8sclient.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		klog.Warning("Failed to get service: ", err)
+		return nil, err
+	}
+
+	var minioService *v1.Service
+
+	for _, service := range serviceList.Items {
+		if service.Name == minioServiceName {
+			minioService = &service
+			break
+		}
+	}
+
+	if minioService == nil {
+		klog.Warning("Cannot find the minio service ", err)
+		return nil, err
+	}
+
+	ip := minioService.Spec.ClusterIP
+	port := minioService.Spec.Ports[0].Port
+
+	// image template spec
+	imageTemplate.Spec.Source = v1alpha1.ImageTemplateSource{
+		HTTP: &cdiv1.DataVolumeSourceHTTP{
+			URL: "http://" + ip + ":" + strconv.Itoa(int(port)) + "/" + bucketName + "/" + ui_image.UploadFileName,
+		},
+	}
+	imageTemplate.Spec.Attributes = v1alpha1.ImageTemplateAttributes{
+		Public: ui_image.Shared,
+	}
+	imageTemplate.Spec.Resources.Requests = v1.ResourceList{
+		v1.ResourceStorage: resource.MustParse(ui_image.Size),
+	}
+
+	createdImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Create(context.Background(), &imageTemplate, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return createdImage, nil
+}
+
+func (v *virtualizationOperator) GetImage(namespace string, name string) (*v1alpha1.ImageTemplate, error) {
+	imageTemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return imageTemplate, nil
 }

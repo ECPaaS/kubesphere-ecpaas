@@ -7,6 +7,7 @@ package v1
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/emicklei/go-restful"
@@ -136,6 +137,55 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 			api.HandleInternalError(response, request, err)
 			return
 		}
+	}
+
+	// change bucket access policy to public
+	policy := `{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": {
+					"AWS": [
+						"*"
+					]
+				},
+				"Action": [
+					"s3:GetBucketLocation",
+					"s3:ListBucket",
+					"s3:ListBucketMultipartUploads"
+				],
+				"Resource": [
+					"arn:aws:s3:::ecpaas-images"
+				]
+			},
+			{
+				"Effect": "Allow",
+				"Principal": {
+					"AWS": [
+						"*"
+					]
+				},
+				"Action": [
+					"s3:AbortMultipartUpload",
+					"s3:DeleteObject",
+					"s3:GetObject",
+					"s3:ListMultipartUploadParts",
+					"s3:PutObject"
+				],
+				"Resource": [
+					"arn:aws:s3:::ecpaas-images/*"
+				]
+			}
+		]
+	}`
+
+	policy = strings.ReplaceAll(policy, "\n", " ")
+
+	err = h.minioClient.SetBucketPolicy(context.Background(), bucketName, policy)
+	if err != nil {
+		api.HandleInternalError(response, request, err)
+		return
 	}
 
 	request.Request.ParseMultipartForm(500 << 20)
