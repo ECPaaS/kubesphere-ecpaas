@@ -5,8 +5,10 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
 package virtualization
 
 const (
+	vmNamePrefix         = "vm-"   // vm: virtual machine
 	diskVolumeNamePrefix = "disk-" // disk: disk volume
 	diskVolumeNewPrefix  = "new-"
+	imageNamePrefix      = "image-"
 )
 
 // Virtual Machine
@@ -102,10 +104,10 @@ type ListDiskResponse struct {
 // Image
 type ImageInfo struct {
 	ID        string `json:"id" description:"Image id"`
+	Name      string `json:"name" description:"Image name"`
 	Namespace string `json:"namespace" description:"Image namespace"`
 	System    string `json:"system" description:"Image system"`
 	Version   string `json:"version" description:"Image version"`
-	AliasName string `json:"aliasName" description:"Image alias name"`
 	ImageSize string `json:"imageSize" description:"Image size"`
 	Cpu       string `json:"cpu" description:"cpu used by image"`
 	Memory    string `json:"memory" description:"memory used by image"`
@@ -117,7 +119,7 @@ type ImageInfoResponse struct {
 }
 
 type ImageRequest struct {
-	ID             string `json:"id" description:"Image id"`
+	Name           string `json:"name" description:"Image name"`
 	OSFamily       string `json:"os_family" default:"ubuntu" description:"Image operating system"`
 	Version        string `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
 	CpuCores       string `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4"`
@@ -128,8 +130,18 @@ type ImageRequest struct {
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
 }
 
+type ModifyImageRequest struct {
+	Name        string `json:"name,omitempty" description:"Image name"`
+	CpuCores    string `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores, range from 1 to 4"`
+	Memory      string `json:"memory,omitempty" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
+	Size        string `json:"size,omitempty" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi"`
+	Description string `json:"description,omitempty" default:"" description:"Image description"`
+	Shared      bool   `json:"shared,omitempty" default:"false" description:"Image shared or not"`
+}
+
 type ImageResponse struct {
 	ID          string      `json:"id" description:"Image id"`
+	Name        string      `json:"name" description:"Image name"`
 	Namespace   string      `json:"namespace" description:"Image namespace"`
 	OSFamily    string      `json:"os_family" default:"ubuntu" description:"Image operating system"`
 	Version     string      `json:"version" default:"20.04_LTS_64bit" description:"Image version"`

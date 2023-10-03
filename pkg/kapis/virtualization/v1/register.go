@@ -28,6 +28,9 @@ When the cpu cores or memory parameter changed, the virtual machine need be rest
 var diskPutNotes = `Any parameters which are not provied will not be changed.
 The disk size only can be increased.`
 
+var imagePutNotes = `Any parameters which are not provied will not be changed.
+The image size only can be increased.`
+
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
 func AddToContainer(container *restful.Container, ksclient kubesphere.Interface, k8sclient kubernetes.Interface) error {
@@ -137,6 +140,16 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Reads(ui_virtz.ImageRequest{}).
 		Doc("Create image").
 		Returns(http.StatusOK, api.StatusOK, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
+
+	webservice.Route(webservice.PUT("/namespace/{namespace}/image/{id}").
+		To(handler.UpdateImage).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Param(webservice.PathParameter("id", "image id")).
+		Reads(ui_virtz.ModifyImageRequest{}).
+		Doc("Update image").
+		Notes(imagePutNotes).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/image/{id}").

@@ -358,6 +358,26 @@ func (h *virtzhandler) CreateImage(req *restful.Request, resp *restful.Response)
 	resp.WriteHeader(http.StatusOK)
 }
 
+func (h *virtzhandler) UpdateImage(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	imageName := req.PathParameter("id")
+
+	var ui_image ui_virtz.ModifyImageRequest
+	err := req.ReadEntity(&ui_image)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = h.virtz.UpdateImage(namespace, imageName, &ui_image)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+}
+
 func (h *virtzhandler) GetImage(req *restful.Request, resp *restful.Response) {
 	namespace := req.PathParameter("namespace")
 	imageName := req.PathParameter("id")
@@ -383,6 +403,7 @@ func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageRespon
 
 	return ui_virtz.ImageResponse{
 		ID:          image.Name,
+		Name:        image.Annotations[virtzv1alpha1.VirtualizationAliasName],
 		Namespace:   image.Namespace,
 		OSFamily:    image.Labels[virtzv1alpha1.VirtualizationOSFamily],
 		Version:     image.Labels[virtzv1alpha1.VirtualizationOSVersion],

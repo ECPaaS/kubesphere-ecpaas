@@ -42,6 +42,7 @@ type Interface interface {
 	DeleteDisk(namespace string, name string) (*v1alpha1.DiskVolume, error)
 	// Image
 	CreateImage(namespace string, ui_image *ImageRequest) (*v1alpha1.ImageTemplate, error)
+	UpdateImage(namespace string, name string, ui_image *ModifyImageRequest) (*v1alpha1.ImageTemplate, error)
 	GetImage(namespace string, name string) (*v1alpha1.ImageTemplate, error)
 	ListImage(namespace string) (*v1alpha1.ImageTemplateList, error)
 	DeleteImage(namespace string, name string) (*v1alpha1.ImageTemplate, error)
@@ -91,7 +92,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 	vm.Annotations[v1alpha1.VirtualizationAliasName] = ui_vm.Name
 	vm.Annotations[v1alpha1.VirtualizationDescription] = ui_vm.Description
 	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = ui_vm.Image.Size
-	vm.Name = "vm-" + vm_uuid
+	vm.Name = vmNamePrefix + vm_uuid
 
 	vm.Spec.Hardware.Domain = v1alpha1.Domain{
 		CPU: v1alpha1.CPU{
@@ -130,7 +131,7 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 	imageInfo.ID = imagetemplate.Name
 	imageInfo.Namespace = imagetemplate.Namespace
 	// annotations
-	imageInfo.AliasName = imagetemplate.Annotations[v1alpha1.VirtualizationAliasName]
+	imageInfo.Name = imagetemplate.Annotations[v1alpha1.VirtualizationAliasName]
 	// labels
 	imageInfo.System = imagetemplate.Labels[v1alpha1.VirtualizationOSFamily]
 	imageInfo.Version = imagetemplate.Labels[v1alpha1.VirtualizationOSVersion]
@@ -409,10 +410,10 @@ func (v *virtualizationOperator) DeleteDisk(namespace string, name string) (*v1a
 func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRequest) (*v1alpha1.ImageTemplate, error) {
 	imageTemplate := v1alpha1.ImageTemplate{}
 
-	imageTemplate.Name = ui_image.ID
+	imageTemplate.Name = imageNamePrefix + uuid.New().String()[:8]
 	imageTemplate.Namespace = namespace
 	imageTemplate.Annotations = map[string]string{
-		v1alpha1.VirtualizationAliasName:   ui_image.ID,
+		v1alpha1.VirtualizationAliasName:   ui_image.Name,
 		v1alpha1.VirtualizationDescription: ui_image.Description,
 	}
 	imageTemplate.Labels = map[string]string{
@@ -468,6 +469,44 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 	}
 
 	return createdImage, nil
+}
+
+func (v *virtualizationOperator) UpdateImage(namespace string, name string, ui_image *ModifyImageRequest) (*v1alpha1.ImageTemplate, error) {
+	imageTemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if ui_image.Name != "" && ui_image.Name != imageTemplate.Annotations[v1alpha1.VirtualizationAliasName] {
+		imageTemplate.Annotations[v1alpha1.VirtualizationAliasName] = ui_image.Name
+	}
+
+	if ui_image.CpuCores != "" && ui_image.CpuCores != imageTemplate.Labels[v1alpha1.VirtualizationCpuCores] {
+		imageTemplate.Labels[v1alpha1.VirtualizationCpuCores] = ui_image.CpuCores
+	}
+
+	if ui_image.Memory != "" && ui_image.Memory != imageTemplate.Labels[v1alpha1.VirtualizationImageMemory] {
+		imageTemplate.Labels[v1alpha1.VirtualizationImageMemory] = ui_image.Memory
+	}
+
+	if ui_image.Size != "" && ui_image.Size != imageTemplate.Labels[v1alpha1.VirtualizationImageStorage] {
+		imageTemplate.Labels[v1alpha1.VirtualizationImageStorage] = ui_image.Size
+	}
+
+	if ui_image.Description != "" && ui_image.Description != imageTemplate.Annotations[v1alpha1.VirtualizationDescription] {
+		imageTemplate.Annotations[v1alpha1.VirtualizationDescription] = ui_image.Description
+	}
+
+	if ui_image.Shared != imageTemplate.Spec.Attributes.Public {
+		imageTemplate.Spec.Attributes.Public = ui_image.Shared
+	}
+
+	updatedImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Update(context.Background(), imageTemplate, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedImage, nil
 }
 
 func (v *virtualizationOperator) GetImage(namespace string, name string) (*v1alpha1.ImageTemplate, error) {
