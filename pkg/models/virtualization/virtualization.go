@@ -31,12 +31,12 @@ type Interface interface {
 	// VirtualMachine
 	CreateVirtualMachine(namespace string, ui_vm *VirtualMachineRequest) (*v1alpha1.VirtualMachine, error)
 	GetVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
-	UpdateVirtualMachine(namespace string, name string, ui_vm *VirtualMachineRequest) (*v1alpha1.VirtualMachine, error)
+	UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error)
 	ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error)
 	DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	// Disk
 	CreateDisk(namespace string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error)
-	UpdateDisk(namespace string, name string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error)
+	UpdateDisk(namespace string, name string, ui_disk *ModifyDiskRequest) (*v1alpha1.DiskVolume, error)
 	GetDisk(namespace string, name string) (*v1alpha1.DiskVolume, error)
 	ListDisk(namespace string) (*v1alpha1.DiskVolumeList, error)
 	DeleteDisk(namespace string, name string) (*v1alpha1.DiskVolume, error)
@@ -260,31 +260,32 @@ func ApplyMountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, uiDisk.ID)
 }
 
-func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *VirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
+func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	if ui_vm.Name != vm.Annotations[v1alpha1.VirtualizationAliasName] {
+	if ui_vm.Name != "" && ui_vm.Name != vm.Annotations[v1alpha1.VirtualizationAliasName] {
 		vm.Annotations[v1alpha1.VirtualizationAliasName] = ui_vm.Name
 	}
 
-	if ui_vm.Description != vm.Annotations[v1alpha1.VirtualizationDescription] {
+	if ui_vm.Description != "" && ui_vm.Description != vm.Annotations[v1alpha1.VirtualizationDescription] {
 		vm.Annotations[v1alpha1.VirtualizationDescription] = ui_vm.Description
 	}
 
-	if ui_vm.CpuCores != vm.Spec.Hardware.Domain.CPU.Cores {
+	if ui_vm.CpuCores != 0 && ui_vm.CpuCores != vm.Spec.Hardware.Domain.CPU.Cores {
 		vm.Spec.Hardware.Domain.CPU.Cores = ui_vm.CpuCores
 	}
 
-	if ui_vm.Memory != vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() {
+	if ui_vm.Memory != "" && ui_vm.Memory != vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() {
 		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] = resource.MustParse(ui_vm.Memory)
 	}
 
-	if ui_vm.Image.Size != vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] {
-		vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = ui_vm.Image.Size
-	}
+	// TODO: update image size
+	// if ui_vm.Image.Size != "" && ui_vm.Image.Size != vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] {
+	// 	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = ui_vm.Image.Size
+	// }
 
 	updated_vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
 	if err != nil {
@@ -354,7 +355,7 @@ func (v *virtualizationOperator) CreateDisk(namespace string, ui_disk *DiskReque
 		v1alpha1.VirtualizationDescription: ui_disk.Description,
 	}
 	diskVolume.Labels = map[string]string{
-		v1alpha1.VirtualizationDiskType: "data",
+		v1alpha1.VirtualizationDiskType: ui_disk.Type,
 	}
 
 	diskVolume.Spec.PVCName = diskVolumeNewPrefix + diskVolume.Name
@@ -371,18 +372,22 @@ func (v *virtualizationOperator) CreateDisk(namespace string, ui_disk *DiskReque
 	return createdDisk, nil
 }
 
-func (v *virtualizationOperator) UpdateDisk(namespace string, name string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error) {
+func (v *virtualizationOperator) UpdateDisk(namespace string, name string, ui_disk *ModifyDiskRequest) (*v1alpha1.DiskVolume, error) {
 	diskVolume, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	if ui_disk.Name != diskVolume.Annotations[v1alpha1.VirtualizationAliasName] {
+	if ui_disk.Name != "" && ui_disk.Name != diskVolume.Annotations[v1alpha1.VirtualizationAliasName] {
 		diskVolume.Annotations[v1alpha1.VirtualizationAliasName] = ui_disk.Name
 	}
 
-	if ui_disk.Size != diskVolume.Spec.Resources.Requests.Storage().String() {
+	if ui_disk.Size != "" && ui_disk.Size != diskVolume.Spec.Resources.Requests.Storage().String() {
 		diskVolume.Spec.Resources.Requests[v1.ResourceStorage] = resource.MustParse(ui_disk.Size)
+	}
+
+	if ui_disk.Description != "" && ui_disk.Description != diskVolume.Annotations[v1alpha1.VirtualizationDescription] {
+		diskVolume.Annotations[v1alpha1.VirtualizationDescription] = ui_disk.Description
 	}
 
 	updatedDisk, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Update(context.Background(), diskVolume, metav1.UpdateOptions{})

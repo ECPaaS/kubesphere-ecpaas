@@ -48,7 +48,7 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	namespace := req.PathParameter("namespace")
 	vmName := req.PathParameter("id")
 
-	var ui_vm ui_virtz.VirtualMachineRequest
+	var ui_vm ui_virtz.ModifyVirtualMachineRequest
 	err := req.ReadEntity(&ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -246,7 +246,7 @@ func (h *virtzhandler) UpdateDisk(req *restful.Request, resp *restful.Response) 
 	namespace := req.PathParameter("namespace")
 	diskName := req.PathParameter("id")
 
-	var ui_disk ui_virtz.DiskRequest
+	var ui_disk ui_virtz.ModifyDiskRequest
 	err := req.ReadEntity(&ui_disk)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)

@@ -55,7 +55,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Reads(ui_virtz.ModifyVirtualMachineRequest{}).
 		Doc("Update virtual machine").
 		Notes(vmPutNotes).
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineResponse{}).
+		Returns(http.StatusOK, api.StatusOK, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/virtualmachine/{id}").
@@ -102,7 +102,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Reads(ui_virtz.ModifyDiskRequest{}).
 		Doc("Update disk").
 		Notes(diskPutNotes).
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskResponse{}).
+		Returns(http.StatusOK, api.StatusOK, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/disk/{id}").
@@ -149,7 +149,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Reads(ui_virtz.ModifyImageRequest{}).
 		Doc("Update image").
 		Notes(imagePutNotes).
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageResponse{}).
+		Returns(http.StatusOK, api.StatusOK, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/image/{id}").
