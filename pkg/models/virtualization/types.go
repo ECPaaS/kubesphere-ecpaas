@@ -57,6 +57,10 @@ type VirtualMachineResponse struct {
 	Status      VMStatus           `json:"status" description:"Virtual machine status"`
 }
 
+type IDResponse struct {
+	ID string `json:"id" description:"Resource id"`
+}
+
 type VMStatus struct {
 	Ready bool   `json:"ready" description:"Virtual machine is ready or not"`
 	State string `json:"state" description:"Virtual machine state"`

@@ -1,3 +1,7 @@
+/*
+Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
+*/
+
 package virtualization
 
 import (
@@ -35,13 +39,16 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	_, err = h.virtz.CreateVirtualMachine(namespace, &ui_vm)
+	createdVM, err := h.virtz.CreateVirtualMachine(namespace, &ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK)
+	var ui_resp ui_virtz.IDResponse
+	ui_resp.ID = createdVM.Name
+
+	resp.WriteEntity(ui_resp)
 }
 
 func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.Response) {
@@ -233,13 +240,17 @@ func (h *virtzhandler) CreateDisk(req *restful.Request, resp *restful.Response) 
 		return
 	}
 
-	_, err = h.virtz.CreateDisk(namespace, &ui_disk)
+	createdDisk, err := h.virtz.CreateDisk(namespace, &ui_disk)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK)
+	var ui_resp ui_virtz.IDResponse
+	ui_resp.ID = createdDisk.Name
+
+	resp.WriteEntity(ui_resp)
+
 }
 
 func (h *virtzhandler) UpdateDisk(req *restful.Request, resp *restful.Response) {
@@ -349,13 +360,16 @@ func (h *virtzhandler) CreateImage(req *restful.Request, resp *restful.Response)
 		return
 	}
 
-	_, err = h.virtz.CreateImage(namespace, &ui_image)
+	createdImage, err := h.virtz.CreateImage(namespace, &ui_image)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK)
+	var ui_resp ui_virtz.IDResponse
+	ui_resp.ID = createdImage.Name
+
+	resp.WriteEntity(ui_resp)
 }
 
 func (h *virtzhandler) UpdateImage(req *restful.Request, resp *restful.Response) {

@@ -1,3 +1,7 @@
+/*
+Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
+*/
+
 package virtualization
 
 import (
@@ -45,7 +49,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.VirtualMachineRequest{}).
 		Doc("Create virtual machine").
-		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.IDResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/virtualmachine/{id}").
@@ -92,7 +96,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.DiskRequest{}).
 		Doc("Create data disk").
-		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.IDResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/disk/{id}").
@@ -139,7 +143,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.ImageRequest{}).
 		Doc("Create image").
-		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.IDResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/image/{id}").
