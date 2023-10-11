@@ -231,29 +231,30 @@ func ApplyVMDiskSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine) 
 }
 
 func ApplyAddDisk(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
+	diskVolume := AddDiskVolume(ui_vm.Name, uiDisk)
+	vm.Spec.DiskVolumeTemplates = append(vm.Spec.DiskVolumeTemplates, diskVolume)
+	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, diskVolume.Name)
+}
+
+func AddDiskVolume(diskVolumeName string, uiDisk *DiskSpec) v1alpha1.DiskVolume {
 	disk_uuid := uuid.New().String()[:8]
-	vm.Spec.DiskVolumeTemplates = append(vm.Spec.DiskVolumeTemplates, v1alpha1.DiskVolume{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: diskVolumeNamePrefix + disk_uuid,
-			Annotations: map[string]string{
-				v1alpha1.VirtualizationAliasName: ui_vm.Name,
-			},
-			Labels: map[string]string{
-				v1alpha1.VirtualizationDiskType: uiDisk.Type,
-			},
-		},
-		Spec: v1alpha1.DiskVolumeSpec{
-			Source: v1alpha1.DiskVolumeSource{
-				Blank: &v1alpha1.DataVolumeBlankImage{},
-			},
-			Resources: v1alpha1.ResourceRequirements{
-				Requests: v1.ResourceList{
-					v1.ResourceStorage: resource.MustParse(uiDisk.Size),
-				},
-			},
-		},
-	})
-	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, diskVolumeNamePrefix+disk_uuid)
+
+	diskVolume := v1alpha1.DiskVolume{}
+	diskVolume.Name = diskVolumeNamePrefix + disk_uuid
+	diskVolume.Annotations = map[string]string{
+		v1alpha1.VirtualizationAliasName:   diskVolumeName,
+		v1alpha1.VirtualizationDescription: uiDisk.Description,
+	}
+	diskVolume.Labels = map[string]string{
+		v1alpha1.VirtualizationDiskType: uiDisk.Type,
+	}
+
+	diskVolume.Spec.Source.Blank = &v1alpha1.DataVolumeBlankImage{}
+	res := v1.ResourceList{}
+	res[v1.ResourceStorage] = resource.MustParse(uiDisk.Size)
+	diskVolume.Spec.Resources.Requests = res
+
+	return diskVolume
 }
 
 func ApplyMountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
@@ -355,7 +356,7 @@ func (v *virtualizationOperator) CreateDisk(namespace string, ui_disk *DiskReque
 		v1alpha1.VirtualizationDescription: ui_disk.Description,
 	}
 	diskVolume.Labels = map[string]string{
-		v1alpha1.VirtualizationDiskType: ui_disk.Type,
+		v1alpha1.VirtualizationDiskType: "data",
 	}
 
 	diskVolume.Spec.PVCName = diskVolumeNewPrefix + diskVolume.Name
@@ -422,11 +423,12 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 		v1alpha1.VirtualizationDescription: ui_image.Description,
 	}
 	imageTemplate.Labels = map[string]string{
-		v1alpha1.VirtualizationOSFamily:     ui_image.OSFamily,
-		v1alpha1.VirtualizationOSVersion:    ui_image.Version,
-		v1alpha1.VirtualizationImageMemory:  ui_image.Memory,
-		v1alpha1.VirtualizationCpuCores:     ui_image.CpuCores,
-		v1alpha1.VirtualizationImageStorage: ui_image.Size,
+		v1alpha1.VirtualizationOSFamily:       ui_image.OSFamily,
+		v1alpha1.VirtualizationOSVersion:      ui_image.Version,
+		v1alpha1.VirtualizationImageMemory:    ui_image.Memory,
+		v1alpha1.VirtualizationCpuCores:       ui_image.CpuCores,
+		v1alpha1.VirtualizationImageStorage:   ui_image.Size,
+		v1alpha1.VirtualizationUploadFileName: ui_image.UploadFileName,
 	}
 
 	// get minio ip and port

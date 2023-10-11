@@ -20,6 +20,7 @@ const (
 	VirtualizationCpuCores       = "virtualization.ecpaas.io/cpu-cores"
 	VirtualizationImageMemory    = "virtualization.ecpaas.io/image-memory"
 	VirtualizationImageStorage   = "virtualization.ecpaas.io/image-storage"
+	VirtualizationUploadFileName = "virtualization.ecpaas.io/upload-file-name"
 	VirtualizationOSFamily       = "virtualization.ecpaas.io/os-family"
 	VirtualizationOSVersion      = "virtualization.ecpaas.io/os-version"
 	VirtualizationOSPlatform     = "virtualization.ecpaas.io/os-platform"

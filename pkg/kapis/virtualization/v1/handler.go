@@ -45,7 +45,7 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	var ui_resp ui_virtz.IDResponse
+	var ui_resp ui_virtz.VirtualMachineIDResponse
 	ui_resp.ID = createdVM.Name
 
 	resp.WriteEntity(ui_resp)
@@ -246,7 +246,7 @@ func (h *virtzhandler) CreateDisk(req *restful.Request, resp *restful.Response) 
 		return
 	}
 
-	var ui_resp ui_virtz.IDResponse
+	var ui_resp ui_virtz.ImageIDResponse
 	ui_resp.ID = createdDisk.Name
 
 	resp.WriteEntity(ui_resp)
@@ -366,7 +366,7 @@ func (h *virtzhandler) CreateImage(req *restful.Request, resp *restful.Response)
 		return
 	}
 
-	var ui_resp ui_virtz.IDResponse
+	var ui_resp ui_virtz.ImageIDResponse
 	ui_resp.ID = createdImage.Name
 
 	resp.WriteEntity(ui_resp)
@@ -416,17 +416,18 @@ func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageRespon
 	status.Ready = image.Status.Ready
 
 	return ui_virtz.ImageResponse{
-		ID:          image.Name,
-		Name:        image.Annotations[virtzv1alpha1.VirtualizationAliasName],
-		Namespace:   image.Namespace,
-		OSFamily:    image.Labels[virtzv1alpha1.VirtualizationOSFamily],
-		Version:     image.Labels[virtzv1alpha1.VirtualizationOSVersion],
-		CpuCores:    image.Labels[virtzv1alpha1.VirtualizationCpuCores],
-		Memory:      image.Labels[virtzv1alpha1.VirtualizationImageMemory],
-		Size:        image.Labels[virtzv1alpha1.VirtualizationImageStorage],
-		Description: image.Annotations[virtzv1alpha1.VirtualizationDescription],
-		Shared:      image.Spec.Attributes.Public,
-		Status:      status,
+		ID:             image.Name,
+		Name:           image.Annotations[virtzv1alpha1.VirtualizationAliasName],
+		Namespace:      image.Namespace,
+		OSFamily:       image.Labels[virtzv1alpha1.VirtualizationOSFamily],
+		Version:        image.Labels[virtzv1alpha1.VirtualizationOSVersion],
+		CpuCores:       image.Labels[virtzv1alpha1.VirtualizationCpuCores],
+		Memory:         image.Labels[virtzv1alpha1.VirtualizationImageMemory],
+		Size:           image.Labels[virtzv1alpha1.VirtualizationImageStorage],
+		Description:    image.Annotations[virtzv1alpha1.VirtualizationDescription],
+		UploadFileName: image.Labels[virtzv1alpha1.VirtualizationUploadFileName],
+		Shared:         image.Spec.Attributes.Public,
+		Status:         status,
 	}
 }
 

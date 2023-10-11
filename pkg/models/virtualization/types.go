@@ -46,8 +46,8 @@ type ModifyVirtualMachineRequest struct {
 }
 
 type VirtualMachineResponse struct {
-	Name        string             `json:"name" description:"Virtual machine name"`
 	ID          string             `json:"id" description:"Virtual machine id"`
+	Name        string             `json:"name" description:"Virtual machine name"`
 	Namespace   string             `json:"namespace" description:"Virtual machine namespace"`
 	Description string             `json:"description" description:"Virtual machine description"`
 	CpuCores    uint32             `json:"cpu_cores" description:"Virtual machine cpu cores"`
@@ -57,8 +57,16 @@ type VirtualMachineResponse struct {
 	Status      VMStatus           `json:"status" description:"Virtual machine status"`
 }
 
-type IDResponse struct {
-	ID string `json:"id" description:"Resource id"`
+type VirtualMachineIDResponse struct {
+	ID string `json:"id" description:"virtual machine id"`
+}
+
+type ImageIDResponse struct {
+	ID string `json:"id" description:"image id"`
+}
+
+type DiskIDResponse struct {
+	ID string `json:"id" description:"disk id"`
 }
 
 type VMStatus struct {
@@ -75,19 +83,18 @@ type ListVirtualMachineResponse struct {
 type DiskRequest struct {
 	Name        string `json:"name" description:"Disk name"`
 	Description string `json:"description" default:"" description:"Disk description"`
-	Type        string `json:"type" description:"Disk type, the value is 'system' or 'data'"`
 	Size        string `json:"size" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi"`
 }
 
 type ModifyDiskRequest struct {
 	Name        string `json:"name,omitempty" description:"Disk name"`
 	Description string `json:"description,omitempty" default:"" description:"Disk description"`
-	Size        string `json:"size,omitempty" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi"`
+	Size        string `json:"size,omitempty" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi, the size only can be increased."`
 }
 
 type DiskResponse struct {
-	Name        string     `json:"name" description:"Disk name"`
 	ID          string     `json:"id" description:"Disk id"`
+	Name        string     `json:"name" description:"Disk name"`
 	Namespace   string     `json:"namespace" description:"Disk namespace"`
 	Description string     `json:"description" default:"" description:"Disk description"`
 	Type        string     `json:"type" description:"Disk type, the value is 'system' or 'data'"`
@@ -138,23 +145,24 @@ type ModifyImageRequest struct {
 	Name        string `json:"name,omitempty" description:"Image name"`
 	CpuCores    string `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores, range from 1 to 4"`
 	Memory      string `json:"memory,omitempty" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
-	Size        string `json:"size,omitempty" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi"`
+	Size        string `json:"size,omitempty" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi, the size only can be increased."`
 	Description string `json:"description,omitempty" default:"" description:"Image description"`
 	Shared      bool   `json:"shared,omitempty" default:"false" description:"Image shared or not"`
 }
 
 type ImageResponse struct {
-	ID          string      `json:"id" description:"Image id"`
-	Name        string      `json:"name" description:"Image name"`
-	Namespace   string      `json:"namespace" description:"Image namespace"`
-	OSFamily    string      `json:"os_family" default:"ubuntu" description:"Image operating system"`
-	Version     string      `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
-	CpuCores    string      `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4"`
-	Memory      string      `json:"memory" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
-	Size        string      `json:"size" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi"`
-	Description string      `json:"description" default:"" description:"Image description"`
-	Shared      bool        `json:"shared" default:"false" description:"Image shared or not"`
-	Status      ImageStatus `json:"status" description:"Image status"`
+	ID             string      `json:"id" description:"Image id"`
+	Name           string      `json:"name" description:"Image name"`
+	Namespace      string      `json:"namespace" description:"Image namespace"`
+	OSFamily       string      `json:"os_family" default:"ubuntu" description:"Image operating system"`
+	Version        string      `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
+	CpuCores       string      `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4"`
+	Memory         string      `json:"memory" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
+	Size           string      `json:"size" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi"`
+	UploadFileName string      `json:"upload_file_name" description:"File name which created by upload image api"`
+	Description    string      `json:"description" default:"" description:"Image description"`
+	Shared         bool        `json:"shared" default:"false" description:"Image shared or not"`
+	Status         ImageStatus `json:"status" description:"Image status"`
 }
 
 type ImageStatus struct {

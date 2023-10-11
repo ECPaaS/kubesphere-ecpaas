@@ -135,41 +135,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		if vm_instance.Spec.DiskVolumeTemplates != nil {
 			klog.Infof("Creating DiskVolume for VirtualMachine %s/%s", req.Namespace, req.Name)
 
-			blockOwnerDeletion := true
-			controller := true
-			namespace := "default"
-
 			for _, diskVolumeTemplate := range vm_instance.Spec.DiskVolumeTemplates {
-				diskVolume := virtzv1alpha1.DiskVolume{}
-				diskVolume.Name = diskVolumeTemplate.Name
-				if diskVolumeTemplate.Namespace != "" {
-					namespace = diskVolumeTemplate.Namespace
-				}
-				diskVolume.Namespace = namespace
-				diskVolume.Annotations = diskVolumeTemplate.Annotations
-				diskVolume.Labels = diskVolumeTemplate.Labels
-				diskVolume.Spec.PVCName = pvcCreateByDiskVolumeTemplatePrefix + diskVolumeTemplate.Name
-				diskVolume.Spec.Resources = diskVolumeTemplate.Spec.Resources
-				diskVolume.Spec.Source = diskVolumeTemplate.Spec.Source
+				diskVolume := GenerateDiskVolume(vm_instance, &diskVolumeTemplate)
 
-				// For check data volume status
-				if diskVolume.Annotations == nil {
-					diskVolume.Annotations = make(map[string]string)
-				}
-				diskVolume.Annotations["cdi.kubevirt.io/storage.deleteAfterCompletion"] = "false"
-
-				diskVolume.OwnerReferences = []metav1.OwnerReference{
-					{
-						APIVersion:         vm_instance.APIVersion,
-						Kind:               vm_instance.Kind,
-						Name:               vm_instance.Name,
-						UID:                vm_instance.UID,
-						Controller:         &controller,
-						BlockOwnerDeletion: &blockOwnerDeletion,
-					},
-				}
-
-				err := r.Create(rootCtx, &diskVolume)
+				err := r.Create(rootCtx, diskVolume)
 				if err != nil {
 					klog.Infof(err.Error())
 					return ctrl.Result{}, err
@@ -237,6 +206,41 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	r.Recorder.Event(vm, corev1.EventTypeNormal, successSynced, messageResourceSynced)
 	return ctrl.Result{}, nil
 
+}
+
+func GenerateDiskVolume(vm_instance *virtzv1alpha1.VirtualMachine, diskVolumeTemplate *virtzv1alpha1.DiskVolume) *virtzv1alpha1.DiskVolume {
+
+	blockOwnerDeletion := true
+	controller := true
+	namespace := "default"
+
+	diskVolume := &virtzv1alpha1.DiskVolume{}
+	diskVolume.Name = diskVolumeTemplate.Name
+	diskVolume.Namespace = namespace
+	diskVolume.Annotations = diskVolumeTemplate.Annotations
+	diskVolume.Labels = diskVolumeTemplate.Labels
+	diskVolume.Spec.PVCName = pvcCreateByDiskVolumeTemplatePrefix + diskVolumeTemplate.Name
+	diskVolume.Spec.Resources = diskVolumeTemplate.Spec.Resources
+	diskVolume.Spec.Source = diskVolumeTemplate.Spec.Source
+
+	// For check data volume status
+	if diskVolume.Annotations == nil {
+		diskVolume.Annotations = make(map[string]string)
+	}
+	diskVolume.Annotations["cdi.kubevirt.io/storage.deleteAfterCompletion"] = "false"
+
+	diskVolume.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         vm_instance.APIVersion,
+			Kind:               vm_instance.Kind,
+			Name:               vm_instance.Name,
+			UID:                vm_instance.UID,
+			Controller:         &controller,
+			BlockOwnerDeletion: &blockOwnerDeletion,
+		},
+	}
+
+	return diskVolume
 }
 
 func (c *Reconciler) addFinalizer(virtualmachine *virtzv1alpha1.VirtualMachine) error {

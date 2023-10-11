@@ -14,7 +14,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
-	"kubesphere.io/kubesphere/pkg/server/errors"
 
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
@@ -29,11 +28,9 @@ const (
 var vmPutNotes = `Any parameters which are not provied will not be changed.
 When the cpu cores or memory parameter changed, the virtual machine need be restarted.`
 
-var diskPutNotes = `Any parameters which are not provied will not be changed.
-The disk size only can be increased.`
+var diskPutNotes = `Any parameters which are not provied will not be changed.`
 
-var imagePutNotes = `Any parameters which are not provied will not be changed.
-The image size only can be increased.`
+var imagePutNotes = `Any parameters which are not provied will not be changed.`
 
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
@@ -49,7 +46,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.VirtualMachineRequest{}).
 		Doc("Create virtual machine").
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.IDResponse{}).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineIDResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/virtualmachine/{id}").
@@ -89,14 +86,14 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Delete virtual machine").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}).
-		Returns(http.StatusOK, api.StatusOK, errors.Error{}))
+		Returns(http.StatusOK, api.StatusOK, nil))
 
 	webservice.Route(webservice.POST("/namespace/{namespace}/disk").
 		To(handler.CreateDisk).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.DiskRequest{}).
 		Doc("Create data disk").
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.IDResponse{}).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskIDResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/disk/{id}").
@@ -136,14 +133,14 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "disk id")).
 		Doc("Delete disk").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}).
-		Returns(http.StatusOK, api.StatusOK, errors.Error{}))
+		Returns(http.StatusOK, api.StatusOK, nil))
 
 	webservice.Route(webservice.POST("/namespace/{namespace}/image").
 		To(handler.CreateImage).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.ImageRequest{}).
 		Doc("Create image").
-		Returns(http.StatusOK, api.StatusOK, ui_virtz.IDResponse{}).
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageIDResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/image/{id}").
@@ -183,7 +180,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "image id")).
 		Doc("Delete image").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}).
-		Returns(http.StatusOK, api.StatusOK, errors.Error{}))
+		Returns(http.StatusOK, api.StatusOK, nil))
 
 	container.Add(webservice)
 
