@@ -25,7 +25,7 @@ type VirtualMachineRequest struct {
 type DiskSpec struct {
 	Action      string `json:"action" description:"Disk action, the value is 'add' or 'mount'"`
 	Name        string `json:"name,omitempty" description:"Disk name"`
-	ID          string `json:"id,omitempty" description:"Disk id"`
+	ID          string `json:"id,omitempty" description:"Disk id which is got from disk api"`
 	Description string `json:"description,omitempty" default:"" description:"Disk description"`
 	Namespace   string `json:"namespace,omitempty" description:"Disk namespace"`
 	Type        string `json:"type,omitempty" description:"Disk type, the value is 'system' or 'data'"`
@@ -125,7 +125,7 @@ type ImageInfo struct {
 }
 
 type ImageInfoResponse struct {
-	ID   string `json:"id" description:"Image id"`
+	ID   string `json:"id" description:"Image id which is got from image api"`
 	Size string `json:"size" default:"20Gi" description:"Image size, range from 10Gi to 80Gi, the value is integer"`
 }
 
@@ -136,8 +136,8 @@ type ImageRequest struct {
 	CpuCores       string `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4. The value is integer"`
 	Memory         string `json:"memory" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi. The value is integer"`
 	Size           string `json:"size" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi. The value is integer"`
-	Description    string `json:"description" default:"" description:"Image description"`
-	UploadFileName string `json:"upload_file_name" default:"" description:"File name which created by upload image api"`
+	Description    string `json:"description" description:"Image description"`
+	UploadFileName string `json:"upload_file_name" description:"File name which created by minio images api"`
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
 }
 
