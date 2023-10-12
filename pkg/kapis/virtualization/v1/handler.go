@@ -431,7 +431,7 @@ func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageRespon
 	}
 }
 
-func (h *virtzhandler) ListIamgeWithNamespace(req *restful.Request, resp *restful.Response) {
+func (h *virtzhandler) ListImageWithNamespace(req *restful.Request, resp *restful.Response) {
 	namespace := req.PathParameter("namespace")
 
 	ui_list_image_resp, err := h.listImage(namespace, resp)

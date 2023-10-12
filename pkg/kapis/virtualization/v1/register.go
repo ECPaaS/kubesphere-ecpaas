@@ -162,7 +162,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/image").
-		To(handler.ListIamgeWithNamespace).
+		To(handler.ListImageWithNamespace).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all image with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListImageResponse{}).
