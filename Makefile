@@ -111,6 +111,7 @@ openapi: ;$(info $(M)...Begin to openapi.)  @ ## Openapi.
 	go run ./vendor/k8s.io/kube-openapi/cmd/openapi-gen/openapi-gen.go -O openapi_generated -i ./vendor/k8s.io/apimachinery/pkg/apis/meta/v1,./vendor/kubesphere.io/api/devops/v1alpha3,./vendor/k8s.io/apimachinery/pkg/runtime -p kubesphere.io/api/devops/v1alpha3 -h ./hack/boilerplate.go.txt --report-filename ./api/api-rules/violation_exceptions.list  --output-base=staging/src/
 	go run ./tools/cmd/crd-doc-gen/main.go
 	go run ./tools/cmd/doc-gen/main.go
+	go run ./tools/cmd/accton-doc-gen/main.go
 
 container: ;$(info $(M)...Begin to build the docker image.)  @ ## Build the docker image.
 	DRY_RUN=true hack/docker_build.sh
