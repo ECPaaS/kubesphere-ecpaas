@@ -67,6 +67,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 
 	webservice.Route(webservice.PATCH("/vpcnetwork/{vpcnetwork}").
 		To(handler.PatchVpcNetwork).
+		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
 		Reads(v1.VPCNetwork{}).
 		Doc("Patch vpcnetwork").
 		Returns(http.StatusOK, api.StatusOK, v1.VPCNetwork{}).
@@ -88,6 +89,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 
 	webservice.Route(webservice.GET("/vpcnetwork/{vpcnetwork}/vpcsubnets").
 		To(handler.ListVpcSubnetWithinVpcNetwork).
+		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
 		Doc("List all vpcsubnet resource within vpcnetwork").
 		Returns(http.StatusOK, api.StatusOK, api.ListResult{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
@@ -109,6 +111,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 
 	webservice.Route(webservice.PUT("/vpcsubnet/{vpcsubnet}").
 		To(handler.UpdateVpcSubnet).
+		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
 		Reads(v1.VPCSubnet{}).
 		Doc("Update vpcsubnet").
 		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
@@ -117,6 +120,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 	webservice.Route(webservice.PATCH("/vpcsubnet/{namespace}/{vpcsubnet}").
 		To(handler.PatchVpcSubnet).
 		Param(webservice.PathParameter("namespace", "namespace name")).
+		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
 		Reads(v1.VPCSubnet{}).
 		Doc("Patch vpcsubnet").
 		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).

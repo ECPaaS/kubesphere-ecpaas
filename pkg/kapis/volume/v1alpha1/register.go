@@ -39,9 +39,25 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		Returns(http.StatusOK, api.StatusOK, ImagesList{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
+	webservice.Route(webservice.GET("/namespaces/{namespace}/upload/file/images").
+		To(handler.ListMinioObjectsWithNs).
+		Doc("List all uploaded images").
+		Param(webservice.PathParameter("namespace", "name of a namespace").Required(true)).
+		Returns(http.StatusOK, api.StatusOK, ImagesList{}).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
+
 	webservice.Route(webservice.GET("/upload/file/checkFileExist/{imageName}").
 		To(handler.GetMinioObjectStatus).
 		Doc("Check If image exist or not").
+		Param(webservice.PathParameter("imageName", "Image name").Required(true)).
+		Returns(http.StatusOK, api.StatusOK, ObjectStatus{}).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
+
+	webservice.Route(webservice.GET("/namespaces/{namespace}/upload/file/checkFileExist/{imageName}").
+		To(handler.GetMinioObjectStatusWithNs).
+		Doc("Check If image exist or not").
+		Param(webservice.PathParameter("imageName", "Image name").Required(true)).
+		Param(webservice.PathParameter("namespace", "name of a namespace").Required(true)).
 		Returns(http.StatusOK, api.StatusOK, ObjectStatus{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
@@ -51,9 +67,25 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		Returns(http.StatusOK, api.StatusOK, errors.None).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
+	webservice.Route(webservice.POST("/namespaces/{namespace}/upload/file/").
+		To(handler.UploadMinioObjectWithNs).
+		Doc("Upload Volume Image").
+		Param(webservice.PathParameter("namespace", "name of a namespace").Required(true)).
+		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
+
 	webservice.Route(webservice.DELETE("/upload/file/{imageName}").
 		To(handler.DeleteMinioObject).
 		Doc("Delete Volume Image").
+		Param(webservice.PathParameter("imageName", "Image name").Required(true)).
+		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
+
+	webservice.Route(webservice.DELETE("/namespaces/{namespace}/upload/file/{imageName}").
+		To(handler.DeleteMinioObjectWithNs).
+		Doc("Delete Volume Image").
+		Param(webservice.PathParameter("namespace", "name of a namespace").Required(true)).
+		Param(webservice.PathParameter("imageName", "Image name").Required(true)).
 		Returns(http.StatusOK, api.StatusOK, errors.None).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 

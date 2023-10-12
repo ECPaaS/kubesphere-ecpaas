@@ -1,0 +1,2274 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "KubeSphere OpenAPI",
+    "title": "KubeSphere",
+    "contact": {
+      "name": "KubeSphere",
+      "url": "https://kubesphere.io/",
+      "email": "kubesphere@yunify.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "v0.0.0"
+  },
+  "paths": {
+    "/kapis/k8s.ovn.org/v1/vpcnetwork/{vpcnetwork}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "Get vpcnetowkrs resources",
+        "operationId": "GetVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "vpcnetwork name",
+            "name": "vpcnetwork",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCNetwork"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "Delete vpcnetwork",
+        "operationId": "DeleteVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "vpcnetwork name",
+            "name": "vpcnetwork",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "Patch vpcnetwork",
+        "operationId": "PatchVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "vpcnetwork name",
+            "name": "vpcnetwork",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.VPCNetwork"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCNetwork"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcnetwork/{vpcnetwork}/vpcsubnets": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "List all vpcsubnet resource within vpcnetwork",
+        "operationId": "ListVpcSubnetWithinVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "vpcnetwork name",
+            "name": "vpcnetwork",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.ListResult"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcnetwork/{workspace}": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "Create vpcnetwork",
+        "operationId": "CreateVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "workspace name",
+            "name": "workspace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.VPCNetwork"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCNetwork"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcnetwork/{workspace}/{vpcnetwork}": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "Update vpcnetwork",
+        "operationId": "UpdateVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "workspace name",
+            "name": "workspace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpcnetwork name",
+            "name": "vpcnetwork",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.VPCNetwork"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCNetwork"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcnetworks": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "List all vpcnetowkrs resources",
+        "operationId": "ListVpcNetwork",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.ListResult"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcsubnet": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "Create vpcsubnet",
+        "operationId": "CreateVpcSubnet",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.VPCSubnet"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCSubnet"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcsubnet/{namespace}/{vpcsubnet}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "Get vpcsubnet resources",
+        "operationId": "GetVpcSubnet",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpcsubnet name",
+            "name": "vpcsubnet",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCSubnet"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "Delete vpcsubnet",
+        "operationId": "DeleteVpcSubnet",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpcsubnet name",
+            "name": "vpcsubnet",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "Patch vpcsubnet",
+        "operationId": "PatchVpcSubnet",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpcsubnet name",
+            "name": "vpcsubnet",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.VPCSubnet"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCSubnet"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcsubnet/{vpcsubnet}": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "Update vpcsubnet",
+        "operationId": "UpdateVpcSubnet",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "vpcsubnet name",
+            "name": "vpcsubnet",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.VPCSubnet"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VPCSubnet"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcsubnets": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "List all vpcsubnet resources",
+        "operationId": "ListVpcSubnet",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.ListResult"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/disk": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "List all disk",
+        "operationId": "ListDisk",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListDiskResponse"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/image": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "List all image",
+        "operationId": "ListImage",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListImageResponse"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/disk": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "List all disk with namespace",
+        "operationId": "ListDiskWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListDiskResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Create data disk",
+        "operationId": "CreateDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskIDResponse"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/disk/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Get disk",
+        "operationId": "GetDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Update disk",
+        "operationId": "UpdateDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyDiskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Delete disk",
+        "operationId": "DeleteDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/image": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "List all image with namespace",
+        "operationId": "ListImageWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListImageResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Create image",
+        "operationId": "CreateImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageIDResponse"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/image/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Get image",
+        "operationId": "GetImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Update image",
+        "operationId": "UpdateImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Delete image",
+        "operationId": "DeleteImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/virtualmachine": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all virtual machine with namespace",
+        "operationId": "ListVirtualMachineWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Create virtual machine",
+        "operationId": "CreateVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineIDResponse"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/virtualmachine/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Get virtual machine",
+        "operationId": "GetVirtualMachine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed. When the cpu cores or memory parameter changed, the virtual machine need be restarted.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Update virtual machine",
+        "operationId": "UpdateVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyVirtualMachineRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Delete virtual machine",
+        "operationId": "DeleteVirtualMachine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/virtualmachine": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all virtual machine",
+        "operationId": "ListVirtualMachine",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Upload Volume Image",
+        "operationId": "UploadMinioObjectWithNs",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of a namespace",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file/checkFileExist/{imageName}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Check If image exist or not",
+        "operationId": "GetMinioObjectStatusWithNs",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Image name",
+            "name": "imageName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of a namespace",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.ObjectStatus"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file/images": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "List all uploaded images",
+        "operationId": "ListMinioObjectsWithNs",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of a namespace",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.ImagesList"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file/{imageName}": {
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Delete Volume Image",
+        "operationId": "DeleteMinioObjectWithNs",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of a namespace",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Image name",
+            "name": "imageName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Upload Volume Image",
+        "operationId": "UploadMinioObject",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file/checkFileExist/{imageName}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Check If image exist or not",
+        "operationId": "GetMinioObjectStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Image name",
+            "name": "imageName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.ObjectStatus"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file/images": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "List all uploaded images",
+        "operationId": "ListMinioObjects",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.ImagesList"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file/{imageName}": {
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Delete Volume Image",
+        "operationId": "DeleteMinioObject",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Image name",
+            "name": "imageName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "api.ListResult": {
+      "required": [
+        "items",
+        "totalItems"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/api.ListResult.items"
+          }
+        },
+        "totalItems": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "api.ListResult.items": {},
+    "errors.Error": {
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "description": "error message",
+          "type": "string"
+        }
+      }
+    },
+    "v1.ClusterRouterPolicy": {
+      "required": [
+        "destination",
+        "targetPort"
+      ],
+      "properties": {
+        "destination": {
+          "type": "string"
+        },
+        "targetPort": {
+          "type": "string"
+        }
+      }
+    },
+    "v1.GatewayChassis": {
+      "required": [
+        "ip"
+      ],
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string"
+        }
+      }
+    },
+    "v1.ImagesList": {
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.ObjectStatusData"
+          }
+        }
+      }
+    },
+    "v1.L3Gateway": {
+      "required": [
+        "network",
+        "nexthop"
+      ],
+      "properties": {
+        "destination": {
+          "type": "string"
+        },
+        "network": {
+          "type": "string"
+        },
+        "nexthop": {
+          "type": "string"
+        },
+        "outboundNat": {
+          "type": "string"
+        },
+        "vlanid": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1.ManagedFieldsEntry": {
+      "description": "ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource that the fieldset applies to.",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the version of this resource that this field set applies to. The format is \"group/version\" just like the top-level APIVersion field. It is necessary to track the version of a field set because it cannot be automatically converted.",
+          "type": "string"
+        },
+        "fieldsType": {
+          "description": "FieldsType is the discriminator for the different fields format and version. There is currently only one possible value: \"FieldsV1\"",
+          "type": "string"
+        },
+        "fieldsV1": {
+          "description": "FieldsV1 holds the first JSON version format as described in the \"FieldsV1\" type.",
+          "type": "string"
+        },
+        "manager": {
+          "description": "Manager is an identifier of the workflow managing these fields.",
+          "type": "string"
+        },
+        "operation": {
+          "description": "Operation is the type of operation which lead to this ManagedFieldsEntry being created. The only valid values for this field are 'Apply' and 'Update'.",
+          "type": "string"
+        },
+        "time": {
+          "description": "Time is timestamp of when these fields were set. It should always be empty if Operation is 'Apply'",
+          "type": "string"
+        }
+      }
+    },
+    "v1.NATRule": {
+      "required": [
+        "type",
+        "logicalIP",
+        "externalIP"
+      ],
+      "properties": {
+        "externalIP": {
+          "type": "string"
+        },
+        "logicalIP": {
+          "type": "string"
+        },
+        "port": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "v1.ObjectMeta": {
+      "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to. This is used to distinguish resources with same name and namespace in different clusters. This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.",
+          "type": "string"
+        },
+        "creationTimestamp": {
+          "description": "CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+          "type": "string"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "deletionTimestamp": {
+          "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This field is set by the server when a graceful deletion is requested by the user, and is not directly settable by a client. The resource is expected to be deleted (no longer visible from resource lists, and not reachable by name) after the time in this field, once the finalizers list is empty. As long as the finalizers list contains items, deletion is blocked. Once the deletionTimestamp is set, this value may not be unset or be set further into the future, although it may be shortened or the resource may be deleted prior to this time. For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react by sending a graceful termination signal to the containers in the pod. After that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup, remove the pod from the API. In the presence of network partitions, this object may still exist after this timestamp, until an administrator or automated process can determine the resource is fully terminated. If not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+          "type": "string"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique name ONLY IF the Name field has not been provided. If this field is used, the name returned to the client will be different than the name passed. This value will also be combined with a unique suffix. The provided value has the same validation rules as the Name field, and may be truncated by the length of the suffix required to make the value unique on the server.\n\nIf this field is specified and the generated name exists, the server will NOT return a 409 - instead, it will either return 201 Created or 500 with Reason ServerTimeout indicating a unique name could not be found in the time allotted, and the client should retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency",
+          "type": "string"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state. Populated by the system. Read-only.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like \"ci-cd\". The set of fields is always in the version that the workflow used when modifying the object.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.ManagedFieldsEntry"
+          }
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/namespaces",
+          "type": "string"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have been deleted, this object will be garbage collected. If this object is managed by a controller, then an entry in this list will point to this controller, with the controller field set to true. There cannot be more than one managing controller.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.OwnerReference"
+          }
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can be used by clients to determine when objects have changed. May be used for optimistic concurrency, change detection, and the watch operation on a resource or set of resources. Clients must treat these values as opaque and passed unmodified back to the server. They may only be valid for a particular resource or set of resources.\n\nPopulated by the system. Read-only. Value must be treated as opaque by clients and . More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
+          "type": "string"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object. Populated by the system. Read-only.\n\nDEPRECATED Kubernetes will stop propagating this field in 1.20 release and the field is planned to be removed in 1.21 release.",
+          "type": "string"
+        },
+        "uid": {
+          "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+          "type": "string"
+        }
+      }
+    },
+    "v1.ObjectStatus": {
+      "required": [
+        "fileHas"
+      ],
+      "properties": {
+        "fileHas": {
+          "description": "Check file exist or not",
+          "type": "boolean"
+        }
+      }
+    },
+    "v1.ObjectStatusData": {
+      "required": [
+        "name",
+        "location",
+        "lastModified",
+        "size"
+      ],
+      "properties": {
+        "lastModified": {
+          "description": "The last modified time of the image",
+          "type": "string"
+        },
+        "location": {
+          "description": "Image URL location",
+          "type": "string"
+        },
+        "name": {
+          "description": "Image file name",
+          "type": "string"
+        },
+        "size": {
+          "description": "Size in bytes of the image",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1.OwnerReference": {
+      "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name",
+        "uid"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "API version of the referent.",
+          "type": "string"
+        },
+        "blockOwnerDeletion": {
+          "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed. Defaults to false. To set this field, a user needs \"delete\" permission of the owner, otherwise 422 (Unprocessable Entity) will be returned.",
+          "type": "boolean"
+        },
+        "controller": {
+          "description": "If true, this reference points to the managing controller.",
+          "type": "boolean"
+        },
+        "kind": {
+          "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "type": "string"
+        },
+        "uid": {
+          "description": "UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+          "type": "string"
+        }
+      }
+    },
+    "v1.Peer": {
+      "required": [
+        "name",
+        "ip",
+        "port"
+      ],
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1.VPCNetwork": {
+      "required": [
+        "spec"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/definitions/v1.ObjectMeta"
+        },
+        "spec": {
+          "$ref": "#/definitions/v1.VPCNetworkSpec"
+        },
+        "status": {
+          "$ref": "#/definitions/v1.VPCNetworkStatus"
+        }
+      }
+    },
+    "v1.VPCNetworkSpec": {
+      "required": [
+        "cidr",
+        "subnetLength"
+      ],
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "clusterRouter": {
+          "type": "string"
+        },
+        "clusterRouterPolicy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.ClusterRouterPolicy"
+          }
+        },
+        "gatewayChassises": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.GatewayChassis"
+          }
+        },
+        "l3gateways": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.L3Gateway"
+          }
+        },
+        "nat": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.NATRule"
+          }
+        },
+        "peers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.Peer"
+          }
+        },
+        "subnetLength": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1.VPCNetworkStatus": {
+      "required": [
+        "subnets"
+      ],
+      "properties": {
+        "subnets": {
+          "type": "string"
+        },
+        "transitSwitch": {
+          "type": "string"
+        },
+        "tsNetwork": {
+          "type": "string"
+        },
+        "tsPort": {
+          "type": "string"
+        }
+      }
+    },
+    "v1.VPCSubnet": {
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/definitions/v1.ObjectMeta"
+        },
+        "spec": {
+          "$ref": "#/definitions/v1.VPCSubnetSpec"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "v1.VPCSubnetSpec": {
+      "required": [
+        "cidr",
+        "vpc"
+      ],
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "vpc": {
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "disk id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskRequest": {
+      "required": [
+        "name",
+        "description",
+        "size"
+      ],
+      "properties": {
+        "description": {
+          "description": "Disk description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Disk name",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, range from 10Gi to 500Gi. The value is integer",
+          "type": "string",
+          "default": "20Gi"
+        }
+      }
+    },
+    "virtualization.DiskResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "description",
+        "type",
+        "size",
+        "status"
+      ],
+      "properties": {
+        "description": {
+          "description": "Disk description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id",
+          "type": "string"
+        },
+        "name": {
+          "description": "Disk name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, range from 10Gi to 500Gi",
+          "type": "string",
+          "default": "20Gi"
+        },
+        "status": {
+          "description": "Disk status",
+          "$ref": "#/definitions/virtualization.DiskStatus"
+        },
+        "type": {
+          "description": "Disk type, the value is 'system' or 'data'",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskSpec": {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "description": "Disk action, the value is 'add' or 'mount'",
+          "type": "string"
+        },
+        "description": {
+          "description": "Disk description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id",
+          "type": "string"
+        },
+        "name": {
+          "description": "Disk name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, range from 10Gi to 500Gi. The value is integer",
+          "type": "string",
+          "default": "20Gi"
+        },
+        "type": {
+          "description": "Disk type, the value is 'system' or 'data'",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskStatus": {
+      "required": [
+        "ready",
+        "owner"
+      ],
+      "properties": {
+        "owner": {
+          "description": "Disk owner, if empty, means not owned by any virtual machine",
+          "type": "string"
+        },
+        "ready": {
+          "description": "Disk is ready or not",
+          "type": "boolean"
+        }
+      }
+    },
+    "virtualization.GuestSpec": {
+      "required": [
+        "username",
+        "password"
+      ],
+      "properties": {
+        "password": {
+          "description": "Guest operating system password",
+          "type": "string",
+          "default": 123456
+        },
+        "username": {
+          "description": "Guest operating system username",
+          "type": "string",
+          "default": "root"
+        }
+      }
+    },
+    "virtualization.ImageIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "image id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.ImageInfoResponse": {
+      "required": [
+        "id",
+        "size"
+      ],
+      "properties": {
+        "id": {
+          "description": "Image id",
+          "type": "string"
+        },
+        "size": {
+          "description": "Image size, range from 10Gi to 80Gi, the value is integer",
+          "type": "string",
+          "default": "20Gi"
+        }
+      }
+    },
+    "virtualization.ImageRequest": {
+      "required": [
+        "name",
+        "os_family",
+        "version",
+        "cpu_cores",
+        "memory",
+        "size",
+        "description",
+        "upload_file_name",
+        "shared"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores, range from 1 to 4. The value is integer",
+          "type": "string",
+          "default": 1
+        },
+        "description": {
+          "description": "Image description",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Default image memory, range from 1Gi to 8Gi. The value is integer",
+          "type": "string",
+          "default": "1Gi"
+        },
+        "name": {
+          "description": "Image name",
+          "type": "string"
+        },
+        "os_family": {
+          "description": "Image operating system",
+          "type": "string",
+          "default": "ubuntu"
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, range from 10Gi to 80Gi. The value is integer",
+          "type": "string",
+          "default": "20Gi"
+        },
+        "upload_file_name": {
+          "description": "File name which created by upload image api",
+          "type": "string"
+        },
+        "version": {
+          "description": "Image version",
+          "type": "string",
+          "default": "20.04_LTS_64bit"
+        }
+      }
+    },
+    "virtualization.ImageResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "os_family",
+        "version",
+        "cpu_cores",
+        "memory",
+        "size",
+        "upload_file_name",
+        "description",
+        "shared",
+        "status"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores, range from 1 to 4",
+          "type": "string",
+          "default": 1
+        },
+        "description": {
+          "description": "Image description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Image id",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Default image memory, range from 1Gi to 8Gi",
+          "type": "string",
+          "default": "1Gi"
+        },
+        "name": {
+          "description": "Image name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Image namespace",
+          "type": "string"
+        },
+        "os_family": {
+          "description": "Image operating system",
+          "type": "string",
+          "default": "ubuntu"
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, range from 10Gi to 80Gi",
+          "type": "string",
+          "default": "20Gi"
+        },
+        "status": {
+          "description": "Image status",
+          "$ref": "#/definitions/virtualization.ImageStatus"
+        },
+        "upload_file_name": {
+          "description": "File name which created by upload image api",
+          "type": "string"
+        },
+        "version": {
+          "description": "Image version",
+          "type": "string",
+          "default": "20.04_LTS_64bit"
+        }
+      }
+    },
+    "virtualization.ImageStatus": {
+      "required": [
+        "ready"
+      ],
+      "properties": {
+        "ready": {
+          "description": "Image is ready or not",
+          "type": "boolean"
+        }
+      }
+    },
+    "virtualization.ListDiskResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of disks",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ListImageResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of images",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.ImageResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of images",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ListVirtualMachineResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of virtual machines",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.VirtualMachineResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of virtual machines",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ModifyDiskRequest": {
+      "properties": {
+        "description": {
+          "description": "Disk description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Disk name",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, range from 10Gi to 500Gi, the size only can be increased. The value is integer",
+          "type": "string",
+          "default": "20Gi"
+        }
+      }
+    },
+    "virtualization.ModifyImageRequest": {
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores, range from 1 to 4. The value is integer",
+          "type": "string",
+          "default": 1
+        },
+        "description": {
+          "description": "Image description",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Default image memory, range from 1Gi to 8Gi. The value is integer",
+          "type": "string",
+          "default": "1Gi"
+        },
+        "name": {
+          "description": "Image name",
+          "type": "string"
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, range from 10Gi to 80Gi, the size only can be increased. The value is integer",
+          "type": "string",
+          "default": "20Gi"
+        }
+      }
+    },
+    "virtualization.ModifyVirtualMachineRequest": {
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores, range from 1 to 4. The value is integer",
+          "type": "integer",
+          "format": "integer",
+          "default": 1
+        },
+        "description": {
+          "description": "Virtual machine description",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Virtual machine memory size, range from 1Gi to 8Gi. The value is integer",
+          "type": "string",
+          "default": "1Gi"
+        },
+        "name": {
+          "description": "Virtual machine name",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VMStatus": {
+      "required": [
+        "ready",
+        "state"
+      ],
+      "properties": {
+        "ready": {
+          "description": "Virtual machine is ready or not",
+          "type": "boolean"
+        },
+        "state": {
+          "description": "Virtual machine state",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VirtualMachineIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "virtual machine id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VirtualMachineRequest": {
+      "required": [
+        "name",
+        "cpu_cores",
+        "memory",
+        "description",
+        "image"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores, range from 1 to 4. The value is integer",
+          "type": "integer",
+          "format": "integer",
+          "default": 1
+        },
+        "description": {
+          "description": "Virtual machine description",
+          "type": "string"
+        },
+        "disk": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskSpec"
+          }
+        },
+        "guest": {
+          "description": "Virtual machine guest operating system",
+          "$ref": "#/definitions/virtualization.GuestSpec"
+        },
+        "image": {
+          "description": "Virtual machine image source",
+          "$ref": "#/definitions/virtualization.ImageInfoResponse"
+        },
+        "memory": {
+          "description": "Virtual machine memory size, range from 1Gi to 8Gi. The value is integer",
+          "type": "string",
+          "default": "1Gi"
+        },
+        "name": {
+          "description": "Virtual machine name",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VirtualMachineResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "description",
+        "cpu_cores",
+        "memory",
+        "image",
+        "disks",
+        "status"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores",
+          "type": "integer",
+          "format": "integer"
+        },
+        "description": {
+          "description": "Virtual machine description",
+          "type": "string"
+        },
+        "disks": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskResponse"
+          }
+        },
+        "id": {
+          "description": "Virtual machine id",
+          "type": "string"
+        },
+        "image": {
+          "description": "Virtual machine image source",
+          "$ref": "#/definitions/virtualization.ImageInfoResponse"
+        },
+        "memory": {
+          "description": "Virtual machine memory size",
+          "type": "string"
+        },
+        "name": {
+          "description": "Virtual machine name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Virtual machine namespace",
+          "type": "string"
+        },
+        "status": {
+          "description": "Virtual machine status",
+          "$ref": "#/definitions/virtualization.VMStatus"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "jwt": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "jwt": []
+    }
+  ]
+}
