@@ -14,9 +14,9 @@ const (
 // Virtual Machine
 type VirtualMachineRequest struct {
 	Name        string             `json:"name" description:"Virtual machine name"`
-	CpuCores    uint32             `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores, range from 1 to 4"`
-	Memory      string             `json:"memory" default:"1Gi" description:"Virtual machine memory size, range from 1Gi to 8Gi"`
-	Description string             `json:"description" default:"" description:"Virtual machine description"`
+	CpuCores    uint32             `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores, range from 1 to 4. The value is integer"`
+	Memory      string             `json:"memory" default:"1Gi" description:"Virtual machine memory size, range from 1Gi to 8Gi. The value is integer"`
+	Description string             `json:"description" description:"Virtual machine description"`
 	Image       *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disk        []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
 	Guest       *GuestSpec         `json:"guest,omitempty" description:"Virtual machine guest operating system"`
@@ -28,8 +28,8 @@ type DiskSpec struct {
 	ID          string `json:"id,omitempty" description:"Disk id"`
 	Description string `json:"description,omitempty" default:"" description:"Disk description"`
 	Namespace   string `json:"namespace,omitempty" description:"Disk namespace"`
-	Type        string `json:"type" description:"Disk type, the value is 'system' or 'data'"`
-	Size        string `json:"size" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi"`
+	Type        string `json:"type,omitempty" description:"Disk type, the value is 'system' or 'data'"`
+	Size        string `json:"size,omitempty" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi. The value is integer"`
 }
 
 type GuestSpec struct {
@@ -40,8 +40,8 @@ type GuestSpec struct {
 type ModifyVirtualMachineRequest struct {
 	//TODO: support dynamic mount disk
 	Name        string `json:"name,omitempty" description:"Virtual machine name"`
-	CpuCores    uint32 `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores, range from 1 to 4"`
-	Memory      string `json:"memory,omitempty" default:"1Gi" description:"Virtual machine memory size, range from 1Gi to 8Gi"`
+	CpuCores    uint32 `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores, range from 1 to 4. The value is integer"`
+	Memory      string `json:"memory,omitempty" default:"1Gi" description:"Virtual machine memory size, range from 1Gi to 8Gi. The value is integer"`
 	Description string `json:"description,omitempty" description:"Virtual machine description"`
 }
 
@@ -83,13 +83,13 @@ type ListVirtualMachineResponse struct {
 type DiskRequest struct {
 	Name        string `json:"name" description:"Disk name"`
 	Description string `json:"description" default:"" description:"Disk description"`
-	Size        string `json:"size" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi"`
+	Size        string `json:"size" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi. The value is integer"`
 }
 
 type ModifyDiskRequest struct {
 	Name        string `json:"name,omitempty" description:"Disk name"`
 	Description string `json:"description,omitempty" default:"" description:"Disk description"`
-	Size        string `json:"size,omitempty" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi, the size only can be increased."`
+	Size        string `json:"size,omitempty" default:"20Gi" description:"Disk size, range from 10Gi to 500Gi, the size only can be increased. The value is integer"`
 }
 
 type DiskResponse struct {
@@ -126,16 +126,16 @@ type ImageInfo struct {
 
 type ImageInfoResponse struct {
 	ID   string `json:"id" description:"Image id"`
-	Size string `json:"size" default:"20Gi" description:"Image size, range from 10Gi to 80Gi"`
+	Size string `json:"size" default:"20Gi" description:"Image size, range from 10Gi to 80Gi, the value is integer"`
 }
 
 type ImageRequest struct {
 	Name           string `json:"name" description:"Image name"`
 	OSFamily       string `json:"os_family" default:"ubuntu" description:"Image operating system"`
 	Version        string `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
-	CpuCores       string `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4"`
-	Memory         string `json:"memory" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
-	Size           string `json:"size" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi"`
+	CpuCores       string `json:"cpu_cores" default:"1" description:"Default image cpu cores, range from 1 to 4. The value is integer"`
+	Memory         string `json:"memory" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi. The value is integer"`
+	Size           string `json:"size" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi. The value is integer"`
 	Description    string `json:"description" default:"" description:"Image description"`
 	UploadFileName string `json:"upload_file_name" default:"" description:"File name which created by upload image api"`
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
@@ -143,9 +143,9 @@ type ImageRequest struct {
 
 type ModifyImageRequest struct {
 	Name        string `json:"name,omitempty" description:"Image name"`
-	CpuCores    string `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores, range from 1 to 4"`
-	Memory      string `json:"memory,omitempty" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi"`
-	Size        string `json:"size,omitempty" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi, the size only can be increased."`
+	CpuCores    string `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores, range from 1 to 4. The value is integer"`
+	Memory      string `json:"memory,omitempty" default:"1Gi" description:"Default image memory, range from 1Gi to 8Gi. The value is integer"`
+	Size        string `json:"size,omitempty" default:"20Gi" description:"Default image size, range from 10Gi to 80Gi, the size only can be increased. The value is integer"`
 	Description string `json:"description,omitempty" default:"" description:"Image description"`
 	Shared      bool   `json:"shared,omitempty" default:"false" description:"Image shared or not"`
 }
