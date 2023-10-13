@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/emicklei/go-restful"
@@ -46,7 +47,7 @@ func prepare2() (*virtzhandler, error) {
 	image := &FakeImageTemplate{
 		Name:      "image-1234",
 		Namespace: "default",
-		Size:      "20Gi",
+		Size:      20,
 	}
 
 	prepareFakeImageTemplate(ksClient, image)
@@ -137,8 +138,8 @@ func TestGetVirtualMachineWithAddDisk(t *testing.T) {
 		t.Errorf("vm disk type is not correct: got %v want %v", vmResponse.Disks[1].Type, "data")
 	}
 
-	if vmResponse.Disks[1].Size != "20Gi" {
-		t.Errorf("vm disk size is not correct: got %v want %v", vmResponse.Disks[1].Size, "20Gi")
+	if vmResponse.Disks[1].Size != 20 {
+		t.Errorf("vm disk size is not correct: got %v want %v", vmResponse.Disks[1].Size, "20")
 	}
 
 }
@@ -154,7 +155,7 @@ func TestPostVirtualMachine(t *testing.T) {
 	fakeImageTemlate := &FakeImageTemplate{
 		Name:      "image-1234",
 		Namespace: "default",
-		Size:      "20Gi",
+		Size:      20,
 	}
 	prepareFakeImageTemplate(ksClient, fakeImageTemlate)
 
@@ -165,10 +166,10 @@ func TestPostVirtualMachine(t *testing.T) {
 	vmRequest := ui_virtz.VirtualMachineRequest{
 		Name:     "testvm",
 		CpuCores: 2,
-		Memory:   "2Gi",
+		Memory:   2,
 		Image: &ui_virtz.ImageInfoResponse{
 			ID:   fakeImageTemlate.Name,
-			Size: "20Gi",
+			Size: 20,
 		},
 	}
 
@@ -214,12 +215,13 @@ func TestPostVirtualMachine(t *testing.T) {
 		t.Errorf("vm alias name is not correct: got %v want %v", vm.Annotations[virtzv1alpha1.VirtualizationAliasName], vmRequest.Name)
 	}
 
-	if vm.Spec.Hardware.Domain.CPU.Cores != vmRequest.CpuCores {
+	if vm.Spec.Hardware.Domain.CPU.Cores != uint32(vmRequest.CpuCores) {
 		t.Errorf("vm cpu cores is not correct: got %v want %v", vm.Spec.Hardware.Domain.CPU.Cores, vmRequest.CpuCores)
 	}
 
-	if vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() != vmRequest.Memory {
-		t.Errorf("vm memory is not correct: got %v want %v", vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), vmRequest.Memory)
+	memory := strconv.FormatUint(uint64(vmRequest.Memory), 10) + "Gi"
+	if vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() != memory {
+		t.Errorf("vm memory is not correct: got %v want %v", vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), memory)
 	}
 
 }
@@ -235,7 +237,7 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 	fakeImageTemlate := &FakeImageTemplate{
 		Name:      "image-1234",
 		Namespace: "default",
-		Size:      "20Gi",
+		Size:      20,
 	}
 	prepareFakeImageTemplate(ksClient, fakeImageTemlate)
 
@@ -246,16 +248,16 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 	vmRequest := ui_virtz.VirtualMachineRequest{
 		Name:     "testvm",
 		CpuCores: 2,
-		Memory:   "2Gi",
+		Memory:   2,
 		Image: &ui_virtz.ImageInfoResponse{
 			ID:   fakeImageTemlate.Name,
-			Size: "20Gi",
+			Size: 20,
 		},
 		Disk: []ui_virtz.DiskSpec{
 			{
 				Action: "add",
 				Type:   "data",
-				Size:   "20Gi",
+				Size:   20,
 			},
 		},
 	}
@@ -302,12 +304,13 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 		t.Errorf("vm alias name is not correct: got %v want %v", vm.Annotations[virtzv1alpha1.VirtualizationAliasName], vmRequest.Name)
 	}
 
-	if vm.Spec.Hardware.Domain.CPU.Cores != vmRequest.CpuCores {
+	if vm.Spec.Hardware.Domain.CPU.Cores != uint32(vmRequest.CpuCores) {
 		t.Errorf("vm cpu cores is not correct: got %v want %v", vm.Spec.Hardware.Domain.CPU.Cores, vmRequest.CpuCores)
 	}
 
-	if vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() != vmRequest.Memory {
-		t.Errorf("vm memory is not correct: got %v want %v", vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), vmRequest.Memory)
+	memory := strconv.FormatUint(uint64(vmRequest.Memory), 10) + "Gi"
+	if vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() != memory {
+		t.Errorf("vm memory is not correct: got %v want %v", vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), memory)
 	}
 
 	// verify disk
@@ -337,7 +340,7 @@ func TestPostDisk(t *testing.T) {
 	diskRequest := ui_virtz.DiskRequest{
 		Name:        "testdisk",
 		Description: "testdisk",
-		Size:        "20Gi",
+		Size:        20,
 	}
 
 	diskRequestBodyBytes, err := json.Marshal(diskRequest)
@@ -386,8 +389,9 @@ func TestPostDisk(t *testing.T) {
 		t.Errorf("disk description is not correct: got %v want %v", disk.Annotations[virtzv1alpha1.VirtualizationDescription], diskRequest.Description)
 	}
 
-	if disk.Spec.Resources.Requests.Storage().String() != diskRequest.Size {
-		t.Errorf("disk size is not correct: got %v want %v", disk.Spec.Resources.Requests.Storage().String(), diskRequest.Size)
+	size := strconv.FormatUint(uint64(diskRequest.Size), 10) + "Gi"
+	if disk.Spec.Resources.Requests.Storage().String() != size {
+		t.Errorf("disk size is not correct: got %v want %v", disk.Spec.Resources.Requests.Storage().String(), size)
 	}
 
 	if disk.Labels[virtzv1alpha1.VirtualizationDiskType] != "data" {
@@ -411,7 +415,7 @@ func TestPostImage(t *testing.T) {
 	imageRequest := ui_virtz.ImageRequest{
 		Name:           "testimage",
 		Description:    "testimage",
-		Size:           "20Gi",
+		Size:           20,
 		OSFamily:       "ubuntu",
 		Version:        "20.04_LTS_64bit",
 		UploadFileName: "testimage",
@@ -472,8 +476,9 @@ func TestPostImage(t *testing.T) {
 		t.Errorf("image version is not correct: got %v want %v", image.Labels[virtzv1alpha1.VirtualizationOSVersion], imageRequest.Version)
 	}
 
-	if image.Spec.Resources.Requests.Storage().String() != imageRequest.Size {
-		t.Errorf("image size is not correct: got %v want %v", image.Spec.Resources.Requests.Storage().String(), imageRequest.Size)
+	size := strconv.FormatUint(uint64(imageRequest.Size), 10) + "Gi"
+	if image.Spec.Resources.Requests.Storage().String() != size {
+		t.Errorf("image size is not correct: got %v want %v", image.Spec.Resources.Requests.Storage().String(), size)
 	}
 
 	expectedURL := fmt.Sprintf("http://1.2.3.4:9000/ecpaas-images/%s", imageRequest.UploadFileName)
@@ -498,7 +503,7 @@ func TestGetImage(t *testing.T) {
 	fakeImageTemlate := &FakeImageTemplate{
 		Name:      "image-1234",
 		Namespace: "default",
-		Size:      "20Gi",
+		Size:      20,
 	}
 	prepareFakeImageTemplate(ksClient, fakeImageTemlate)
 

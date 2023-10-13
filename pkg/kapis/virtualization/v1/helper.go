@@ -7,6 +7,7 @@ package virtualization
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 
 	fakek8s "k8s.io/client-go/kubernetes/fake"
 	fakeks "kubesphere.io/kubesphere/pkg/client/clientset/versioned/fake"
@@ -40,12 +41,14 @@ func prepareFakeDiskVolume(ksClient *fakeks.Clientset, vm_instance *virtzv1alpha
 type FakeImageTemplate struct {
 	Name      string
 	Namespace string
-	Size      string
+	Size      uint
 }
 
 func prepareFakeImageTemplate(ksClient *fakeks.Clientset, fakeImageTemlate *FakeImageTemplate) error {
 	imageName := fakeImageTemlate.Name
 	imageNamespace := fakeImageTemlate.Namespace
+
+	size := strconv.FormatUint(uint64(fakeImageTemlate.Size), 10)
 	imagetemplate := &virtzv1alpha1.ImageTemplate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      imageName,
@@ -59,7 +62,7 @@ func prepareFakeImageTemplate(ksClient *fakeks.Clientset, fakeImageTemlate *Fake
 			},
 			Resources: virtzv1alpha1.ResourceRequirements{
 				Requests: v1.ResourceList{
-					v1.ResourceStorage: resource.MustParse(fakeImageTemlate.Size),
+					v1.ResourceStorage: resource.MustParse(size + "Gi"),
 				},
 			},
 		},

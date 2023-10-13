@@ -91,12 +91,13 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 	vm.Annotations = make(map[string]string)
 	vm.Annotations[v1alpha1.VirtualizationAliasName] = ui_vm.Name
 	vm.Annotations[v1alpha1.VirtualizationDescription] = ui_vm.Description
-	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = ui_vm.Image.Size
+	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = strconv.FormatUint(uint64(ui_vm.Image.Size), 10)
 	vm.Name = vmNamePrefix + vm_uuid
 
+	memory := strconv.FormatUint(uint64(ui_vm.Memory), 10) + "Gi"
 	vm.Spec.Hardware.Domain = v1alpha1.Domain{
 		CPU: v1alpha1.CPU{
-			Cores: ui_vm.CpuCores,
+			Cores: uint32(ui_vm.CpuCores),
 		},
 		Devices: v1alpha1.Devices{
 			Interfaces: []v1alpha1.Interface{
@@ -110,7 +111,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 		},
 		Resources: v1alpha1.ResourceRequirements{
 			Requests: v1.ResourceList{
-				v1.ResourceMemory: resource.MustParse(ui_vm.Memory),
+				v1.ResourceMemory: resource.MustParse(memory),
 			},
 		},
 	}
@@ -146,6 +147,7 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 
 	vm.Annotations[v1alpha1.VirtualizationImageInfo] = string(jsonData)
 
+	size := strconv.FormatUint(uint64(ui_vm.Image.Size), 10) + "Gi"
 	vm.Spec.DiskVolumeTemplates = []v1alpha1.DiskVolume{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -167,7 +169,7 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 				},
 				Resources: v1alpha1.ResourceRequirements{
 					Requests: v1.ResourceList{
-						v1.ResourceStorage: resource.MustParse(ui_vm.Image.Size),
+						v1.ResourceStorage: resource.MustParse(size),
 					},
 				},
 			},
@@ -249,9 +251,10 @@ func AddDiskVolume(diskVolumeName string, uiDisk *DiskSpec) v1alpha1.DiskVolume 
 		v1alpha1.VirtualizationDiskType: uiDisk.Type,
 	}
 
+	size := strconv.FormatUint(uint64(uiDisk.Size), 10) + "Gi"
 	diskVolume.Spec.Source.Blank = &v1alpha1.DataVolumeBlankImage{}
 	res := v1.ResourceList{}
-	res[v1.ResourceStorage] = resource.MustParse(uiDisk.Size)
+	res[v1.ResourceStorage] = resource.MustParse(size)
 	diskVolume.Spec.Resources.Requests = res
 
 	return diskVolume
@@ -275,12 +278,13 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		vm.Annotations[v1alpha1.VirtualizationDescription] = ui_vm.Description
 	}
 
-	if ui_vm.CpuCores != 0 && ui_vm.CpuCores != vm.Spec.Hardware.Domain.CPU.Cores {
-		vm.Spec.Hardware.Domain.CPU.Cores = ui_vm.CpuCores
+	if ui_vm.CpuCores != 0 && ui_vm.CpuCores != uint(vm.Spec.Hardware.Domain.CPU.Cores) {
+		vm.Spec.Hardware.Domain.CPU.Cores = uint32(ui_vm.CpuCores)
 	}
 
-	if ui_vm.Memory != "" && ui_vm.Memory != vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() {
-		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] = resource.MustParse(ui_vm.Memory)
+	if ui_vm.Memory != 0 && ui_vm.Memory != uint(vm.Spec.Hardware.Domain.Resources.Requests.Memory().Size()) {
+		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] =
+			resource.MustParse(strconv.FormatUint(uint64(ui_vm.Memory), 10) + "Gi")
 	}
 
 	// TODO: update image size
@@ -359,10 +363,11 @@ func (v *virtualizationOperator) CreateDisk(namespace string, ui_disk *DiskReque
 		v1alpha1.VirtualizationDiskType: "data",
 	}
 
+	size := strconv.FormatUint(uint64(ui_disk.Size), 10) + "Gi"
 	diskVolume.Spec.PVCName = diskVolumeNewPrefix + diskVolume.Name
 	diskVolume.Spec.Source.Blank = &v1alpha1.DataVolumeBlankImage{}
 	res := v1.ResourceList{}
-	res[v1.ResourceStorage] = resource.MustParse(ui_disk.Size)
+	res[v1.ResourceStorage] = resource.MustParse(size)
 	diskVolume.Spec.Resources.Requests = res
 
 	createdDisk, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Create(context.Background(), &diskVolume, metav1.CreateOptions{})
@@ -383,8 +388,9 @@ func (v *virtualizationOperator) UpdateDisk(namespace string, name string, ui_di
 		diskVolume.Annotations[v1alpha1.VirtualizationAliasName] = ui_disk.Name
 	}
 
-	if ui_disk.Size != "" && ui_disk.Size != diskVolume.Spec.Resources.Requests.Storage().String() {
-		diskVolume.Spec.Resources.Requests[v1.ResourceStorage] = resource.MustParse(ui_disk.Size)
+	size := strconv.FormatUint(uint64(ui_disk.Size), 10) + "Gi"
+	if ui_disk.Size != 0 && resource.MustParse(size) != diskVolume.Spec.Resources.Requests[v1.ResourceStorage] {
+		diskVolume.Spec.Resources.Requests[v1.ResourceStorage] = resource.MustParse(size)
 	}
 
 	if ui_disk.Description != "" && ui_disk.Description != diskVolume.Annotations[v1alpha1.VirtualizationDescription] {
@@ -422,12 +428,13 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 		v1alpha1.VirtualizationAliasName:   ui_image.Name,
 		v1alpha1.VirtualizationDescription: ui_image.Description,
 	}
+
 	imageTemplate.Labels = map[string]string{
 		v1alpha1.VirtualizationOSFamily:       ui_image.OSFamily,
 		v1alpha1.VirtualizationOSVersion:      ui_image.Version,
-		v1alpha1.VirtualizationImageMemory:    ui_image.Memory,
-		v1alpha1.VirtualizationCpuCores:       ui_image.CpuCores,
-		v1alpha1.VirtualizationImageStorage:   ui_image.Size,
+		v1alpha1.VirtualizationImageMemory:    strconv.FormatUint(uint64(ui_image.Memory), 10),
+		v1alpha1.VirtualizationCpuCores:       strconv.FormatUint(uint64(ui_image.CpuCores), 10),
+		v1alpha1.VirtualizationImageStorage:   strconv.FormatUint(uint64(ui_image.Size), 10),
 		v1alpha1.VirtualizationUploadFileName: ui_image.UploadFileName,
 	}
 
@@ -466,8 +473,9 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 	imageTemplate.Spec.Attributes = v1alpha1.ImageTemplateAttributes{
 		Public: ui_image.Shared,
 	}
+	size := strconv.FormatUint(uint64(ui_image.Size), 10)
 	imageTemplate.Spec.Resources.Requests = v1.ResourceList{
-		v1.ResourceStorage: resource.MustParse(ui_image.Size),
+		v1.ResourceStorage: resource.MustParse(size + "Gi"),
 	}
 
 	createdImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Create(context.Background(), &imageTemplate, metav1.CreateOptions{})
@@ -488,16 +496,19 @@ func (v *virtualizationOperator) UpdateImage(namespace string, name string, ui_i
 		imageTemplate.Annotations[v1alpha1.VirtualizationAliasName] = ui_image.Name
 	}
 
-	if ui_image.CpuCores != "" && ui_image.CpuCores != imageTemplate.Labels[v1alpha1.VirtualizationCpuCores] {
-		imageTemplate.Labels[v1alpha1.VirtualizationCpuCores] = ui_image.CpuCores
+	cpuCores, _ := strconv.ParseUint(imageTemplate.Labels[v1alpha1.VirtualizationCpuCores], 10, 32)
+	if ui_image.CpuCores != 0 && ui_image.CpuCores != uint(cpuCores) {
+		imageTemplate.Labels[v1alpha1.VirtualizationCpuCores] = strconv.FormatUint(uint64(ui_image.CpuCores), 10)
 	}
 
-	if ui_image.Memory != "" && ui_image.Memory != imageTemplate.Labels[v1alpha1.VirtualizationImageMemory] {
-		imageTemplate.Labels[v1alpha1.VirtualizationImageMemory] = ui_image.Memory
+	memory, _ := strconv.ParseUint(imageTemplate.Labels[v1alpha1.VirtualizationImageMemory], 10, 32)
+	if ui_image.Memory != 0 && ui_image.Memory != uint(memory) {
+		imageTemplate.Labels[v1alpha1.VirtualizationImageMemory] = strconv.FormatUint(uint64(ui_image.Memory), 10)
 	}
 
-	if ui_image.Size != "" && ui_image.Size != imageTemplate.Labels[v1alpha1.VirtualizationImageStorage] {
-		imageTemplate.Labels[v1alpha1.VirtualizationImageStorage] = ui_image.Size
+	size, _ := strconv.ParseUint(imageTemplate.Labels[v1alpha1.VirtualizationImageStorage], 10, 32)
+	if ui_image.Size != 0 && ui_image.Size != uint(size) {
+		imageTemplate.Labels[v1alpha1.VirtualizationImageStorage] = strconv.FormatUint(uint64(ui_image.Size), 10)
 	}
 
 	if ui_image.Description != "" && ui_image.Description != imageTemplate.Annotations[v1alpha1.VirtualizationDescription] {

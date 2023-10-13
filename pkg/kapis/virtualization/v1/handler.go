@@ -7,6 +7,8 @@ package virtualization
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -104,8 +106,8 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		ID:          vm.Name,
 		Namespace:   vm.Namespace,
 		Description: vm.Annotations[virtzv1alpha1.VirtualizationDescription],
-		CpuCores:    vm.Spec.Hardware.Domain.CPU.Cores,
-		Memory:      vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(),
+		CpuCores:    uint(vm.Spec.Hardware.Domain.CPU.Cores),
+		Memory:      uint(vm.Spec.Hardware.Domain.Resources.Requests.Memory().Size()),
 		Image:       &ui_image_spec,
 		Disks:       h.getUIDisksResponse(vm),
 		Status:      ui_vm_status,
@@ -123,9 +125,11 @@ func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) 
 		return ui_virtz.ImageInfoResponse{}
 	}
 
+	size, _ := strconv.ParseUint(vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize], 10, 32)
+
 	return ui_virtz.ImageInfoResponse{
 		ID:   uiImageInfo.ID,
-		Size: vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize],
+		Size: uint(size),
 	}
 }
 
@@ -159,13 +163,14 @@ func getUIDiskResponse(diskvolume *virtzv1alpha1.DiskVolume) ui_virtz.DiskRespon
 	ui_disk_status.Ready = diskvolume.Status.Ready
 	ui_disk_status.Owner = diskvolume.Status.Owner
 
+	size, _ := strconv.ParseUint(strings.Replace(diskvolume.Spec.Resources.Requests.Storage().String(), "Gi", "", -1), 10, 32)
 	return ui_virtz.DiskResponse{
 		Name:        diskvolume.Annotations[virtzv1alpha1.VirtualizationAliasName],
 		ID:          diskvolume.Name,
 		Namespace:   diskvolume.Namespace,
 		Description: diskvolume.Annotations[virtzv1alpha1.VirtualizationDescription],
 		Type:        diskvolume.Labels[virtzv1alpha1.VirtualizationDiskType],
-		Size:        diskvolume.Spec.Resources.Requests.Storage().String(),
+		Size:        uint(size),
 		Status:      ui_disk_status,
 	}
 }
@@ -415,15 +420,19 @@ func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageRespon
 	status := ui_virtz.ImageStatus{}
 	status.Ready = image.Status.Ready
 
+	cpuCores, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationCpuCores], 10, 32)
+	memory, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationImageMemory], 10, 32)
+	size, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationImageStorage], 10, 32)
+
 	return ui_virtz.ImageResponse{
 		ID:             image.Name,
 		Name:           image.Annotations[virtzv1alpha1.VirtualizationAliasName],
 		Namespace:      image.Namespace,
 		OSFamily:       image.Labels[virtzv1alpha1.VirtualizationOSFamily],
 		Version:        image.Labels[virtzv1alpha1.VirtualizationOSVersion],
-		CpuCores:       image.Labels[virtzv1alpha1.VirtualizationCpuCores],
-		Memory:         image.Labels[virtzv1alpha1.VirtualizationImageMemory],
-		Size:           image.Labels[virtzv1alpha1.VirtualizationImageStorage],
+		CpuCores:       uint(cpuCores),
+		Memory:         uint(memory),
+		Size:           uint(size),
 		Description:    image.Annotations[virtzv1alpha1.VirtualizationDescription],
 		UploadFileName: image.Labels[virtzv1alpha1.VirtualizationUploadFileName],
 		Shared:         image.Spec.Attributes.Public,
