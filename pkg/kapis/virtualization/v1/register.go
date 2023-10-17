@@ -92,7 +92,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		To(handler.CreateDisk).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Reads(ui_virtz.DiskRequest{}).
-		Doc("Create data disk").
+		Doc("Create disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskIDResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 

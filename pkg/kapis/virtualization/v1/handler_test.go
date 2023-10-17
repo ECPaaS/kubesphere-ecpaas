@@ -256,7 +256,6 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 		Disk: []ui_virtz.DiskSpec{
 			{
 				Action: "add",
-				Type:   "data",
 				Size:   20,
 			},
 		},
@@ -418,7 +417,7 @@ func TestPostImage(t *testing.T) {
 		Size:           20,
 		OSFamily:       "ubuntu",
 		Version:        "20.04_LTS_64bit",
-		UploadFileName: "testimage",
+		MinioImageName: "testimage",
 		Shared:         false,
 	}
 
@@ -481,7 +480,7 @@ func TestPostImage(t *testing.T) {
 		t.Errorf("image size is not correct: got %v want %v", image.Spec.Resources.Requests.Storage().String(), size)
 	}
 
-	expectedURL := fmt.Sprintf("http://1.2.3.4:9000/ecpaas-images/%s", imageRequest.UploadFileName)
+	expectedURL := fmt.Sprintf("http://1.2.3.4:9000/ecpaas-images/%s", imageRequest.MinioImageName)
 	if image.Spec.Source.HTTP.URL != expectedURL {
 		t.Errorf("image url is not correct: got %v want %v", image.Spec.Source.HTTP.URL, expectedURL)
 	}

@@ -63,6 +63,7 @@ func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interfac
 func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *VirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm := v1alpha1.VirtualMachine{}
 	vm_uuid := uuid.New().String()[:8]
+	vm.Namespace = namespace
 
 	ApplyVMSpec(ui_vm, &vm, vm_uuid)
 
@@ -233,6 +234,7 @@ func ApplyVMDiskSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine) 
 }
 
 func ApplyAddDisk(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
+	uiDisk.Namespace = vm.Namespace
 	diskVolume := AddDiskVolume(ui_vm.Name, uiDisk)
 	vm.Spec.DiskVolumeTemplates = append(vm.Spec.DiskVolumeTemplates, diskVolume)
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, diskVolume.Name)
@@ -243,12 +245,12 @@ func AddDiskVolume(diskVolumeName string, uiDisk *DiskSpec) v1alpha1.DiskVolume 
 
 	diskVolume := v1alpha1.DiskVolume{}
 	diskVolume.Name = diskVolumeNamePrefix + disk_uuid
+	diskVolume.Namespace = uiDisk.Namespace
 	diskVolume.Annotations = map[string]string{
-		v1alpha1.VirtualizationAliasName:   diskVolumeName,
-		v1alpha1.VirtualizationDescription: uiDisk.Description,
+		v1alpha1.VirtualizationAliasName: diskVolumeName,
 	}
 	diskVolume.Labels = map[string]string{
-		v1alpha1.VirtualizationDiskType: uiDisk.Type,
+		v1alpha1.VirtualizationDiskType: "data",
 	}
 
 	size := strconv.FormatUint(uint64(uiDisk.Size), 10) + "Gi"
@@ -435,7 +437,7 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 		v1alpha1.VirtualizationImageMemory:    strconv.FormatUint(uint64(ui_image.Memory), 10),
 		v1alpha1.VirtualizationCpuCores:       strconv.FormatUint(uint64(ui_image.CpuCores), 10),
 		v1alpha1.VirtualizationImageStorage:   strconv.FormatUint(uint64(ui_image.Size), 10),
-		v1alpha1.VirtualizationUploadFileName: ui_image.UploadFileName,
+		v1alpha1.VirtualizationUploadFileName: ui_image.MinioImageName,
 	}
 
 	// get minio ip and port
@@ -467,7 +469,7 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 	// image template spec
 	imageTemplate.Spec.Source = v1alpha1.ImageTemplateSource{
 		HTTP: &cdiv1.DataVolumeSourceHTTP{
-			URL: "http://" + ip + ":" + strconv.Itoa(int(port)) + "/" + bucketName + "/" + ui_image.UploadFileName,
+			URL: "http://" + ip + ":" + strconv.Itoa(int(port)) + "/" + bucketName + "/" + ui_image.MinioImageName,
 		},
 	}
 	imageTemplate.Spec.Attributes = v1alpha1.ImageTemplateAttributes{
