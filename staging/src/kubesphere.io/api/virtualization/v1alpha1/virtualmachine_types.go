@@ -13,19 +13,20 @@ import (
 const (
 	VirtualMachineFinalizer = "finalizers.virtualization.ecpaas.io/virtualmachine"
 
-	VirtualizationBootOrder      = "virtualization.ecpaas.io/bootorder"
-	VirtualizationDiskType       = "virtualization.ecpaas.io/disk-type"
-	VirtualizationImageInfo      = "virtualization.ecpaas.io/image-info"
-	VirtualizationAliasName      = "virtualization.ecpaas.io/alias-name"
-	VirtualizationCpuCores       = "virtualization.ecpaas.io/cpu-cores"
-	VirtualizationImageMemory    = "virtualization.ecpaas.io/image-memory"
-	VirtualizationImageStorage   = "virtualization.ecpaas.io/image-storage"
-	VirtualizationUploadFileName = "virtualization.ecpaas.io/upload-file-name"
-	VirtualizationOSFamily       = "virtualization.ecpaas.io/os-family"
-	VirtualizationOSVersion      = "virtualization.ecpaas.io/os-version"
-	VirtualizationOSPlatform     = "virtualization.ecpaas.io/os-platform"
-	VirtualizationDescription    = "virtualization.ecpaas.io/description"
-	VirtualizationSystemDiskSize = "virtualization.ecpaas.io/system-disk-size"
+	VirtualizationBootOrder       = "virtualization.ecpaas.io/bootorder"
+	VirtualizationDiskType        = "virtualization.ecpaas.io/disk-type"
+	VirtualizationImageInfo       = "virtualization.ecpaas.io/image-info"
+	VirtualizationAliasName       = "virtualization.ecpaas.io/alias-name"
+	VirtualizationCpuCores        = "virtualization.ecpaas.io/cpu-cores"
+	VirtualizationImageMemory     = "virtualization.ecpaas.io/image-memory"
+	VirtualizationImageStorage    = "virtualization.ecpaas.io/image-storage"
+	VirtualizationUploadFileName  = "virtualization.ecpaas.io/upload-file-name"
+	VirtualizationOSFamily        = "virtualization.ecpaas.io/os-family"
+	VirtualizationOSVersion       = "virtualization.ecpaas.io/os-version"
+	VirtualizationOSPlatform      = "virtualization.ecpaas.io/os-platform"
+	VirtualizationDescription     = "virtualization.ecpaas.io/description"
+	VirtualizationSystemDiskSize  = "virtualization.ecpaas.io/system-disk-size"
+	VirtualizationDiskVolumeOwner = "virtualization.ecpaas.io/disk-volume-owner"
 )
 
 type ResourceRequirements struct {

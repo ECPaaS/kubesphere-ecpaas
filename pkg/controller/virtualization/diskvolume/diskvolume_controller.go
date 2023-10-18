@@ -65,7 +65,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	klog.V(2).Infof("Reconciling VirtualMachine %s/%s", req.Namespace, req.Name)
+	klog.V(2).Infof("Reconciling DiskVolume %s/%s", req.Namespace, req.Name)
 
 	rootCtx := context.Background()
 	dv := &virtzv1alpha1.DiskVolume{}
@@ -124,16 +124,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 		status.Created = true
 
-		if dv_instance.OwnerReferences != nil {
-			status.Owner = dv_instance.OwnerReferences[0].Name
-		}
-
 	}
 
 	if !reflect.DeepEqual(dv, dv_instance) {
 		if err := r.Update(rootCtx, dv_instance); err != nil {
 			return ctrl.Result{}, err
 		}
+	}
+
+	if dv_instance.OwnerReferences != nil {
+		status.Owner = dv_instance.OwnerReferences[0].Name
+	} else if dv_instance.Labels[virtzv1alpha1.VirtualizationDiskVolumeOwner] != "" {
+		status.Owner = dv_instance.Labels[virtzv1alpha1.VirtualizationDiskVolumeOwner]
+	} else {
+		status.Owner = ""
 	}
 
 	// update status

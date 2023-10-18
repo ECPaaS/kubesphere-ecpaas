@@ -24,6 +24,7 @@ import (
 	snapv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	kvapi "kubevirt.io/api/core/v1"
 	"kubevirt.io/client-go/kubecli"
@@ -115,6 +116,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	if IsDeletionCandidate(vm_instance, virtzv1alpha1.VirtualMachineFinalizer) {
 		klog.Infof("Deleting VirtualMachine %s/%s", req.Namespace, req.Name)
+
+		err = r.deleteDiskVolumeOwnerLabel(vm_instance, req)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
 		if err := deleteVirtualMachine(virtClient, req.Namespace, vm_instance); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -142,6 +149,27 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 				if err != nil {
 					klog.Infof(err.Error())
 					return ctrl.Result{}, err
+				}
+			}
+		}
+
+		// add disk volume owner label in order to update disk volume status
+		if vm_instance.Spec.DiskVolumes != nil {
+			for _, diskVolume := range vm_instance.Spec.DiskVolumes {
+				dv := &virtzv1alpha1.DiskVolume{}
+				if err := r.Get(rootCtx, types.NamespacedName{Name: diskVolume, Namespace: req.Namespace}, dv); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				if dv.Labels[virtzv1alpha1.VirtualizationDiskType] == "data" {
+					klog.Infof("Add DiskVolume %s/%s owner label", req.Namespace, diskVolume)
+
+					copy_dv := dv.DeepCopy()
+					copy_dv.Labels[virtzv1alpha1.VirtualizationDiskVolumeOwner] = vm_instance.Name
+
+					if err := r.Update(rootCtx, copy_dv); err != nil {
+						return ctrl.Result{}, err
+					}
 				}
 			}
 		}
@@ -208,6 +236,30 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 }
 
+func (r *Reconciler) deleteDiskVolumeOwnerLabel(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request) error {
+	rootCtx := context.Background()
+
+	if vm_instance.Spec.DiskVolumes != nil {
+		for _, diskVolume := range vm_instance.Spec.DiskVolumes {
+			dv := &virtzv1alpha1.DiskVolume{}
+			if err := r.Get(rootCtx, types.NamespacedName{Name: diskVolume, Namespace: req.Namespace}, dv); err != nil {
+				return err
+			}
+
+			klog.Infof("Delete DiskVolume %s/%s owner label", req.Namespace, diskVolume)
+
+			copy_dv := dv.DeepCopy()
+			delete(copy_dv.Labels, virtzv1alpha1.VirtualizationDiskVolumeOwner)
+
+			if err := r.Update(rootCtx, copy_dv); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func GenerateDiskVolume(vm_instance *virtzv1alpha1.VirtualMachine, diskVolumeTemplate *virtzv1alpha1.DiskVolume) *virtzv1alpha1.DiskVolume {
 
 	blockOwnerDeletion := true
@@ -229,15 +281,17 @@ func GenerateDiskVolume(vm_instance *virtzv1alpha1.VirtualMachine, diskVolumeTem
 	}
 	diskVolume.Annotations["cdi.kubevirt.io/storage.deleteAfterCompletion"] = "false"
 
-	diskVolume.OwnerReferences = []metav1.OwnerReference{
-		{
-			APIVersion:         vm_instance.APIVersion,
-			Kind:               vm_instance.Kind,
-			Name:               vm_instance.Name,
-			UID:                vm_instance.UID,
-			Controller:         &controller,
-			BlockOwnerDeletion: &blockOwnerDeletion,
-		},
+	if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskType] == "system" {
+		diskVolume.OwnerReferences = []metav1.OwnerReference{
+			{
+				APIVersion:         vm_instance.APIVersion,
+				Kind:               vm_instance.Kind,
+				Name:               vm_instance.Name,
+				UID:                vm_instance.UID,
+				Controller:         &controller,
+				BlockOwnerDeletion: &blockOwnerDeletion,
+			},
+		}
 	}
 
 	return diskVolume
