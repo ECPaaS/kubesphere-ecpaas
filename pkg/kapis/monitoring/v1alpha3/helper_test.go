@@ -349,6 +349,8 @@ func TestParseRequestParams(t *testing.T) {
 					"pod_memory_usage_wo_cache",
 					"pod_net_bytes_transmitted",
 					"pod_net_bytes_received",
+					"pod_net_packets_transmitted",
+					"pod_net_packets_received",
 					"meter_pod_cpu_usage",
 					"meter_pod_memory_usage_wo_cache",
 					"meter_pod_net_bytes_transmitted",
