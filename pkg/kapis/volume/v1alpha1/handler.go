@@ -6,6 +6,7 @@ package v1
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -60,7 +61,7 @@ func (h *handler) ListMinioObjects(request *restful.Request, response *restful.R
 
 	serviceList, err := h.k8sclient.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		klog.Warning("Failed to get service: ", err)
+		response.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -113,7 +114,7 @@ func (h *handler) ListMinioObjectsWithNs(request *restful.Request, response *res
 
 	serviceList, err := h.k8sclient.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		klog.Warning("Failed to get service: ", err)
+		response.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 

@@ -37,6 +37,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		To(handler.ListMinioObjects).
 		Doc("List all Minio images").
 		Returns(http.StatusOK, api.StatusOK, ImagesList{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
 	webservice.Route(webservice.GET("/namespaces/{namespace}/minio/images").
@@ -44,6 +45,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		Doc("List all Minio images with namespace").
 		Param(webservice.PathParameter("namespace", "name of a namespace").Required(true)).
 		Returns(http.StatusOK, api.StatusOK, ImagesList{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
 	webservice.Route(webservice.GET("/minio/image/checkFileExist/{imageName}").
@@ -69,6 +71,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		Consumes("multipart/form-data").
 		Param(formData).
 		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
 	webservice.Route(webservice.POST("/namespaces/{namespace}/minio/image").
@@ -78,6 +81,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		Param(formData).
 		Param(webservice.PathParameter("namespace", "name of a namespace").Required(true)).
 		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
 	webservice.Route(webservice.DELETE("/minio/image/{imageName}").
@@ -85,6 +89,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		Doc("Delete Minio Image").
 		Param(webservice.PathParameter("imageName", "Image name").Required(true)).
 		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
 	webservice.Route(webservice.DELETE("/namespaces/{namespace}/minio/image/{imageName}").
@@ -93,6 +98,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, k8s
 		Param(webservice.PathParameter("namespace", "name of a namespace").Required(true)).
 		Param(webservice.PathParameter("imageName", "Image name").Required(true)).
 		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.MinioImageTag}))
 
 	container.Add(webservice)

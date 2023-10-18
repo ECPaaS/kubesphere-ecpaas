@@ -415,6 +415,8 @@ func TestPostImage(t *testing.T) {
 		Name:           "testimage",
 		Description:    "testimage",
 		Size:           20,
+		CpuCores:       1,
+		Memory:         2,
 		OSFamily:       "ubuntu",
 		Version:        "20.04_LTS_64bit",
 		MinioImageName: "testimage",

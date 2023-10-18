@@ -47,6 +47,8 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Reads(ui_virtz.VirtualMachineRequest{}).
 		Doc("Create virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineIDResponse{}).
+		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/virtualmachine/{id}").
@@ -57,6 +59,8 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Doc("Update virtual machine").
 		Notes(vmPutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/virtualmachine/{id}").
@@ -65,6 +69,8 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Get virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/virtualmachine").
@@ -72,12 +78,14 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all virtual machine with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListVirtualMachineResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/virtualmachine").
 		To(handler.ListVirtualMachine).
 		Doc("List all virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListVirtualMachineResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.DELETE("/namespace/{namespace}/virtualmachine/{id}").
@@ -86,7 +94,9 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Delete virtual machine").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}).
-		Returns(http.StatusOK, api.StatusOK, nil))
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
 
 	webservice.Route(webservice.POST("/namespace/{namespace}/disk").
 		To(handler.CreateDisk).
@@ -94,6 +104,8 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Reads(ui_virtz.DiskRequest{}).
 		Doc("Create disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskIDResponse{}).
+		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/disk/{id}").
@@ -104,6 +116,9 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Doc("Update disk").
 		Notes(diskPutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/disk/{id}").
@@ -112,6 +127,8 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "disk id")).
 		Doc("Get disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/disk").
@@ -119,12 +136,14 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all disk with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListDiskResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/disk").
 		To(handler.ListDisk).
 		Doc("List all disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListDiskResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.DELETE("/namespace/{namespace}/disk/{id}").
@@ -133,7 +152,9 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "disk id")).
 		Doc("Delete disk").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}).
-		Returns(http.StatusOK, api.StatusOK, nil))
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
 
 	webservice.Route(webservice.POST("/namespace/{namespace}/image").
 		To(handler.CreateImage).
@@ -141,6 +162,8 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Reads(ui_virtz.ImageRequest{}).
 		Doc("Create image").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageIDResponse{}).
+		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.PUT("/namespace/{namespace}/image/{id}").
@@ -151,6 +174,9 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Doc("Update image").
 		Notes(imagePutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/image/{id}").
@@ -159,6 +185,8 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("id", "image id")).
 		Doc("Get image").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/namespace/{namespace}/image").
@@ -166,12 +194,14 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all image with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListImageResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/image").
 		To(handler.ListImage).
 		Doc("List all image").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListImageResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.DELETE("/namespace/{namespace}/image/{id}").
@@ -179,8 +209,10 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("id", "image id")).
 		Doc("Delete image").
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}).
-		Returns(http.StatusOK, api.StatusOK, nil))
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	container.Add(webservice)
 

@@ -25,6 +25,10 @@ type virtzhandler struct {
 	virtz ui_virtz.Interface
 }
 
+type BadRequestError struct {
+	Reason string `json:"reason"`
+}
+
 func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) virtzhandler {
 	return virtzhandler{
 		virtz: ui_virtz.New(ksclient, k8sclient),
@@ -38,6 +42,10 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 	err := req.ReadEntity(&ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if !isValidVirtualMachine(ui_vm, resp) {
 		return
 	}
 
@@ -61,6 +69,10 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	err := req.ReadEntity(&ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if !isValidModifyVirtualMachine(ui_vm, resp) {
 		return
 	}
 
@@ -245,6 +257,10 @@ func (h *virtzhandler) CreateDisk(req *restful.Request, resp *restful.Response) 
 		return
 	}
 
+	if !isValidDiskRequest(ui_disk, resp) {
+		return
+	}
+
 	createdDisk, err := h.virtz.CreateDisk(namespace, &ui_disk)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -269,8 +285,21 @@ func (h *virtzhandler) UpdateDisk(req *restful.Request, resp *restful.Response) 
 		return
 	}
 
+	if !isValidModifyDiskRequest(ui_disk, resp) {
+		return
+	}
+
+	if !isValidDiskSize(h, namespace, diskName, int(ui_disk.Size), resp) {
+		return
+	}
+
 	_, err = h.virtz.UpdateDisk(namespace, diskName, &ui_disk)
 	if err != nil {
+		klog.Error(err)
+		if errors.IsNotFound(err) {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
@@ -365,6 +394,10 @@ func (h *virtzhandler) CreateImage(req *restful.Request, resp *restful.Response)
 		return
 	}
 
+	if !isValidImageRequest(ui_image, resp) {
+		return
+	}
+
 	createdImage, err := h.virtz.CreateImage(namespace, &ui_image)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -388,8 +421,17 @@ func (h *virtzhandler) UpdateImage(req *restful.Request, resp *restful.Response)
 		return
 	}
 
+	if !isValidModifyImageRequest(ui_image, resp) {
+		return
+	}
+
 	_, err = h.virtz.UpdateImage(namespace, imageName, &ui_image)
 	if err != nil {
+		klog.Error(err)
+		if errors.IsNotFound(err) {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}

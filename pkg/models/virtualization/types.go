@@ -31,7 +31,7 @@ type DiskSpec struct {
 
 type GuestSpec struct {
 	Username string `json:"username" default:"root" description:"Guest operating system username"`
-	Password string `json:"password" default:"123456" description:"Guest operating system password"`
+	Password string `json:"password" default:"abc1234" description:"Guest operating system password"`
 }
 
 type ModifyVirtualMachineRequest struct {
