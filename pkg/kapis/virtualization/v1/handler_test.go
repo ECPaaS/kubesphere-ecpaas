@@ -24,33 +24,12 @@ import (
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
-func prepare() (*virtzhandler, error) {
-
-	ksClient := fakeks.NewSimpleClientset()
-	k8sClient := fakek8s.NewSimpleClientset()
-
-	handler := newHandler(ksClient, k8sClient)
-
-	prepareFakeVirtualMachine(ksClient)
-
-	return &handler, nil
-}
-
 func prepare2() (*virtzhandler, error) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
 
 	handler := newHandler(ksClient, k8sClient)
-
-	// prepare a fake image template
-	image := &FakeImageTemplate{
-		Name:      "image-1234",
-		Namespace: "default",
-		Size:      20,
-	}
-
-	prepareFakeImageTemplate(ksClient, image)
 
 	vm, _ := prepareFakeVirtualMachine(ksClient)
 
@@ -61,13 +40,39 @@ func prepare2() (*virtzhandler, error) {
 
 func TestGetVirtualMachine(t *testing.T) {
 
-	handler, err := prepare()
+	ksClient := fakeks.NewSimpleClientset()
+	k8sClient := fakek8s.NewSimpleClientset()
+
+	handler := newHandler(ksClient, k8sClient)
+
+	namespace := "default"
+
+	// prepare a fake image template
+	image := &FakeImageTemplate{
+		Name:      "image-1234",
+		Namespace: namespace,
+		Size:      20,
+	}
+
+	prepareFakeImageTemplate(ksClient, image)
+
+	// prepare a fake virtual machine
+	ui_virtz_vm := ui_virtz.VirtualMachineRequest{}
+	ui_virtz_vm.Name = "testvm"
+	ui_virtz_vm.Description = "testvm"
+	ui_virtz_vm.Image = &ui_virtz.ImageInfoResponse{
+		ID:   "image-1234",
+		Size: 20,
+	}
+	ui_virtz_vm.CpuCores = 1
+	ui_virtz_vm.Memory = 1
+
+	vm, err := prepareFakeVirtualMachine2(&handler, &ui_virtz_vm, namespace)
 	if err != nil {
 		t.Error(err)
 	}
 
-	namespace := "default"
-	vmName := "vm-1234"
+	vmName := vm.Name
 	url := fmt.Sprintf("/namespaces/%s/virtualmachine/%s", namespace, vmName)
 
 	request := httptest.NewRequest("GET", url, nil)
@@ -87,6 +92,30 @@ func TestGetVirtualMachine(t *testing.T) {
 	handler.GetVirtualMachine(restfulRequest, restfulResponse)
 	if status := restfulResponse.StatusCode(); status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var vmResponse ui_virtz.VirtualMachineResponse
+	err = json.Unmarshal(res.Body.Bytes(), &vmResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if vmResponse.Name != ui_virtz_vm.Name {
+		t.Errorf("vm name is not correct: got %v want %v", vmResponse.Name, vmName)
+	}
+
+	if vmResponse.CpuCores != ui_virtz_vm.CpuCores {
+		t.Errorf("vm cpu cores is not correct: got %v want %v", vmResponse.CpuCores, 2)
+	}
+
+	if vmResponse.Memory != ui_virtz_vm.Memory {
+		t.Errorf("vm memory is not correct: got %v want %v", vmResponse.Memory, 2)
+	}
+
+	if vmResponse.Description != ui_virtz_vm.Description {
+		t.Errorf("vm description is not correct: got %v want %v", vmResponse.Description, ui_virtz_vm.Description)
 	}
 
 }

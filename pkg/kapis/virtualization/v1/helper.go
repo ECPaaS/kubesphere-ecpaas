@@ -76,6 +76,15 @@ func prepareFakeImageTemplate(ksClient *fakeks.Clientset, fakeImageTemlate *Fake
 	return nil
 }
 
+func prepareFakeVirtualMachine2(h *virtzhandler, ui_virtz_vm *ui_virtz.VirtualMachineRequest, namespace string) (*virtzv1alpha1.VirtualMachine, error) {
+	vm, err := h.virtz.CreateVirtualMachine(namespace, ui_virtz_vm)
+	if err != nil {
+		return nil, err
+	}
+
+	return vm, nil
+}
+
 func prepareFakeVirtualMachine(ksClient *fakeks.Clientset) (*virtzv1alpha1.VirtualMachine, error) {
 
 	diskVolumeNamePrefix := "disk-"

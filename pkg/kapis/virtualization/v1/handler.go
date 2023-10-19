@@ -101,13 +101,14 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 
 	ui_image_spec := h.getUIImageInfoResponse(vm)
 
+	memory, _ := strconv.ParseUint(strings.Replace(vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), "Gi", "", -1), 10, 32)
 	return ui_virtz.VirtualMachineResponse{
 		Name:        vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
 		ID:          vm.Name,
 		Namespace:   vm.Namespace,
 		Description: vm.Annotations[virtzv1alpha1.VirtualizationDescription],
 		CpuCores:    uint(vm.Spec.Hardware.Domain.CPU.Cores),
-		Memory:      uint(vm.Spec.Hardware.Domain.Resources.Requests.Memory().Size()),
+		Memory:      uint(memory),
 		Image:       &ui_image_spec,
 		Disks:       h.getUIDisksResponse(vm),
 		Status:      ui_vm_status,
