@@ -132,7 +132,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
-	if NeedToAddFinalizer(vm_instance, virtzv1alpha1.VirtualMachineFinalizer) {
+	if NeedToAddFinalizer(vm_instance, virtzv1alpha1.VirtualMachineFinalizer) || !vm_instance.Status.Created {
 		klog.Infof("Adding finalizer for VirtualMachine %s/%s", req.Namespace, req.Name)
 		if err := r.addFinalizer(vm_instance); err != nil {
 			return ctrl.Result{}, err
@@ -147,8 +147,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 				err := r.Create(rootCtx, diskVolume)
 				if err != nil {
-					klog.Infof(err.Error())
-					return ctrl.Result{}, err
+					statusErr := err.(*errors.StatusError)
+					if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
+						klog.Infof("DiskVolume %s/%s already exists", req.Namespace, diskVolume.Name)
+					} else {
+						klog.Infof(err.Error())
+						return ctrl.Result{}, err
+					}
 				}
 			}
 		}
@@ -178,7 +183,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		err := createVirtualMachine(virtClient, vm_instance)
 
 		if err != nil {
-			return ctrl.Result{}, err
+			statusErr := err.(*errors.StatusError)
+			if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
+				klog.Infof("VirtualMachine %s/%s already exists", req.Namespace, vm_instance.Name)
+			} else {
+				klog.Infof(err.Error())
+				return ctrl.Result{}, err
+			}
 		}
 	}
 

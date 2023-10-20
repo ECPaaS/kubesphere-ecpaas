@@ -15,6 +15,7 @@ import (
 	"k8s.io/klog"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -111,13 +112,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		if dv_instance.Spec.Source.Blank != nil {
 			err := r.createPVC(dv_instance, scName)
 			if err != nil {
-				return ctrl.Result{}, err
+				statusErr := err.(*errors.StatusError)
+				if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
+					klog.Infof("PVC %s/%s already exists", dv_instance.Namespace, dv_instance.Spec.PVCName)
+				} else {
+					klog.Infof("Cannot create PVC: %v\n", err)
+					return ctrl.Result{}, err
+				}
 			}
 		}
 		// clone pvc for image disk
 		if dv_instance.Spec.Source.Image != nil {
 			err := r.clonePVC(virtClient, dv_instance, scName)
 			if err != nil {
+				klog.Infof("Cannot clone PVC: %v\n", err)
 				return ctrl.Result{}, err
 			}
 		}
