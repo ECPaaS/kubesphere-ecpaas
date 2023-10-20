@@ -24,25 +24,10 @@ import (
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
-func prepare2() (*virtzhandler, error) {
-
-	ksClient := fakeks.NewSimpleClientset()
-	k8sClient := fakek8s.NewSimpleClientset()
-
-	handler := newHandler(ksClient, k8sClient)
-
-	vm, _ := prepareFakeVirtualMachine(ksClient)
-
-	prepareFakeDiskVolume(ksClient, vm)
-
-	return &handler, nil
-}
-
 func TestGetVirtualMachine(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-
 	handler := newHandler(ksClient, k8sClient)
 
 	namespace := "default"
@@ -67,20 +52,20 @@ func TestGetVirtualMachine(t *testing.T) {
 	ui_virtz_vm.CpuCores = 1
 	ui_virtz_vm.Memory = 1
 
-	vm, err := prepareFakeVirtualMachine2(&handler, &ui_virtz_vm, namespace)
+	vm, err := createVirtualMachine(&handler, &ui_virtz_vm, namespace)
 	if err != nil {
 		t.Error(err)
 	}
 
-	vmName := vm.Name
-	url := fmt.Sprintf("/namespaces/%s/virtualmachine/%s", namespace, vmName)
+	vmID := vm.Name
+	url := fmt.Sprintf("/namespaces/%s/virtualmachine/%s", namespace, vmID)
 
 	request := httptest.NewRequest("GET", url, nil)
 	restfulRequest := restful.NewRequest(request)
 
 	pathMap := make(map[string]string)
 	pathMap["namespace"] = namespace
-	pathMap["id"] = vmName
+	pathMap["id"] = vmID
 	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
 		t.Fatalf("set pathParameters failed")
 	}
@@ -102,8 +87,12 @@ func TestGetVirtualMachine(t *testing.T) {
 		t.Error(err)
 	}
 
+	if vmResponse.ID != vmID {
+		t.Errorf("vm id is not correct: got %v want %v", vmResponse.ID, vmID)
+	}
+
 	if vmResponse.Name != ui_virtz_vm.Name {
-		t.Errorf("vm name is not correct: got %v want %v", vmResponse.Name, vmName)
+		t.Errorf("vm name is not correct: got %v want %v", vmResponse.Name, ui_virtz_vm.Name)
 	}
 
 	if vmResponse.CpuCores != ui_virtz_vm.CpuCores {
@@ -122,13 +111,46 @@ func TestGetVirtualMachine(t *testing.T) {
 
 func TestGetVirtualMachineWithAddDisk(t *testing.T) {
 
-	handler, err := prepare2()
+	ksClient := fakeks.NewSimpleClientset()
+	k8sClient := fakek8s.NewSimpleClientset()
+	handler := newHandler(ksClient, k8sClient)
+
+	namespace := "default"
+
+	// prepare a fake image template
+	image := &FakeImageTemplate{
+		Name:      "image-1234",
+		Namespace: namespace,
+		Size:      20,
+	}
+
+	prepareFakeImageTemplate(ksClient, image)
+
+	// prepare a fake virtual machine
+	ui_virtz_vm := ui_virtz.VirtualMachineRequest{}
+	ui_virtz_vm.Name = "testvm"
+	ui_virtz_vm.Description = "testvm"
+	ui_virtz_vm.Image = &ui_virtz.ImageInfoResponse{
+		ID:   "image-1234",
+		Size: 20,
+	}
+	ui_virtz_vm.Disk = []ui_virtz.DiskSpec{
+		{
+			Action: "add",
+			Size:   20,
+		},
+	}
+	ui_virtz_vm.CpuCores = 1
+	ui_virtz_vm.Memory = 1
+
+	vm, err := createVirtualMachine(&handler, &ui_virtz_vm, namespace)
 	if err != nil {
 		t.Error(err)
 	}
 
-	namespace := "default"
-	vmName := "vm-1234"
+	prepareFakeDiskVolume(ksClient, vm)
+
+	vmName := vm.Name
 	url := fmt.Sprintf("/namespaces/%s/virtualmachine/%s", namespace, vmName)
 
 	request := httptest.NewRequest("GET", url, nil)
@@ -163,12 +185,16 @@ func TestGetVirtualMachineWithAddDisk(t *testing.T) {
 		t.Errorf("vm disk number is not correct: got %v want %v", len(vmResponse.Disks), 2)
 	}
 
-	if vmResponse.Disks[1].Type != "data" {
-		t.Errorf("vm disk type is not correct: got %v want %v", vmResponse.Disks[1].Type, "data")
-	}
-
-	if vmResponse.Disks[1].Size != 20 {
-		t.Errorf("vm disk size is not correct: got %v want %v", vmResponse.Disks[1].Size, "20")
+	for _, disk := range vmResponse.Disks {
+		if disk.Type == "system" {
+			if disk.Size != ui_virtz_vm.Image.Size {
+				t.Errorf("vm disk size is not correct: got %v want %v", disk.Size, ui_virtz_vm.Image.Size)
+			}
+		} else if disk.Type == "data" {
+			if disk.Size != ui_virtz_vm.Disk[0].Size {
+				t.Errorf("vm disk size is not correct: got %v want %v", disk.Size, ui_virtz_vm.Disk[0].Size)
+			}
+		}
 	}
 
 }
@@ -177,7 +203,6 @@ func TestPostVirtualMachine(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-
 	handler := newHandler(ksClient, k8sClient)
 
 	// prepare a fake image template
@@ -240,18 +265,7 @@ func TestPostVirtualMachine(t *testing.T) {
 		t.Error(err)
 	}
 
-	if vm.Annotations[virtzv1alpha1.VirtualizationAliasName] != vmRequest.Name {
-		t.Errorf("vm alias name is not correct: got %v want %v", vm.Annotations[virtzv1alpha1.VirtualizationAliasName], vmRequest.Name)
-	}
-
-	if vm.Spec.Hardware.Domain.CPU.Cores != uint32(vmRequest.CpuCores) {
-		t.Errorf("vm cpu cores is not correct: got %v want %v", vm.Spec.Hardware.Domain.CPU.Cores, vmRequest.CpuCores)
-	}
-
-	memory := strconv.FormatUint(uint64(vmRequest.Memory), 10) + "Gi"
-	if vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() != memory {
-		t.Errorf("vm memory is not correct: got %v want %v", vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), memory)
-	}
+	checkVirtualMachineResult(t, vm, vmRequest)
 
 }
 
@@ -259,7 +273,6 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-
 	handler := newHandler(ksClient, k8sClient)
 
 	// prepare a fake image template
@@ -328,38 +341,13 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 		t.Error(err)
 	}
 
-	if vm.Annotations[virtzv1alpha1.VirtualizationAliasName] != vmRequest.Name {
-		t.Errorf("vm alias name is not correct: got %v want %v", vm.Annotations[virtzv1alpha1.VirtualizationAliasName], vmRequest.Name)
-	}
-
-	if vm.Spec.Hardware.Domain.CPU.Cores != uint32(vmRequest.CpuCores) {
-		t.Errorf("vm cpu cores is not correct: got %v want %v", vm.Spec.Hardware.Domain.CPU.Cores, vmRequest.CpuCores)
-	}
-
-	memory := strconv.FormatUint(uint64(vmRequest.Memory), 10) + "Gi"
-	if vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() != memory {
-		t.Errorf("vm memory is not correct: got %v want %v", vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), memory)
-	}
-
-	// verify disk
-	if len(vm.Spec.DiskVolumeTemplates) != 2 {
-		t.Errorf("vm disk number is not correct: got %v want %v", len(vm.Spec.DiskVolumeTemplates), 2)
-	}
-
-	if vm.Spec.DiskVolumeTemplates[1].Labels[virtzv1alpha1.VirtualizationDiskType] != "data" {
-		t.Errorf("vm disk type is not correct: got %v want %v", vm.Spec.DiskVolumeTemplates[1].Labels[virtzv1alpha1.VirtualizationDiskType], "data")
-	}
-
-	if vm.Spec.DiskVolumeTemplates[1].Spec.Resources.Requests.Storage().String() != "20Gi" {
-		t.Errorf("vm disk size is not correct: got %v want %v", vm.Spec.DiskVolumeTemplates[1].Spec.Resources.Requests.Storage().String(), "20Gi")
-	}
+	checkVirtualMachineResult(t, vm, vmRequest)
 }
 
 func TestPostDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-
 	handler := newHandler(ksClient, k8sClient)
 
 	namespace := "default"
@@ -367,7 +355,7 @@ func TestPostDisk(t *testing.T) {
 
 	diskRequest := ui_virtz.DiskRequest{
 		Name:        "testdisk",
-		Description: "testdisk",
+		Description: "testdisk-description",
 		Size:        20,
 	}
 
@@ -428,11 +416,66 @@ func TestPostDisk(t *testing.T) {
 
 }
 
+func TestGetDisk(t *testing.T) {
+
+	ksClient := fakeks.NewSimpleClientset()
+	k8sClient := fakek8s.NewSimpleClientset()
+	handler := newHandler(ksClient, k8sClient)
+
+	namespace := "default"
+	diskName := "testdisk"
+
+	disk := ui_virtz.DiskRequest{
+		Name:        diskName,
+		Description: "testdisk",
+		Size:        20,
+	}
+
+	diskVolume, err := createDisk(&handler, &disk, namespace)
+	if err != nil {
+		t.Error(err)
+	}
+
+	diskID := diskVolume.Name
+	url := fmt.Sprintf("/namespaces/%s/disk/%s", namespace, diskID)
+
+	request := httptest.NewRequest("GET", url, nil)
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	pathMap["id"] = diskID
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.GetDisk(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var diskResponse ui_virtz.DiskResponse
+	err = json.Unmarshal(res.Body.Bytes(), &diskResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if diskResponse.ID != diskID {
+		t.Errorf("disk id is not correct: got %v want %v", diskResponse.ID, diskID)
+	}
+
+}
+
 func TestPostImage(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-
 	handler := newHandler(ksClient, k8sClient)
 
 	prepareFakeMinioService(k8sClient)
@@ -524,27 +567,37 @@ func TestGetImage(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-
 	handler := newHandler(ksClient, k8sClient)
 
-	// prepare a fake image template
-	fakeImageTemlate := &FakeImageTemplate{
-		Name:      "image-1234",
-		Namespace: "default",
-		Size:      20,
-	}
-	prepareFakeImageTemplate(ksClient, fakeImageTemlate)
+	prepareFakeMinioService(k8sClient)
 
 	namespace := "default"
-	imageName := "image-1234"
-	url := fmt.Sprintf("/namespaces/%s/image/%s", namespace, imageName)
+	imageName := "testimage"
+
+	image := ui_virtz.ImageRequest{
+		Name:           imageName,
+		Description:    "testimage",
+		Size:           20,
+		OSFamily:       "ubuntu",
+		Version:        "20.04_LTS_64bit",
+		MinioImageName: "testimage",
+		Shared:         false,
+	}
+
+	imageTempate, err := createImage(&handler, &image, namespace)
+	if err != nil {
+		t.Error(err)
+	}
+
+	imageID := imageTempate.Name
+	url := fmt.Sprintf("/namespaces/%s/image/%s", namespace, imageID)
 
 	request := httptest.NewRequest("GET", url, nil)
 	restfulRequest := restful.NewRequest(request)
 
 	pathMap := make(map[string]string)
 	pathMap["namespace"] = namespace
-	pathMap["id"] = imageName
+	pathMap["id"] = imageID
 	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
 		t.Fatalf("set pathParameters failed")
 	}
@@ -554,5 +607,48 @@ func TestGetImage(t *testing.T) {
 	restfulResponse.SetRequestAccepts("application/json")
 
 	handler.GetImage(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var imageResponse ui_virtz.ImageResponse
+	err = json.Unmarshal(res.Body.Bytes(), &imageResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if imageResponse.ID != imageID {
+		t.Errorf("image id is not correct: got %v want %v", imageResponse.ID, imageID)
+	}
+
+	if imageResponse.Name != image.Name {
+		t.Errorf("image name is not correct: got %v want %v", imageResponse.Name, image.Name)
+	}
+
+	if imageResponse.Description != image.Description {
+		t.Errorf("image description is not correct: got %v want %v", imageResponse.Description, image.Description)
+	}
+
+	if imageResponse.OSFamily != image.OSFamily {
+		t.Errorf("image os family is not correct: got %v want %v", imageResponse.OSFamily, image.OSFamily)
+	}
+
+	if imageResponse.Version != image.Version {
+		t.Errorf("image version is not correct: got %v want %v", imageResponse.Version, image.Version)
+	}
+
+	if imageResponse.Size != image.Size {
+		t.Errorf("image size is not correct: got %v want %v", imageResponse.Size, image.Size)
+	}
+
+	if imageResponse.MinioImageName != image.MinioImageName {
+		t.Errorf("image minio image name is not correct: got %v want %v", imageResponse.MinioImageName, image.MinioImageName)
+	}
+
+	if imageResponse.Shared != image.Shared {
+		t.Errorf("image shared is not correct: got %v want %v", imageResponse.Shared, image.Shared)
+	}
 
 }

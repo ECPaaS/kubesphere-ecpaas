@@ -6,8 +6,8 @@ package virtualization
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
+	"testing"
 
 	fakek8s "k8s.io/client-go/kubernetes/fake"
 	fakeks "kubesphere.io/kubesphere/pkg/client/clientset/versioned/fake"
@@ -23,7 +23,6 @@ import (
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
-// prepare fake disk volume
 func prepareFakeDiskVolume(ksClient *fakeks.Clientset, vm_instance *virtzv1alpha1.VirtualMachine) error {
 
 	for _, diskVolumeTemplate := range vm_instance.Spec.DiskVolumeTemplates {
@@ -76,7 +75,7 @@ func prepareFakeImageTemplate(ksClient *fakeks.Clientset, fakeImageTemlate *Fake
 	return nil
 }
 
-func prepareFakeVirtualMachine2(h *virtzhandler, ui_virtz_vm *ui_virtz.VirtualMachineRequest, namespace string) (*virtzv1alpha1.VirtualMachine, error) {
+func createVirtualMachine(h *virtzhandler, ui_virtz_vm *ui_virtz.VirtualMachineRequest, namespace string) (*virtzv1alpha1.VirtualMachine, error) {
 	vm, err := h.virtz.CreateVirtualMachine(namespace, ui_virtz_vm)
 	if err != nil {
 		return nil, err
@@ -85,126 +84,22 @@ func prepareFakeVirtualMachine2(h *virtzhandler, ui_virtz_vm *ui_virtz.VirtualMa
 	return vm, nil
 }
 
-func prepareFakeVirtualMachine(ksClient *fakeks.Clientset) (*virtzv1alpha1.VirtualMachine, error) {
-
-	diskVolumeNamePrefix := "disk-"
-
-	vm_uuid := "1234"
-	namespace := "default"
-	vm_name := "testvm"
-	vm_id := "vm-" + vm_uuid
-
-	vm := &virtzv1alpha1.VirtualMachine{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      vm_id,
-			Namespace: namespace,
-			Annotations: map[string]string{
-				virtzv1alpha1.VirtualizationAliasName:      vm_name,
-				virtzv1alpha1.VirtualizationDescription:    vm_name,
-				virtzv1alpha1.VirtualizationSystemDiskSize: "10Gi",
-			},
-		},
-	}
-
-	imageInfo := ui_virtz.ImageInfo{}
-	imageInfo.ID = "image-1234"
-	imageInfo.Namespace = namespace
-	// annotations
-	imageInfo.Name = "image-test"
-	// labels
-	imageInfo.System = "ubuntu"
-	imageInfo.Version = "20.04_LTS_64bit"
-	imageInfo.ImageSize = "20Gi"
-	imageInfo.Cpu = "1"
-	imageInfo.Memory = "1Gi"
-
-	jsonData, err := json.Marshal(imageInfo)
+func createImage(h *virtzhandler, ui_virtz_image *ui_virtz.ImageRequest, namespace string) (*virtzv1alpha1.ImageTemplate, error) {
+	image, err := h.virtz.CreateImage(namespace, ui_virtz_image)
 	if err != nil {
 		return nil, err
 	}
 
-	vm.Annotations[virtzv1alpha1.VirtualizationImageInfo] = string(jsonData)
+	return image, nil
+}
 
-	vm.Spec.Hardware.Domain = virtzv1alpha1.Domain{
-		CPU: virtzv1alpha1.CPU{
-			Cores: 2,
-		},
-		Resources: virtzv1alpha1.ResourceRequirements{
-			Requests: v1.ResourceList{
-				v1.ResourceMemory: resource.MustParse("2Gi"),
-			},
-		},
-	}
-
-	vm.Spec.Hardware.Networks = []virtzv1alpha1.Network{
-		{
-			Name: "default",
-			NetworkSource: virtzv1alpha1.NetworkSource{
-				Pod: &virtzv1alpha1.PodNetwork{},
-			},
-		},
-	}
-	vm.Spec.Hardware.Hostname = vm_name
-
-	vm.Spec.DiskVolumeTemplates = []virtzv1alpha1.DiskVolume{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: diskVolumeNamePrefix + vm_uuid,
-				Annotations: map[string]string{
-					virtzv1alpha1.VirtualizationAliasName: vm_name,
-				},
-				Labels: map[string]string{
-					virtzv1alpha1.VirtualizationBootOrder: "1",
-					virtzv1alpha1.VirtualizationDiskType:  "system",
-				},
-			},
-			Spec: virtzv1alpha1.DiskVolumeSpec{
-				Source: virtzv1alpha1.DiskVolumeSource{
-					Image: &virtzv1alpha1.DataVolumeSourceImage{
-						Namespace: namespace,
-						Name:      "image-1234",
-					},
-				},
-				Resources: virtzv1alpha1.ResourceRequirements{
-					Requests: v1.ResourceList{
-						v1.ResourceStorage: resource.MustParse("10Gi"),
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: diskVolumeNamePrefix + vm_uuid + "-new",
-				Annotations: map[string]string{
-					virtzv1alpha1.VirtualizationAliasName: vm_name,
-				},
-				Labels: map[string]string{
-					virtzv1alpha1.VirtualizationDiskType: "data",
-				},
-			},
-			Spec: virtzv1alpha1.DiskVolumeSpec{
-				Source: virtzv1alpha1.DiskVolumeSource{
-					Blank: &virtzv1alpha1.DataVolumeBlankImage{},
-				},
-				Resources: virtzv1alpha1.ResourceRequirements{
-					Requests: v1.ResourceList{
-						v1.ResourceStorage: resource.MustParse("20Gi"),
-					},
-				},
-			},
-		},
-	}
-	vm.Spec.DiskVolumes = []string{
-		diskVolumeNamePrefix + vm_uuid,
-		diskVolumeNamePrefix + vm_uuid + "-new",
-	}
-
-	_, err = ksClient.VirtualizationV1alpha1().VirtualMachines(namespace).Create(context.TODO(), vm, metav1.CreateOptions{})
+func createDisk(h *virtzhandler, ui_virtz_disk *ui_virtz.DiskRequest, namespace string) (*virtzv1alpha1.DiskVolume, error) {
+	disk, err := h.virtz.CreateDisk(namespace, ui_virtz_disk)
 	if err != nil {
 		return nil, err
 	}
 
-	return vm, nil
+	return disk, nil
 }
 
 func prepareFakeMinioService(k8sClient *fakek8s.Clientset) error {
@@ -230,4 +125,63 @@ func prepareFakeMinioService(k8sClient *fakek8s.Clientset) error {
 	}
 
 	return nil
+}
+
+func checkVirtualMachineResult(t *testing.T, vm *virtzv1alpha1.VirtualMachine, ui_vm_req ui_virtz.VirtualMachineRequest) {
+	if vm.Annotations[virtzv1alpha1.VirtualizationAliasName] != ui_vm_req.Name {
+		t.Errorf("vm alias name is not correct: got %v want %v", vm.Annotations[virtzv1alpha1.VirtualizationAliasName], ui_vm_req.Name)
+	}
+
+	if vm.Spec.Hardware.Domain.CPU.Cores != uint32(ui_vm_req.CpuCores) {
+		t.Errorf("vm cpu cores is not correct: got %v want %v", vm.Spec.Hardware.Domain.CPU.Cores, ui_vm_req.CpuCores)
+	}
+
+	memory := strconv.FormatUint(uint64(ui_vm_req.Memory), 10) + "Gi"
+	if vm.Spec.Hardware.Domain.Resources.Requests.Memory().String() != memory {
+		t.Errorf("vm memory is not correct: got %v want %v", vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), memory)
+	}
+
+	// check only system disk
+	if len(vm.Spec.DiskVolumes) == 1 {
+		if len(vm.Spec.DiskVolumeTemplates) != 1 {
+			t.Errorf("vm disk number is not correct: got %v want %v", len(vm.Spec.DiskVolumeTemplates), 1)
+		}
+
+		if vm.Spec.DiskVolumeTemplates[0].Labels[virtzv1alpha1.VirtualizationDiskType] != "system" {
+			t.Errorf("vm disk type is not correct: got %v want %v", vm.Spec.DiskVolumeTemplates[0].Labels[virtzv1alpha1.VirtualizationDiskType], "system")
+		}
+
+		system_size := strconv.FormatUint(uint64(ui_vm_req.Image.Size), 10) + "Gi"
+		if vm.Spec.DiskVolumeTemplates[0].Spec.Resources.Requests.Storage().String() != system_size {
+			t.Errorf("vm disk size is not correct: got %v want %v", vm.Spec.DiskVolumeTemplates[0].Spec.Resources.Requests.Storage().String(), system_size)
+		}
+	}
+
+	// check system and data disk
+	if len(vm.Spec.DiskVolumes) == 2 {
+		if len(ui_vm_req.Disk) == 1 {
+			if ui_vm_req.Disk[0].Action == "add" || ui_vm_req.Disk[0].Action == "mount" {
+				if len(vm.Spec.DiskVolumeTemplates) != 2 {
+					t.Errorf("vm disk number is not correct: got %v want %v", len(vm.Spec.DiskVolumeTemplates), 2)
+				}
+
+				if vm.Spec.DiskVolumeTemplates[1].Labels[virtzv1alpha1.VirtualizationDiskType] != "data" {
+					t.Errorf("vm disk type is not correct: got %v want %v", vm.Spec.DiskVolumeTemplates[1].Labels[virtzv1alpha1.VirtualizationDiskType], "data")
+				}
+
+				data_size := strconv.FormatUint(uint64(ui_vm_req.Disk[0].Size), 10) + "Gi"
+				if vm.Spec.DiskVolumeTemplates[1].Spec.Resources.Requests.Storage().String() != data_size {
+					t.Errorf("vm disk size is not correct: got %v want %v", vm.Spec.DiskVolumeTemplates[1].Spec.Resources.Requests.Storage().String(), data_size)
+				}
+			}
+		}
+	}
+
+	for _, uiDisk := range ui_vm_req.Disk {
+		if uiDisk.Action == "add" || uiDisk.Action == "mount" {
+			if len(vm.Spec.DiskVolumes) != len(ui_vm_req.Disk)+1 {
+				t.Errorf("vm disk number is not correct: got %v want %v", len(vm.Spec.DiskVolumes), len(ui_vm_req.Disk)+1)
+			}
+		}
+	}
 }
