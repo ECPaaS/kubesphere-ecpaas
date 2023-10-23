@@ -290,8 +290,10 @@ func (h *virtzhandler) UpdateDisk(req *restful.Request, resp *restful.Response) 
 		return
 	}
 
-	if !isValidDiskSize(h, namespace, diskName, int(ui_disk.Size), resp) {
-		return
+	if ui_disk.Size != 0 {
+		if !isValidDiskSize(h, namespace, diskName, int(ui_disk.Size), resp) {
+			return
+		}
 	}
 
 	_, err = h.virtz.UpdateDisk(namespace, diskName, &ui_disk)

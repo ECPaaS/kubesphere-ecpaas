@@ -90,20 +90,28 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 		return false
 	}
 
-	if !isValidString(vm.Name, resp) {
-		return false
+	if vm.Name != "" {
+		if !isValidString(vm.Name, resp) {
+			return false
+		}
 	}
 
-	if !isValidLength(reflectType, vm.Description, "Description", resp) {
-		return false
+	if vm.Description != "" {
+		if !isValidLength(reflectType, vm.Description, "Description", resp) {
+			return false
+		}
 	}
 
-	if !isValidWithinRange(reflectType, int(vm.CpuCores), "CpuCores", resp) {
-		return false
+	if vm.CpuCores != 0 {
+		if !isValidWithinRange(reflectType, int(vm.CpuCores), "CpuCores", resp) {
+			return false
+		}
 	}
 
-	if !isValidWithinRange(reflectType, int(vm.Memory), "Memory", resp) {
-		return false
+	if vm.Memory != 0 {
+		if !isValidWithinRange(reflectType, int(vm.Memory), "Memory", resp) {
+			return false
+		}
 	}
 
 	return true
@@ -138,16 +146,22 @@ func isValidModifyDiskRequest(disk ui_virtz.ModifyDiskRequest, resp *restful.Res
 		return false
 	}
 
-	if !isValidString(disk.Name, resp) {
-		return false
+	if disk.Name != "" {
+		if !isValidString(disk.Name, resp) {
+			return false
+		}
 	}
 
-	if !isValidLength(reflectType, disk.Description, "Description", resp) {
-		return false
+	if disk.Description != "" {
+		if !isValidLength(reflectType, disk.Description, "Description", resp) {
+			return false
+		}
 	}
 
-	if !isValidWithinRange(reflectType, int(disk.Size), "Size", resp) {
-		return false
+	if disk.Size != 0 {
+		if !isValidWithinRange(reflectType, int(disk.Size), "Size", resp) {
+			return false
+		}
 	}
 
 	return true
@@ -190,24 +204,34 @@ func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.
 		return false
 	}
 
-	if !isValidString(image.Name, resp) {
-		return false
+	if image.Name != "" {
+		if !isValidString(image.Name, resp) {
+			return false
+		}
 	}
 
-	if !isValidLength(reflectType, image.Description, "Description", resp) {
-		return false
+	if image.Description != "" {
+		if !isValidLength(reflectType, image.Description, "Description", resp) {
+			return false
+		}
 	}
 
-	if !isValidWithinRange(reflectType, int(image.CpuCores), "CpuCores", resp) {
-		return false
+	if image.CpuCores != 0 {
+		if !isValidWithinRange(reflectType, int(image.CpuCores), "CpuCores", resp) {
+			return false
+		}
 	}
 
-	if !isValidWithinRange(reflectType, int(image.Memory), "Memory", resp) {
-		return false
+	if image.Memory != 0 {
+		if !isValidWithinRange(reflectType, int(image.Memory), "Memory", resp) {
+			return false
+		}
 	}
 
-	if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
-		return false
+	if image.Size != 0 {
+		if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
+			return false
+		}
 	}
 
 	return true
