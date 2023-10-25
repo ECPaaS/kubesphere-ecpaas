@@ -435,7 +435,7 @@
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/disk": {
+    "/kapis/virtualization.ecpaas.io/v1/disks": {
       "get": {
         "produces": [
           "application/json"
@@ -451,11 +451,14 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ListDiskResponse"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/image": {
+    "/kapis/virtualization.ecpaas.io/v1/images": {
       "get": {
         "produces": [
           "application/json"
@@ -471,11 +474,14 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ListImageResponse"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/disk": {
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/disks": {
       "get": {
         "produces": [
           "application/json"
@@ -500,6 +506,9 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ListDiskResponse"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -510,7 +519,7 @@
         "tags": [
           "Virtualization Disk"
         ],
-        "summary": "Create data disk",
+        "summary": "Create disk",
         "operationId": "CreateDisk",
         "parameters": [
           {
@@ -535,11 +544,20 @@
             "schema": {
               "$ref": "#/definitions/virtualization.DiskIDResponse"
             }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/disk/{id}": {
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/disks/{id}": {
       "get": {
         "produces": [
           "application/json"
@@ -571,6 +589,12 @@
             "schema": {
               "$ref": "#/definitions/virtualization.DiskResponse"
             }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -611,6 +635,18 @@
         "responses": {
           "200": {
             "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -642,11 +678,17 @@
         "responses": {
           "200": {
             "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/image": {
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images": {
       "get": {
         "produces": [
           "application/json"
@@ -671,6 +713,9 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ListImageResponse"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -706,11 +751,20 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ImageIDResponse"
             }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/image/{id}": {
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images/{id}": {
       "get": {
         "produces": [
           "application/json"
@@ -742,6 +796,12 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ImageResponse"
             }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -782,6 +842,18 @@
         "responses": {
           "200": {
             "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -813,11 +885,17 @@
         "responses": {
           "200": {
             "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/virtualmachine": {
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines": {
       "get": {
         "produces": [
           "application/json"
@@ -842,6 +920,9 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -877,11 +958,20 @@
             "schema": {
               "$ref": "#/definitions/virtualization.VirtualMachineIDResponse"
             }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/namespace/{namespace}/virtualmachine/{id}": {
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines/{id}": {
       "get": {
         "produces": [
           "application/json"
@@ -913,6 +1003,12 @@
             "schema": {
               "$ref": "#/definitions/virtualization.VirtualMachineResponse"
             }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -953,6 +1049,15 @@
         "responses": {
           "200": {
             "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -984,11 +1089,17 @@
         "responses": {
           "200": {
             "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1/virtualmachine": {
+    "/kapis/virtualization.ecpaas.io/v1/virtualmachines": {
       "get": {
         "produces": [
           "application/json"
@@ -1004,21 +1115,153 @@
             "schema": {
               "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file": {
+    "/kapis/virtualization.ecpaas.io/v1alpha1/minio/image": {
       "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
         "produces": [
           "application/json"
         ],
         "tags": [
           "Minio Images"
         ],
-        "summary": "Upload Volume Image",
+        "summary": "Upload Minio Image",
+        "operationId": "UploadMinioObject",
+        "parameters": [
+          {
+            "type": "file",
+            "description": "File Stream form-data",
+            "name": "uploadfile",
+            "in": "formData",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/minio/image/checkFileExist/{imageName}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Check if Minio image exist",
+        "operationId": "GetMinioObjectStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Image name",
+            "name": "imageName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.ObjectStatus"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/minio/image/{imageName}": {
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Delete Minio Image",
+        "operationId": "DeleteMinioObject",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Image name",
+            "name": "imageName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/errors.Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/minio/images": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "List all Minio images",
+        "operationId": "ListMinioObjects",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.ImagesList"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/minio/image": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Minio Images"
+        ],
+        "summary": "Upload Minio Image with namespace",
         "operationId": "UploadMinioObjectWithNs",
         "parameters": [
+          {
+            "type": "file",
+            "description": "File Stream form-data",
+            "name": "uploadfile",
+            "in": "formData",
+            "required": true
+          },
           {
             "type": "string",
             "description": "name of a namespace",
@@ -1033,11 +1276,14 @@
             "schema": {
               "$ref": "#/definitions/errors.Error"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file/checkFileExist/{imageName}": {
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/minio/image/checkFileExist/{imageName}": {
       "get": {
         "produces": [
           "application/json"
@@ -1045,7 +1291,7 @@
         "tags": [
           "Minio Images"
         ],
-        "summary": "Check If image exist or not",
+        "summary": "Check If Minio image exist with namespace",
         "operationId": "GetMinioObjectStatusWithNs",
         "parameters": [
           {
@@ -1073,36 +1319,7 @@
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file/images": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Minio Images"
-        ],
-        "summary": "List all uploaded images",
-        "operationId": "ListMinioObjectsWithNs",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "name of a namespace",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/v1.ImagesList"
-            }
-          }
-        }
-      }
-    },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/upload/file/{imageName}": {
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/minio/image/{imageName}": {
       "delete": {
         "produces": [
           "application/json"
@@ -1110,7 +1327,7 @@
         "tags": [
           "Minio Images"
         ],
-        "summary": "Delete Volume Image",
+        "summary": "Delete Minio Image with namespace",
         "operationId": "DeleteMinioObjectWithNs",
         "parameters": [
           {
@@ -1134,31 +1351,14 @@
             "schema": {
               "$ref": "#/definitions/errors.Error"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file": {
-      "post": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Minio Images"
-        ],
-        "summary": "Upload Volume Image",
-        "operationId": "UploadMinioObject",
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/errors.Error"
-            }
-          }
-        }
-      }
-    },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file/checkFileExist/{imageName}": {
+    "/kapis/virtualization.ecpaas.io/v1alpha1/namespaces/{namespace}/minio/images": {
       "get": {
         "produces": [
           "application/json"
@@ -1166,72 +1366,26 @@
         "tags": [
           "Minio Images"
         ],
-        "summary": "Check If image exist or not",
-        "operationId": "GetMinioObjectStatus",
+        "summary": "List all Minio images with namespace",
+        "operationId": "ListMinioObjectsWithNs",
         "parameters": [
           {
             "type": "string",
-            "description": "Image name",
-            "name": "imageName",
+            "description": "name of a namespace",
+            "name": "namespace",
             "in": "path",
             "required": true
           }
         ],
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/v1.ObjectStatus"
-            }
-          }
-        }
-      }
-    },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file/images": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Minio Images"
-        ],
-        "summary": "List all uploaded images",
-        "operationId": "ListMinioObjects",
         "responses": {
           "200": {
             "description": "ok",
             "schema": {
               "$ref": "#/definitions/v1.ImagesList"
             }
-          }
-        }
-      }
-    },
-    "/kapis/virtualization.ecpaas.io/v1alpha1/upload/file/{imageName}": {
-      "delete": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Minio Images"
-        ],
-        "summary": "Delete Volume Image",
-        "operationId": "DeleteMinioObject",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Image name",
-            "name": "imageName",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/errors.Error"
-            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
@@ -1686,6 +1840,16 @@
         }
       }
     },
+    "virtualization.BadRequestError": {
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
     "virtualization.DiskIDResponse": {
       "required": [
         "id"
@@ -1706,16 +1870,21 @@
       "properties": {
         "description": {
           "description": "Disk description",
-          "type": "string"
+          "type": "string",
+          "maximum": 128
         },
         "name": {
-          "description": "Disk name",
-          "type": "string"
+          "description": "Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
         },
         "size": {
-          "description": "Disk size, range from 10Gi to 500Gi. The value is integer",
-          "type": "string",
-          "default": "20Gi"
+          "description": "Disk size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
         }
       }
     },
@@ -1747,9 +1916,12 @@
           "type": "string"
         },
         "size": {
-          "description": "Disk size, range from 10Gi to 500Gi",
-          "type": "string",
-          "default": "20Gi"
+          "description": "Disk size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
         },
         "status": {
           "description": "Disk status",
@@ -1770,16 +1942,8 @@
           "description": "Disk action, the value is 'add' or 'mount'",
           "type": "string"
         },
-        "description": {
-          "description": "Disk description",
-          "type": "string"
-        },
         "id": {
-          "description": "Disk id",
-          "type": "string"
-        },
-        "name": {
-          "description": "Disk name",
+          "description": "Disk id which is got from disk api",
           "type": "string"
         },
         "namespace": {
@@ -1787,13 +1951,12 @@
           "type": "string"
         },
         "size": {
-          "description": "Disk size, range from 10Gi to 500Gi. The value is integer",
-          "type": "string",
-          "default": "20Gi"
-        },
-        "type": {
-          "description": "Disk type, the value is 'system' or 'data'",
-          "type": "string"
+          "description": "Disk size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
         }
       }
     },
@@ -1822,7 +1985,7 @@
         "password": {
           "description": "Guest operating system password",
           "type": "string",
-          "default": 123456
+          "default": "abc1234"
         },
         "username": {
           "description": "Guest operating system username",
@@ -1849,13 +2012,16 @@
       ],
       "properties": {
         "id": {
-          "description": "Image id",
+          "description": "Image id which is got from image api",
           "type": "string"
         },
         "size": {
-          "description": "Image size, range from 10Gi to 80Gi, the value is integer",
-          "type": "string",
-          "default": "20Gi"
+          "description": "Image size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
         }
       }
     },
@@ -1868,27 +2034,39 @@
         "memory",
         "size",
         "description",
-        "upload_file_name",
+        "minio_image_name",
         "shared"
       ],
       "properties": {
         "cpu_cores": {
-          "description": "Default image cpu cores, range from 1 to 4. The value is integer",
-          "type": "string",
-          "default": 1
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
         },
         "description": {
           "description": "Image description",
-          "type": "string"
+          "type": "string",
+          "maximum": 128
         },
         "memory": {
-          "description": "Default image memory, range from 1Gi to 8Gi. The value is integer",
-          "type": "string",
-          "default": "1Gi"
+          "description": "Default image memory, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
         },
         "name": {
-          "description": "Image name",
-          "type": "string"
+          "description": "Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
         },
         "os_family": {
           "description": "Image operating system",
@@ -1901,13 +2079,12 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, range from 10Gi to 80Gi. The value is integer",
-          "type": "string",
-          "default": "20Gi"
-        },
-        "upload_file_name": {
-          "description": "File name which created by upload image api",
-          "type": "string"
+          "description": "Default image size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
         },
         "version": {
           "description": "Image version",
@@ -1926,16 +2103,19 @@
         "cpu_cores",
         "memory",
         "size",
-        "upload_file_name",
+        "minio_image_name",
         "description",
         "shared",
         "status"
       ],
       "properties": {
         "cpu_cores": {
-          "description": "Default image cpu cores, range from 1 to 4",
-          "type": "string",
-          "default": 1
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
         },
         "description": {
           "description": "Image description",
@@ -1946,9 +2126,16 @@
           "type": "string"
         },
         "memory": {
-          "description": "Default image memory, range from 1Gi to 8Gi",
-          "type": "string",
-          "default": "1Gi"
+          "description": "Default image memory, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
         },
         "name": {
           "description": "Image name",
@@ -1969,17 +2156,16 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, range from 10Gi to 80Gi",
-          "type": "string",
-          "default": "20Gi"
+          "description": "Default image size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
         },
         "status": {
           "description": "Image status",
           "$ref": "#/definitions/virtualization.ImageStatus"
-        },
-        "upload_file_name": {
-          "description": "File name which created by upload image api",
-          "type": "string"
         },
         "version": {
           "description": "Image version",
@@ -2063,38 +2249,51 @@
       "properties": {
         "description": {
           "description": "Disk description",
-          "type": "string"
+          "type": "string",
+          "maximum": 128
         },
         "name": {
-          "description": "Disk name",
-          "type": "string"
+          "description": "Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
         },
         "size": {
-          "description": "Disk size, range from 10Gi to 500Gi, the size only can be increased. The value is integer",
-          "type": "string",
-          "default": "20Gi"
+          "description": "Disk size, unit is GB and the size only can be increased.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
         }
       }
     },
     "virtualization.ModifyImageRequest": {
       "properties": {
         "cpu_cores": {
-          "description": "Default image cpu cores, range from 1 to 4. The value is integer",
-          "type": "string",
-          "default": 1
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
         },
         "description": {
           "description": "Image description",
-          "type": "string"
+          "type": "string",
+          "maximum": 128
         },
         "memory": {
-          "description": "Default image memory, range from 1Gi to 8Gi. The value is integer",
-          "type": "string",
-          "default": "1Gi"
+          "description": "Default image memory, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
         },
         "name": {
-          "description": "Image name",
-          "type": "string"
+          "description": "Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
         },
         "shared": {
           "description": "Image shared or not",
@@ -2102,32 +2301,42 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, range from 10Gi to 80Gi, the size only can be increased. The value is integer",
-          "type": "string",
-          "default": "20Gi"
+          "description": "Default image size, unit is GB and the size only can be increased.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
         }
       }
     },
     "virtualization.ModifyVirtualMachineRequest": {
       "properties": {
         "cpu_cores": {
-          "description": "Virtual machine cpu cores, range from 1 to 4. The value is integer",
+          "description": "Virtual machine cpu cores.",
           "type": "integer",
           "format": "integer",
-          "default": 1
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
         },
         "description": {
           "description": "Virtual machine description",
-          "type": "string"
+          "type": "string",
+          "maximum": 128
         },
         "memory": {
-          "description": "Virtual machine memory size, range from 1Gi to 8Gi. The value is integer",
-          "type": "string",
-          "default": "1Gi"
+          "description": "Virtual machine memory size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
         },
         "name": {
-          "description": "Virtual machine name",
-          "type": "string"
+          "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
         }
       }
     },
@@ -2168,14 +2377,17 @@
       ],
       "properties": {
         "cpu_cores": {
-          "description": "Virtual machine cpu cores, range from 1 to 4. The value is integer",
+          "description": "Virtual machine cpu cores",
           "type": "integer",
           "format": "integer",
-          "default": 1
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
         },
         "description": {
-          "description": "Virtual machine description",
-          "type": "string"
+          "description": "Virtual machine description.",
+          "type": "string",
+          "maximum": 128
         },
         "disk": {
           "description": "Virtual machine disks",
@@ -2193,13 +2405,17 @@
           "$ref": "#/definitions/virtualization.ImageInfoResponse"
         },
         "memory": {
-          "description": "Virtual machine memory size, range from 1Gi to 8Gi. The value is integer",
-          "type": "string",
-          "default": "1Gi"
+          "description": "Virtual machine memory size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
         },
         "name": {
-          "description": "Virtual machine name",
-          "type": "string"
+          "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
         }
       }
     },
@@ -2242,7 +2458,8 @@
         },
         "memory": {
           "description": "Virtual machine memory size",
-          "type": "string"
+          "type": "integer",
+          "format": "integer"
         },
         "name": {
           "description": "Virtual machine name",
