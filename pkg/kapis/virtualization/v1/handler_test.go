@@ -344,6 +344,98 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 	checkVirtualMachineResult(t, vm, vmRequest)
 }
 
+func TestPostVirtualMachineWithMountDisk(t *testing.T) {
+
+	ksClient := fakeks.NewSimpleClientset()
+	k8sClient := fakek8s.NewSimpleClientset()
+	handler := newHandler(ksClient, k8sClient)
+
+	namespace := "default"
+	// prepare a fake image template
+	fakeImageTemlate := &FakeImageTemplate{
+		Name:      "image-1234",
+		Namespace: namespace,
+		Size:      20,
+	}
+	prepareFakeImageTemplate(ksClient, fakeImageTemlate)
+
+	// prepare a fake disk volume
+	diskName := "testdisk"
+
+	disk := ui_virtz.DiskRequest{
+		Name:        diskName,
+		Description: "testdisk",
+		Size:        20,
+	}
+
+	diskVolume, err := createDisk(&handler, &disk, namespace)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// verify post virtual machine request
+
+	url := fmt.Sprintf("/namespaces/%s/virtualmachine", namespace)
+
+	vmRequest := ui_virtz.VirtualMachineRequest{
+		Name:     "testvm",
+		CpuCores: 2,
+		Memory:   2,
+		Image: &ui_virtz.ImageInfoResponse{
+			ID:   fakeImageTemlate.Name,
+			Size: 20,
+		},
+		Disk: []ui_virtz.DiskSpec{
+			{
+				Action:    "mount",
+				ID:        diskVolume.Name,
+				Namespace: namespace,
+			},
+		},
+	}
+
+	vmRequestBodyBytes, err := json.Marshal(vmRequest)
+	if err != nil {
+		t.Fatalf("Error marshaling JSON: %v", err)
+	}
+
+	request := httptest.NewRequest("POST", url, bytes.NewReader(vmRequestBodyBytes))
+	request.Header.Set("Content-Type", "application/json")
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.CreateVirtualMahcine(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var vmIDResponse ui_virtz.VirtualMachineIDResponse
+	err = json.Unmarshal(res.Body.Bytes(), &vmIDResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// get virtual machine from fake ks client
+	vm, err := ksClient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), vmIDResponse.ID, metav1.GetOptions{})
+	if err != nil {
+		t.Error(err)
+	}
+
+	checkVirtualMachineResult(t, vm, vmRequest)
+
+}
+
 func TestPostDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()

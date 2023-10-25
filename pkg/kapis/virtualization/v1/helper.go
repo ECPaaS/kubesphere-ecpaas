@@ -157,10 +157,10 @@ func checkVirtualMachineResult(t *testing.T, vm *virtzv1alpha1.VirtualMachine, u
 		}
 	}
 
-	// check system and data disk
+	// check system and add data disk
 	if len(vm.Spec.DiskVolumes) == 2 {
 		if len(ui_vm_req.Disk) == 1 {
-			if ui_vm_req.Disk[0].Action == "add" || ui_vm_req.Disk[0].Action == "mount" {
+			if ui_vm_req.Disk[0].Action == "add" {
 				if len(vm.Spec.DiskVolumeTemplates) != 2 {
 					t.Errorf("vm disk number is not correct: got %v want %v", len(vm.Spec.DiskVolumeTemplates), 2)
 				}
@@ -172,6 +172,11 @@ func checkVirtualMachineResult(t *testing.T, vm *virtzv1alpha1.VirtualMachine, u
 				data_size := strconv.FormatUint(uint64(ui_vm_req.Disk[0].Size), 10) + "Gi"
 				if vm.Spec.DiskVolumeTemplates[1].Spec.Resources.Requests.Storage().String() != data_size {
 					t.Errorf("vm disk size is not correct: got %v want %v", vm.Spec.DiskVolumeTemplates[1].Spec.Resources.Requests.Storage().String(), data_size)
+				}
+			}
+			if ui_vm_req.Disk[0].Action == "mount" {
+				if len(vm.Spec.DiskVolumeTemplates) != 1 {
+					t.Errorf("vm disk number is not correct: got %v want %v", len(vm.Spec.DiskVolumeTemplates), 1)
 				}
 			}
 		}
