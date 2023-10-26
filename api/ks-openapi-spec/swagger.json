@@ -131,6 +131,13 @@
         "tags": [
           "Network Topology"
         ]
+      },
+      {
+        "name": "Virtaulization",
+        "tags": [
+          "Virtualization Virtual Machine",
+          "Virtualization Disk"
+        ]
       }
     ]
   },
@@ -4954,6 +4961,165 @@
         }
       }
     },
+    "/kapis/monitoring.kubesphere.io/v1alpha3/namespaces/{namespace}/virtualmachines": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualmachine Metrics"
+        ],
+        "summary": "Get VM-level metric data of the specific namespace's VMs.",
+        "operationId": "handleVirtualmachineMetricsQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both VM CPU usage and memory usage: `virtualmachine_cpu_usage|virtualmachine_memory_usage`.",
+            "name": "metrics_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The VM filter consists of a regexp pattern. It specifies which VM data to return. For example, the following filter matches any VM whose name begins with redis: `redis.*`.",
+            "name": "resources_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
+            "name": "time",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Sort VMs by the specified metric. Not applicable if **start** and **end** are provided.",
+            "name": "sort_metric",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "desc.",
+            "description": "Sort order. One of asc, desc.",
+            "name": "sort_type",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "The page number. This field paginates result data of each metric, then returns a specific page. For example, setting **page** to 2 returns the second page. It only applies to sorted metric data.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 5,
+            "description": "Page size, the maximum number of results in a single page. Defaults to 5.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/monitoring.Metrics"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/monitoring.kubesphere.io/v1alpha3/namespaces/{namespace}/virtualmachines/{vm}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualmachine Metrics"
+        ],
+        "summary": "Get VM-level metric data of a specific VM. Navigate to the VM by the VM's namespace.",
+        "operationId": "handleVirtualmachineMetricsQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "VM name.",
+            "name": "vm",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both VM CPU usage and memory usage: `virtualmachine_cpu_usage|virtualmachine_memory_usage`.",
+            "name": "metrics_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
+            "name": "time",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/monitoring.Metrics"
+            }
+          }
+        }
+      }
+    },
     "/kapis/monitoring.kubesphere.io/v1alpha3/namespaces/{namespace}/workloads": {
       "get": {
         "produces": [
@@ -5568,6 +5734,171 @@
         }
       }
     },
+    "/kapis/monitoring.kubesphere.io/v1alpha3/nodes/{node}/virtualmachines": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualmachine Metrics"
+        ],
+        "summary": "Get VM-level metric data of all VMs on a specific node.",
+        "operationId": "handleVirtualmachineMetricsQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Node name.",
+            "name": "node",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both VM CPU usage and memory usage: `virtualmachine_cpu_usage|virtualmachine_memory_usage`.",
+            "name": "metrics_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The VM filter consists of a regexp pattern. It specifies which VM data to return. For example, the following filter matches any VM whose name begins with redis: `redis.*`.",
+            "name": "resources_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Specifies a namespaced resources filter in `\u003cnamespace\u003e/\u003cvm_name\u003e|\u003cnamespace\u003e/\u003cvm_name\u003e` format. For example, a namespaced resources filter like `ns1/vm1|ns2/vm2` will request the data of vm1 in ns1 together with vm2 in ns2.",
+            "name": "namespaced_resources_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
+            "name": "time",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Sort VMs by the specified metric. Not applicable if **start** and **end** are provided.",
+            "name": "sort_metric",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "desc.",
+            "description": "Sort order. One of asc, desc.",
+            "name": "sort_type",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "The page number. This field paginates result data of each metric, then returns a specific page. For example, setting **page** to 2 returns the second page. It only applies to sorted metric data.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 5,
+            "description": "Page size, the maximum number of results in a single page. Defaults to 5.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/monitoring.Metrics"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/monitoring.kubesphere.io/v1alpha3/nodes/{node}/virtualmachines/{vm}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualmachine Metrics"
+        ],
+        "summary": "Get VM-level metric data of a specific VM. Navigate to the VM by the node where it is scheduled.",
+        "operationId": "handleVirtualmachineMetricsQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Node name.",
+            "name": "node",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "VM name.",
+            "name": "vm",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both VM CPU usage and memory usage: `virtualmachine_cpu_usage|virtualmachine_memory_usage`.",
+            "name": "metrics_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
+            "name": "time",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/monitoring.Metrics"
+            }
+          }
+        }
+      }
+    },
     "/kapis/monitoring.kubesphere.io/v1alpha3/pods": {
       "get": {
         "produces": [
@@ -5856,6 +6187,91 @@
             "description": "ok",
             "schema": {
               "$ref": "#/definitions/monitoring.Metric"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/monitoring.kubesphere.io/v1alpha3/virtualmachines": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualmachine Metrics"
+        ],
+        "summary": "Get VM-level metric data of the whole cluster's virtualmachines.",
+        "operationId": "handleVirtualmachineMetricsQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both VM CPU usage and memory usage: `virtualmachine_cpu_usage|virtualmachine_memory_usage`.",
+            "name": "metrics_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Specifies a namespaced resources filter in `\u003cnamespace\u003e/\u003cvm_name\u003e|\u003cnamespace\u003e/\u003cvm_name\u003e` format. For example, a namespaced resources filter like `ns1/vm1|ns2/vm2` will request the data of vm1 in ns1 together with vm2 in ns2.",
+            "name": "namespaced_resources_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
+            "name": "time",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Sort VMs by the specified metric. Not applicable if **start** and **end** are provided.",
+            "name": "sort_metric",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "desc.",
+            "description": "Sort order. One of asc, desc.",
+            "name": "sort_type",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "The page number. This field paginates result data of each metric, then returns a specific page. For example, setting **page** to 2 returns the second page. It only applies to sorted metric data.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 5,
+            "description": "Page size, the maximum number of results in a single page. Defaults to 5.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/monitoring.Metrics"
             }
           }
         }
@@ -10492,6 +10908,35 @@
         }
       }
     },
+    "/kapis/resources.kubesphere.io/v1alpha2/virtualization/namespaces/{namespace}/quotas": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Namespace Resources"
+        ],
+        "summary": "get specified namespace's of virtualization resource quota and usage",
+        "operationId": "handleVirtualizationGetNamespaceQuotas",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the name of the project",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.ResourceQuota"
+            }
+          }
+        }
+      }
+    },
     "/kapis/resources.kubesphere.io/v1alpha2/{resources}": {
       "get": {
         "produces": [
@@ -13434,6 +13879,693 @@
         }
       }
     },
+    "/kapis/virtualization.ecpaas.io/v1/disks": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "List all disk",
+        "operationId": "ListDisk",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListDiskResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/images": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "List all image",
+        "operationId": "ListImage",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListImageResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/disks": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "List all disk with namespace",
+        "operationId": "ListDiskWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListDiskResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Create disk",
+        "operationId": "CreateDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/disks/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Get disk",
+        "operationId": "GetDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Update disk",
+        "operationId": "UpdateDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyDiskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Delete disk",
+        "operationId": "DeleteDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "List all image with namespace",
+        "operationId": "ListImageWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListImageResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Create image",
+        "operationId": "CreateImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Get image",
+        "operationId": "GetImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Update image",
+        "operationId": "UpdateImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Delete image",
+        "operationId": "DeleteImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all virtual machine with namespace",
+        "operationId": "ListVirtualMachineWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Create virtual machine",
+        "operationId": "CreateVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Get virtual machine",
+        "operationId": "GetVirtualMachine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed. When the cpu cores or memory parameter changed, the virtual machine need be restarted.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Update virtual machine",
+        "operationId": "UpdateVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyVirtualMachineRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Delete virtual machine",
+        "operationId": "DeleteVirtualMachine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/virtualmachines": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all virtual machine",
+        "operationId": "ListVirtualMachine",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/oauth/.well-known/openid-configuration": {
       "get": {
         "consumes": [
@@ -14309,14 +15441,14 @@
     },
     "metering.OpenPitrixStatistic": {
       "required": [
+        "cpu_usage",
         "memory_usage_wo_cache",
         "net_bytes_transmitted",
         "net_bytes_received",
         "pvc_bytes_total",
         "deployments",
         "statefulsets",
-        "daemonsets",
-        "cpu_usage"
+        "daemonsets"
       ],
       "properties": {
         "cpu_usage": {
@@ -15065,6 +16197,9 @@
           "type": "string"
         },
         "version_type": {
+          "type": "string"
+        },
+        "workspace": {
           "type": "string"
         }
       }
@@ -21388,9 +22523,9 @@
     },
     "v1alpha2.Node": {
       "required": [
-        "labelMinor",
         "id",
         "label",
+        "labelMinor",
         "rank",
         "controls"
       ],
@@ -22270,6 +23405,641 @@
         "query": {
           "description": "prometheus query expression, grammars of which may be referred to https://prometheus.io/docs/prometheus/latest/querying/basics/",
           "type": "string"
+        }
+      }
+    },
+    "virtualization.BadRequestError": {
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "disk id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskRequest": {
+      "required": [
+        "name",
+        "description",
+        "size"
+      ],
+      "properties": {
+        "description": {
+          "description": "Disk description",
+          "type": "string",
+          "maximum": 128
+        },
+        "name": {
+          "description": "Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "size": {
+          "description": "Disk size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.DiskResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "description",
+        "type",
+        "size",
+        "status"
+      ],
+      "properties": {
+        "description": {
+          "description": "Disk description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id",
+          "type": "string"
+        },
+        "name": {
+          "description": "Disk name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        },
+        "status": {
+          "description": "Disk status",
+          "$ref": "#/definitions/virtualization.DiskStatus"
+        },
+        "type": {
+          "description": "Disk type, the value is 'system' or 'data'",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskSpec": {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "description": "Disk action, the value is 'add' or 'mount'",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id which is got from disk api",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.DiskStatus": {
+      "required": [
+        "ready",
+        "owner"
+      ],
+      "properties": {
+        "owner": {
+          "description": "Disk owner, if empty, means not owned by any virtual machine",
+          "type": "string"
+        },
+        "ready": {
+          "description": "Disk is ready or not",
+          "type": "boolean"
+        }
+      }
+    },
+    "virtualization.GuestSpec": {
+      "required": [
+        "username",
+        "password"
+      ],
+      "properties": {
+        "password": {
+          "description": "Guest operating system password",
+          "type": "string",
+          "default": "abc1234"
+        },
+        "username": {
+          "description": "Guest operating system username",
+          "type": "string",
+          "default": "root"
+        }
+      }
+    },
+    "virtualization.ImageIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "image id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.ImageInfoResponse": {
+      "required": [
+        "id",
+        "size"
+      ],
+      "properties": {
+        "id": {
+          "description": "Image id which is got from image api",
+          "type": "string"
+        },
+        "size": {
+          "description": "Image size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.ImageRequest": {
+      "required": [
+        "name",
+        "os_family",
+        "version",
+        "cpu_cores",
+        "memory",
+        "size",
+        "description",
+        "minio_image_name",
+        "shared"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Image description",
+          "type": "string",
+          "maximum": 128
+        },
+        "memory": {
+          "description": "Default image memory, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
+        },
+        "name": {
+          "description": "Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "os_family": {
+          "description": "Image operating system",
+          "type": "string",
+          "default": "ubuntu"
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        },
+        "version": {
+          "description": "Image version",
+          "type": "string",
+          "default": "20.04_LTS_64bit"
+        }
+      }
+    },
+    "virtualization.ImageResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "os_family",
+        "version",
+        "cpu_cores",
+        "memory",
+        "size",
+        "minio_image_name",
+        "description",
+        "shared",
+        "status"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Image description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Image id",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Default image memory, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
+        },
+        "name": {
+          "description": "Image name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Image namespace",
+          "type": "string"
+        },
+        "os_family": {
+          "description": "Image operating system",
+          "type": "string",
+          "default": "ubuntu"
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        },
+        "status": {
+          "description": "Image status",
+          "$ref": "#/definitions/virtualization.ImageStatus"
+        },
+        "version": {
+          "description": "Image version",
+          "type": "string",
+          "default": "20.04_LTS_64bit"
+        }
+      }
+    },
+    "virtualization.ImageStatus": {
+      "required": [
+        "ready"
+      ],
+      "properties": {
+        "ready": {
+          "description": "Image is ready or not",
+          "type": "boolean"
+        }
+      }
+    },
+    "virtualization.ListDiskResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of disks",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ListImageResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of images",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.ImageResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of images",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ListVirtualMachineResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of virtual machines",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.VirtualMachineResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of virtual machines",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ModifyDiskRequest": {
+      "properties": {
+        "description": {
+          "description": "Disk description",
+          "type": "string",
+          "maximum": 128
+        },
+        "name": {
+          "description": "Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "size": {
+          "description": "Disk size, unit is GB and the size only can be increased.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.ModifyImageRequest": {
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Image description",
+          "type": "string",
+          "maximum": 128
+        },
+        "memory": {
+          "description": "Default image memory, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "name": {
+          "description": "Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, unit is GB and the size only can be increased.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.ModifyVirtualMachineRequest": {
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Virtual machine description",
+          "type": "string",
+          "maximum": 128
+        },
+        "memory": {
+          "description": "Virtual machine memory size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "name": {
+          "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        }
+      }
+    },
+    "virtualization.VMStatus": {
+      "required": [
+        "ready",
+        "state"
+      ],
+      "properties": {
+        "ready": {
+          "description": "Virtual machine is ready or not",
+          "type": "boolean"
+        },
+        "state": {
+          "description": "Virtual machine state",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VirtualMachineIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "virtual machine id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VirtualMachineRequest": {
+      "required": [
+        "name",
+        "cpu_cores",
+        "memory",
+        "description",
+        "image"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Virtual machine description.",
+          "type": "string",
+          "maximum": 128
+        },
+        "disk": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskSpec"
+          }
+        },
+        "guest": {
+          "description": "Virtual machine guest operating system",
+          "$ref": "#/definitions/virtualization.GuestSpec"
+        },
+        "image": {
+          "description": "Virtual machine image source",
+          "$ref": "#/definitions/virtualization.ImageInfoResponse"
+        },
+        "memory": {
+          "description": "Virtual machine memory size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "name": {
+          "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        }
+      }
+    },
+    "virtualization.VirtualMachineResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "description",
+        "cpu_cores",
+        "memory",
+        "image",
+        "disks",
+        "status"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores",
+          "type": "integer",
+          "format": "integer"
+        },
+        "description": {
+          "description": "Virtual machine description",
+          "type": "string"
+        },
+        "disks": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskResponse"
+          }
+        },
+        "id": {
+          "description": "Virtual machine id",
+          "type": "string"
+        },
+        "image": {
+          "description": "Virtual machine image source",
+          "$ref": "#/definitions/virtualization.ImageInfoResponse"
+        },
+        "memory": {
+          "description": "Virtual machine memory size",
+          "type": "integer",
+          "format": "integer"
+        },
+        "name": {
+          "description": "Virtual machine name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Virtual machine namespace",
+          "type": "string"
+        },
+        "status": {
+          "description": "Virtual machine status",
+          "$ref": "#/definitions/virtualization.VMStatus"
         }
       }
     }
