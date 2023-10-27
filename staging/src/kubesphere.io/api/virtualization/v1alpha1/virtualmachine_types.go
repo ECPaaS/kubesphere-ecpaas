@@ -26,7 +26,9 @@ const (
 	VirtualizationOSPlatform      = "virtualization.ecpaas.io/os-platform"
 	VirtualizationDescription     = "virtualization.ecpaas.io/description"
 	VirtualizationSystemDiskSize  = "virtualization.ecpaas.io/system-disk-size"
+	VirtualizationSystemDiskName  = "virtualization.ecpaas.io/system-disk-name"
 	VirtualizationDiskVolumeOwner = "virtualization.ecpaas.io/disk-volume-owner"
+	VirtualizationLastDiskVolumes = "virtualization.ecpaas.io/last-disk-volumes"
 )
 
 type ResourceRequirements struct {

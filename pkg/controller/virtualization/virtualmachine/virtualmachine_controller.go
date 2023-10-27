@@ -6,6 +6,7 @@ package virtualmachine
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -182,7 +183,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		klog.Infof("Creating VirtualMachine %s/%s", req.Namespace, req.Name)
 		err := createVirtualMachine(virtClient, vm_instance)
 
-		if err != nil {
+		if err != nil && reflect.TypeOf(err) == reflect.TypeOf(&errors.StatusError{}) {
 			statusErr := err.(*errors.StatusError)
 			if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
 				klog.Infof("VirtualMachine %s/%s already exists", req.Namespace, vm_instance.Name)
@@ -191,6 +192,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 				return ctrl.Result{}, err
 			}
 		}
+	}
+
+	// add or remove disk volume to kubevirt VM, based on spec.diskvolumes
+	err = updateDiskVolumes(vm_instance, req, virtClient)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	if err := getVirtualMachineStatus(virtClient, req.Namespace, vm_instance); err != nil {
@@ -228,6 +235,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
+	// update last disk volumes
+	vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes] = strings.Join(vm_instance.Spec.DiskVolumes, ",")
+
 	if !reflect.DeepEqual(vm, vm_instance) {
 		if err := r.Update(rootCtx, vm_instance); err != nil {
 			return ctrl.Result{}, err
@@ -245,6 +255,46 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	r.Recorder.Event(vm, corev1.EventTypeNormal, successSynced, messageResourceSynced)
 	return ctrl.Result{}, nil
 
+}
+
+func updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request, virtClient kubecli.KubevirtClient) error {
+	if vm_instance.Spec.DiskVolumes != nil {
+		if vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes] != "" {
+			lastDiskVolumes := strings.Split(vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes], ",")
+			for _, lastDiskVolume := range lastDiskVolumes {
+				if !ContainsString(vm_instance.Spec.DiskVolumes, lastDiskVolume, nil) {
+					klog.Infof("Removing DiskVolume %s/%s from VirtualMachine %s/%s", req.Namespace, lastDiskVolume, req.Namespace, req.Name)
+					err := removeVolume(vm_instance.Name, pvcCreateByDiskVolumeControllerPrefix+lastDiskVolume, vm_instance.Namespace, virtClient)
+					if err != nil {
+						klog.V(2).Infof(err.Error())
+						return err
+					}
+				}
+			}
+		}
+
+		for _, diskVolume := range vm_instance.Spec.DiskVolumes {
+			if vm_instance.Annotations[virtzv1alpha1.VirtualizationSystemDiskName] == diskVolume {
+				continue
+			}
+
+			if vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes] != "" {
+				lastDiskVolumes := strings.Split(vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes], ",")
+				if ContainsString(lastDiskVolumes, diskVolume, nil) {
+					continue
+				}
+			}
+
+			klog.Infof("Adding DiskVolume %s/%s to VirtualMachine %s/%s", req.Namespace, diskVolume, req.Namespace, req.Name)
+			err := addVolume(vm_instance.Name, pvcCreateByDiskVolumeControllerPrefix+diskVolume, vm_instance.Namespace, virtClient)
+			if err != nil {
+				klog.V(2).Infof(err.Error())
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *Reconciler) deleteDiskVolumeOwnerLabel(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request) error {
@@ -456,37 +506,34 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 				}
 			}
 
-			newVolume := kvapi.Volume{
-				Name: volume,
-				VolumeSource: kvapi.VolumeSource{
-					PersistentVolumeClaim: &kvapi.PersistentVolumeClaimVolumeSource{
-						PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{},
-					},
-				},
-			}
-
 			if isMappingTodiskVolumeTemplate {
+				newVolume := kvapi.Volume{
+					Name: volume,
+					VolumeSource: kvapi.VolumeSource{
+						PersistentVolumeClaim: &kvapi.PersistentVolumeClaimVolumeSource{
+							PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{},
+						},
+					},
+				}
+
 				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcCreateByDiskVolumeTemplatePrefix + volume
 				kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
-			} else {
-				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcCreateByDiskVolumeControllerPrefix + volume
-				kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
-			}
 
-			newDisk := kvapi.Disk{
-				Name: volume,
-				DiskDevice: kvapi.DiskDevice{
-					Disk: &kvapi.DiskTarget{
-						Bus: "virtio",
+				newDisk := kvapi.Disk{
+					Name: volume,
+					DiskDevice: kvapi.DiskDevice{
+						Disk: &kvapi.DiskTarget{
+							Bus: "virtio",
+						},
 					},
-				},
-			}
+				}
 
-			if bootorder == 1 {
-				newDisk.BootOrder = &bootorder
-			}
+				if bootorder == 1 {
+					newDisk.BootOrder = &bootorder
+				}
 
-			kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+				kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+			}
 		}
 	}
 
@@ -550,7 +597,7 @@ func createVirtualMachine(virtClient kubecli.KubevirtClient, virtzVM *virtzv1alp
 			Kind: "VirtualMachine",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      virtzVM.ObjectMeta.Name,
+			Name:      virtzVM.Name,
 			Namespace: namespace,
 		},
 		Spec: kvapi.VirtualMachineSpec{},
@@ -616,4 +663,67 @@ func ContainsString(slice []string, s string, modifier func(s string) string) bo
 		}
 	}
 	return false
+}
+
+func addVolume(vmiName, volumeName, namespace string, virtClient kubecli.KubevirtClient) error {
+	volumeSource, err := getVolumeSourceFromVolume(volumeName, namespace, virtClient)
+	if err != nil {
+		return fmt.Errorf("error adding volume, %v", err)
+	}
+	hotplugRequest := &kvapi.AddVolumeOptions{
+		Name: volumeName,
+		Disk: &kvapi.Disk{
+			DiskDevice: kvapi.DiskDevice{
+				Disk: &kvapi.DiskTarget{
+					Bus: "scsi",
+				},
+			},
+		},
+		VolumeSource: volumeSource,
+	}
+
+	err = virtClient.VirtualMachine(namespace).AddVolume(vmiName, hotplugRequest)
+	if err != nil {
+		return fmt.Errorf("error adding volume, %v", err)
+	}
+	fmt.Printf("Successfully submitted add volume request to VM %s for volume %s\n", vmiName, volumeName)
+	return nil
+}
+
+func getVolumeSourceFromVolume(volumeName, namespace string, virtClient kubecli.KubevirtClient) (*kvapi.HotplugVolumeSource, error) {
+	//Check if data volume exists.
+	// _, err := virtClient.CdiClient().CdiV1beta1().DataVolumes(namespace).Get(context.TODO(), volumeName, metav1.GetOptions{})
+	// if err == nil {
+	// 	return &v1.HotplugVolumeSource{
+	// 		DataVolume: &v1.DataVolumeSource{
+	// 			Name:         volumeName,
+	// 			Hotpluggable: true,
+	// 		},
+	// 	}, nil
+	// }
+	// DataVolume not found, try PVC
+	_, err := virtClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), volumeName, metav1.GetOptions{})
+	if err == nil {
+		return &kvapi.HotplugVolumeSource{
+			PersistentVolumeClaim: &kvapi.PersistentVolumeClaimVolumeSource{
+				PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: volumeName,
+				},
+				Hotpluggable: true,
+			},
+		}, nil
+	}
+	// Neither return error
+	return nil, fmt.Errorf("volume %s is not a data volume or persistent volume claim", volumeName)
+}
+
+func removeVolume(vmiName, volumeName, namespace string, virtClient kubecli.KubevirtClient) error {
+	err := virtClient.VirtualMachine(namespace).RemoveVolume(vmiName, &kvapi.RemoveVolumeOptions{
+		Name: volumeName,
+	})
+	if err != nil {
+		return fmt.Errorf("error removing volume, %v", err)
+	}
+	fmt.Printf("Successfully submitted remove volume request to VM %s for volume %s\n", vmiName, volumeName)
+	return nil
 }
