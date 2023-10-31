@@ -428,6 +428,12 @@ func (h *virtzhandler) UpdateImage(req *restful.Request, resp *restful.Response)
 		return
 	}
 
+	if ui_image.Size != 0 {
+		if !isValidImageSize(h, namespace, imageName, int(ui_image.Size), resp) {
+			return
+		}
+	}
+
 	_, err = h.virtz.UpdateImage(namespace, imageName, &ui_image)
 	if err != nil {
 		klog.Error(err)

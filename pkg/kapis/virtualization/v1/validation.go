@@ -237,6 +237,23 @@ func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.
 	return true
 }
 
+func isValidImageSize(h *virtzhandler, namespace string, imageName string, newImageSize int, resp *restful.Response) bool {
+	imageVolume, err := h.virtz.GetImage(namespace, imageName)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return false
+	}
+
+	oldImageSize, _ := strconv.ParseUint(strings.Replace(imageVolume.Spec.Resources.Requests.Storage().String(), "Gi", "", -1), 10, 32)
+	if int(oldImageSize) >= newImageSize {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "The new image size must be larger than the old image size",
+		})
+		return false
+	}
+	return true
+}
+
 func isValidDiskSize(h *virtzhandler, namespace string, diskName string, newDiskSize int, resp *restful.Response) bool {
 	diskVolume, err := h.virtz.GetDisk(namespace, diskName)
 	if err != nil {
