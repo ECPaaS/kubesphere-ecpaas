@@ -16,6 +16,17 @@ import (
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
+func isValidModifyDisk(validateType reflect.Type, disk ui_virtz.DiskSpec, resp *restful.Response) bool {
+	if disk.Action != "mount" && disk.Action != "unmount" {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Disk action should be 'mount' or 'unmount'",
+		})
+		return false
+	}
+
+	return true
+}
+
 func isValidWithinRange(validateType reflect.Type, valueToValidate int, fieldName string, resp *restful.Response) bool {
 	field, found := validateType.FieldByName(fieldName)
 	if found {
@@ -111,6 +122,14 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 	if vm.Memory != 0 {
 		if !isValidWithinRange(reflectType, int(vm.Memory), "Memory", resp) {
 			return false
+		}
+	}
+
+	if vm.Disk != nil {
+		for _, disk := range vm.Disk {
+			if !isValidModifyDisk(reflectType, disk, resp) {
+				return false
+			}
 		}
 	}
 

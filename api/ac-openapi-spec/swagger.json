@@ -1939,7 +1939,7 @@
       ],
       "properties": {
         "action": {
-          "description": "Disk action, the value is 'add' or 'mount'",
+          "description": "Disk action, the value is 'add', 'mount' or 'unmount'",
           "type": "string"
         },
         "id": {
@@ -2324,6 +2324,13 @@
           "description": "Virtual machine description",
           "type": "string",
           "maximum": 128
+        },
+        "disk": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskSpec"
+          }
         },
         "memory": {
           "description": "Virtual machine memory size, unit is GB.",

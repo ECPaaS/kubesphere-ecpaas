@@ -23,7 +23,7 @@ type VirtualMachineRequest struct {
 }
 
 type DiskSpec struct {
-	Action    string `json:"action" description:"Disk action, the value is 'add' or 'mount'"`
+	Action    string `json:"action" description:"Disk action, the value is 'add', 'mount' or 'unmount'"`
 	ID        string `json:"id,omitempty" description:"Disk id which is got from disk api"`
 	Namespace string `json:"namespace,omitempty" description:"Disk namespace"`
 	Size      uint   `json:"size,omitempty" default:"20" description:"Disk size, unit is GB." minimum:"10" maximum:"500"`
@@ -35,11 +35,11 @@ type GuestSpec struct {
 }
 
 type ModifyVirtualMachineRequest struct {
-	//TODO: support dynamic mount disk
-	Name        string `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	CpuCores    uint   `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
-	Memory      uint   `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
-	Description string `json:"description,omitempty" description:"Virtual machine description" maximum:"128"`
+	Name        string     `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	CpuCores    uint       `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
+	Memory      uint       `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
+	Disk        []DiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
+	Description string     `json:"description,omitempty" description:"Virtual machine description" maximum:"128"`
 }
 
 type VirtualMachineResponse struct {

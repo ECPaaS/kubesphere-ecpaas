@@ -195,7 +195,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// add or remove disk volume to kubevirt VM, based on spec.diskvolumes
-	err = updateDiskVolumes(vm_instance, req, virtClient)
+	err = updateMountDiskVolumes(vm_instance, req, virtClient)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -211,9 +211,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
-	if !vm_instance.Status.Ready {
-		klog.V(2).Infof("VirtualMachine %s/%s is not ready", req.Namespace, req.Name)
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	// requeue if the virtualmachine is not ready and not stopped
+	if vm_instance.Status.PrintableStatus != "Stopped" {
+		if !vm_instance.Status.Ready {
+			klog.V(2).Infof("VirtualMachine %s/%s is not ready", req.Namespace, req.Name)
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
 	}
 
 	// delete volumesnapshotcontent
@@ -257,11 +260,24 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 }
 
-func updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request, virtClient kubecli.KubevirtClient) error {
+func updateMountDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request, virtClient kubecli.KubevirtClient) error {
+	// get all data disk volume name from disk volume template
+	diskVolumeTemplateDataVolumeNames := make([]string, len(vm_instance.Spec.DiskVolumeTemplates))
+	for i, diskVolumeTemplate := range vm_instance.Spec.DiskVolumeTemplates {
+		if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskType] == "data" {
+			diskVolumeTemplateDataVolumeNames[i] = diskVolumeTemplate.Name
+		}
+	}
+
 	if vm_instance.Spec.DiskVolumes != nil {
 		if vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes] != "" {
 			lastDiskVolumes := strings.Split(vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes], ",")
 			for _, lastDiskVolume := range lastDiskVolumes {
+				// skip system disk
+				if vm_instance.Annotations[virtzv1alpha1.VirtualizationSystemDiskName] == lastDiskVolume {
+					continue
+				}
+
 				if !ContainsString(vm_instance.Spec.DiskVolumes, lastDiskVolume, nil) {
 					klog.Infof("Removing DiskVolume %s/%s from VirtualMachine %s/%s", req.Namespace, lastDiskVolume, req.Namespace, req.Name)
 					err := removeVolume(vm_instance.Name, pvcCreateByDiskVolumeControllerPrefix+lastDiskVolume, vm_instance.Namespace, virtClient)
@@ -274,7 +290,13 @@ func updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Reque
 		}
 
 		for _, diskVolume := range vm_instance.Spec.DiskVolumes {
+			// skip system disk
 			if vm_instance.Annotations[virtzv1alpha1.VirtualizationSystemDiskName] == diskVolume {
+				continue
+			}
+
+			// skip disk volume template, this is for add disk
+			if ContainsString(diskVolumeTemplateDataVolumeNames, diskVolume, nil) {
 				continue
 			}
 
@@ -289,7 +311,16 @@ func updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Reque
 			err := addVolume(vm_instance.Name, pvcCreateByDiskVolumeControllerPrefix+diskVolume, vm_instance.Namespace, virtClient)
 			if err != nil {
 				klog.V(2).Infof(err.Error())
-				return err
+
+				if reflect.TypeOf(err) == reflect.TypeOf(&errors.StatusError{}) {
+					statusErr := err.(*errors.StatusError)
+					if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
+						klog.Infof("DiskVolume %s/%s already exists", req.Namespace, diskVolume)
+					} else {
+						klog.V(2).Infof(err.Error())
+						return err
+					}
+				}
 			}
 		}
 	}
@@ -713,6 +744,11 @@ func getVolumeSourceFromVolume(volumeName, namespace string, virtClient kubecli.
 			},
 		}, nil
 	}
+
+	if errors.IsNotFound(err) {
+		return nil, fmt.Errorf("volume %s not found, wait for created", volumeName)
+	}
+
 	// Neither return error
 	return nil, fmt.Errorf("volume %s is not a data volume or persistent volume claim", volumeName)
 }

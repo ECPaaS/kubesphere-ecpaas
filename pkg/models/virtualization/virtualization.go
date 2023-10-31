@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -78,7 +79,10 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 		}
 	}
 
-	ApplyVMDiskSpec(ui_vm, &vm)
+	err := ApplyVMDiskSpec(ui_vm, &vm)
+	if err != nil {
+		return nil, err
+	}
 
 	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Create(context.Background(), &vm, metav1.CreateOptions{})
 	if err != nil {
@@ -180,8 +184,10 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 		diskVolumeNamePrefix + vm_uuid,
 	}
 
+	vm.Annotations[v1alpha1.VirtualizationSystemDiskName] = diskVolumeNamePrefix + vm_uuid
+
 	username := "root"
-	password := "123456"
+	password := "abc1234"
 
 	if ui_vm.Guest != nil {
 		username = ui_vm.Guest.Username
@@ -223,14 +229,20 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 	return nil
 }
 
-func ApplyVMDiskSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine) {
+func ApplyVMDiskSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine) error {
 	for _, uiDisk := range ui_vm.Disk {
 		if uiDisk.Action == "add" {
 			ApplyAddDisk(ui_vm, vm, &uiDisk)
 		} else if uiDisk.Action == "mount" {
-			ApplyMountDisk(vm, &uiDisk)
+			err := ApplyMountDisk(vm, &uiDisk)
+			if err != nil {
+				klog.Errorf("mount disk error: %v", err)
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
 func ApplyAddDisk(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
@@ -262,8 +274,31 @@ func AddDiskVolume(diskVolumeName string, uiDisk *DiskSpec) v1alpha1.DiskVolume 
 	return diskVolume
 }
 
-func ApplyMountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) {
+func ApplyMountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) error {
+	if uiDisk.Namespace != vm.Namespace {
+		return fmt.Errorf("disk namespace is not equal to vm namespace")
+	}
+
 	vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes, uiDisk.ID)
+
+	return nil
+}
+
+func ApplyUnmountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) error {
+	found := false
+
+	for i, disk := range vm.Spec.DiskVolumes {
+		if disk == uiDisk.ID {
+			found = true
+			vm.Spec.DiskVolumes = append(vm.Spec.DiskVolumes[:i], vm.Spec.DiskVolumes[i+1:]...)
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("disk %s not found", uiDisk.ID)
+	}
+
+	return nil
 }
 
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
@@ -293,6 +328,24 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	// if ui_vm.Image.Size != "" && ui_vm.Image.Size != vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] {
 	// 	vm.Annotations[v1alpha1.VirtualizationSystemDiskSize] = ui_vm.Image.Size
 	// }
+
+	if ui_vm.Disk != nil {
+		for _, uiDisk := range ui_vm.Disk {
+			if uiDisk.Action == "mount" {
+				err := ApplyMountDisk(vm, &uiDisk)
+				if err != nil {
+					klog.Errorf("mount disk error: %v", err)
+					return nil, err
+				}
+			} else if uiDisk.Action == "unmount" {
+				err := ApplyUnmountDisk(vm, &uiDisk)
+				if err != nil {
+					klog.Errorf("unmount disk error: %v", err)
+					return nil, err
+				}
+			}
+		}
+	}
 
 	updated_vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
 	if err != nil {
