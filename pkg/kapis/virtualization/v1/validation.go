@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
+	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
@@ -238,13 +239,13 @@ func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.
 }
 
 func isValidImageSize(h *virtzhandler, namespace string, imageName string, newImageSize int, resp *restful.Response) bool {
-	imageVolume, err := h.virtz.GetImage(namespace, imageName)
+	image, err := h.virtz.GetImage(namespace, imageName)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return false
 	}
 
-	oldImageSize, _ := strconv.ParseUint(strings.Replace(imageVolume.Spec.Resources.Requests.Storage().String(), "Gi", "", -1), 10, 32)
+	oldImageSize, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationImageStorage], 10, 32)
 	if int(oldImageSize) >= newImageSize {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
 			Reason: "The new image size must be larger than the old image size",
