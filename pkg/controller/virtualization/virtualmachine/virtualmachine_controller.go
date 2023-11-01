@@ -295,11 +295,6 @@ func updateMountDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.
 				continue
 			}
 
-			// skip disk volume template, this is for add disk
-			if ContainsString(diskVolumeTemplateDataVolumeNames, diskVolume, nil) {
-				continue
-			}
-
 			if vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes] != "" {
 				lastDiskVolumes := strings.Split(vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes], ",")
 				if ContainsString(lastDiskVolumes, diskVolume, nil) {
@@ -308,7 +303,7 @@ func updateMountDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.
 			}
 
 			klog.Infof("Adding DiskVolume %s/%s to VirtualMachine %s/%s", req.Namespace, diskVolume, req.Namespace, req.Name)
-			err := addVolume(vm_instance.Name, pvcCreateByDiskVolumeControllerPrefix+diskVolume, vm_instance.Namespace, virtClient)
+			err := addVolume(vm_instance.Name, diskVolume, vm_instance.Namespace, virtClient)
 			if err != nil {
 				klog.V(2).Infof(err.Error())
 
@@ -525,6 +520,7 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 			// check boot order from spec.diskvolumeTemplates label
 			bootorder := uint(0)
 			isMappingTodiskVolumeTemplate := false
+			isSystemDisk := false
 			for _, diskVolumeTemplate := range virtzSpec.DiskVolumeTemplates {
 				if diskVolumeTemplate.Name == volume {
 					isMappingTodiskVolumeTemplate = true
@@ -533,6 +529,10 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 						if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationBootOrder] == "1" {
 							bootorder = uint(1)
 						}
+					}
+
+					if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskType] == "system" {
+						isSystemDisk = true
 					}
 				}
 			}
@@ -547,23 +547,25 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 					},
 				}
 
-				newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcCreateByDiskVolumeTemplatePrefix + volume
-				kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
+				if isSystemDisk {
+					newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcCreateByDiskVolumeTemplatePrefix + volume
+					kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
 
-				newDisk := kvapi.Disk{
-					Name: volume,
-					DiskDevice: kvapi.DiskDevice{
-						Disk: &kvapi.DiskTarget{
-							Bus: "virtio",
+					newDisk := kvapi.Disk{
+						Name: volume,
+						DiskDevice: kvapi.DiskDevice{
+							Disk: &kvapi.DiskTarget{
+								Bus: "virtio",
+							},
 						},
-					},
-				}
+					}
 
-				if bootorder == 1 {
-					newDisk.BootOrder = &bootorder
-				}
+					if bootorder == 1 {
+						newDisk.BootOrder = &bootorder
+					}
 
-				kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+					kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+				}
 			}
 		}
 	}
@@ -733,12 +735,28 @@ func getVolumeSourceFromVolume(volumeName, namespace string, virtClient kubecli.
 	// 	}, nil
 	// }
 	// DataVolume not found, try PVC
-	_, err := virtClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), volumeName, metav1.GetOptions{})
+
+	// list all pvc
+	pvcs, err := virtClient.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error getting pvc list, %v", err)
+	}
+
+	// find the pvc name contains volumeName
+	targetPVCName := ""
+	for _, pvc := range pvcs.Items {
+		if strings.Contains(pvc.Name, volumeName) {
+			targetPVCName = pvc.Name
+			break
+		}
+	}
+
+	_, err = virtClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), targetPVCName, metav1.GetOptions{})
 	if err == nil {
 		return &kvapi.HotplugVolumeSource{
 			PersistentVolumeClaim: &kvapi.PersistentVolumeClaimVolumeSource{
 				PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: volumeName,
+					ClaimName: targetPVCName,
 				},
 				Hotpluggable: true,
 			},
@@ -746,7 +764,7 @@ func getVolumeSourceFromVolume(volumeName, namespace string, virtClient kubecli.
 	}
 
 	if errors.IsNotFound(err) {
-		return nil, fmt.Errorf("volume %s not found, wait for created", volumeName)
+		return nil, fmt.Errorf("target pvc %s for volume %s not found, wait for created", targetPVCName, volumeName)
 	}
 
 	// Neither return error

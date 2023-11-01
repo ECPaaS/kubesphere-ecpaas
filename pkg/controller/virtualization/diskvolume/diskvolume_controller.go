@@ -169,6 +169,8 @@ func (r *Reconciler) createPVC(dv_instance *virtzv1alpha1.DiskVolume, scName str
 	pvc := &corev1.PersistentVolumeClaim{}
 	pvc.Name = dv_instance.Spec.PVCName
 	pvc.Namespace = dv_instance.Namespace
+	volumeMode := corev1.PersistentVolumeBlock
+	pvc.Spec.VolumeMode = &volumeMode
 	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	pvc.Spec.Resources = corev1.ResourceRequirements{}
 	pvc.Spec.Resources.Requests = corev1.ResourceList{}
