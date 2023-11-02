@@ -118,12 +118,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if IsDeletionCandidate(vm_instance, virtzv1alpha1.VirtualMachineFinalizer) {
 		klog.Infof("Deleting VirtualMachine %s/%s", req.Namespace, req.Name)
 
-		err = r.deleteDiskVolumeOwnerLabel(vm_instance, req)
-		if err != nil {
+		if err := deleteVirtualMachine(virtClient, req.Namespace, vm_instance); err != nil {
 			return ctrl.Result{}, err
 		}
 
-		if err := deleteVirtualMachine(virtClient, req.Namespace, vm_instance); err != nil {
+		err = r.deleteDiskVolumeOwnerLabelInVMDiskVolumes(vm_instance, req)
+		if err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -168,12 +168,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 				}
 
 				if dv.Labels[virtzv1alpha1.VirtualizationDiskType] == "data" {
-					klog.Infof("Add DiskVolume %s/%s owner label", req.Namespace, diskVolume)
-
-					copy_dv := dv.DeepCopy()
-					copy_dv.Labels[virtzv1alpha1.VirtualizationDiskVolumeOwner] = vm_instance.Name
-
-					if err := r.Update(rootCtx, copy_dv); err != nil {
+					err := r.addDiskVolumeOwnerLabel(diskVolume, req.Namespace, vm_instance.Name)
+					if err != nil {
 						return ctrl.Result{}, err
 					}
 				}
@@ -195,7 +191,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// add or remove disk volume to kubevirt VM, based on spec.diskvolumes
-	err = updateMountDiskVolumes(vm_instance, req, virtClient)
+	err = r.updateDiskVolumes(vm_instance, req, virtClient)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -260,7 +256,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 }
 
-func updateMountDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request, virtClient kubecli.KubevirtClient) error {
+func (r *Reconciler) updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request, virtClient kubecli.KubevirtClient) error {
 	// get all data disk volume name from disk volume template
 	diskVolumeTemplateDataVolumeNames := make([]string, len(vm_instance.Spec.DiskVolumeTemplates))
 	for i, diskVolumeTemplate := range vm_instance.Spec.DiskVolumeTemplates {
@@ -280,9 +276,13 @@ func updateMountDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.
 
 				if !ContainsString(vm_instance.Spec.DiskVolumes, lastDiskVolume, nil) {
 					klog.Infof("Removing DiskVolume %s/%s from VirtualMachine %s/%s", req.Namespace, lastDiskVolume, req.Namespace, req.Name)
-					err := removeVolume(vm_instance.Name, pvcCreateByDiskVolumeControllerPrefix+lastDiskVolume, vm_instance.Namespace, virtClient)
+					err := removeVolume(vm_instance.Name, lastDiskVolume, vm_instance.Namespace, virtClient)
 					if err != nil {
 						klog.V(2).Infof(err.Error())
+						return err
+					}
+					err = r.removeDiskVolumeOwnerLabel(lastDiskVolume, req.Namespace)
+					if err != nil {
 						return err
 					}
 				}
@@ -317,31 +317,65 @@ func updateMountDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.
 					}
 				}
 			}
+			err = r.addDiskVolumeOwnerLabel(diskVolume, req.Namespace, vm_instance.Name)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func (r *Reconciler) deleteDiskVolumeOwnerLabel(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request) error {
-	rootCtx := context.Background()
+func (r *Reconciler) deleteDiskVolumeOwnerLabelInVMDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine, req ctrl.Request) error {
 
 	if vm_instance.Spec.DiskVolumes != nil {
 		for _, diskVolume := range vm_instance.Spec.DiskVolumes {
-			dv := &virtzv1alpha1.DiskVolume{}
-			if err := r.Get(rootCtx, types.NamespacedName{Name: diskVolume, Namespace: req.Namespace}, dv); err != nil {
-				return err
-			}
-
-			klog.Infof("Delete DiskVolume %s/%s owner label", req.Namespace, diskVolume)
-
-			copy_dv := dv.DeepCopy()
-			delete(copy_dv.Labels, virtzv1alpha1.VirtualizationDiskVolumeOwner)
-
-			if err := r.Update(rootCtx, copy_dv); err != nil {
+			err := r.removeDiskVolumeOwnerLabel(diskVolume, req.Namespace)
+			if err != nil {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func (r *Reconciler) addDiskVolumeOwnerLabel(diskVolumeName, namespace string, vmName string) error {
+	rootCtx := context.Background()
+
+	dv := &virtzv1alpha1.DiskVolume{}
+	if err := r.Get(rootCtx, types.NamespacedName{Name: diskVolumeName, Namespace: namespace}, dv); err != nil {
+		return err
+	}
+
+	klog.V(2).Infof("Add DiskVolume %s/%s owner label", namespace, diskVolumeName)
+
+	copy_dv := dv.DeepCopy()
+	copy_dv.Labels[virtzv1alpha1.VirtualizationDiskVolumeOwner] = vmName
+
+	if err := r.Update(rootCtx, copy_dv); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Reconciler) removeDiskVolumeOwnerLabel(diskVolumeName, namespace string) error {
+	rootCtx := context.Background()
+
+	dv := &virtzv1alpha1.DiskVolume{}
+	if err := r.Get(rootCtx, types.NamespacedName{Name: diskVolumeName, Namespace: namespace}, dv); err != nil {
+		return err
+	}
+
+	klog.V(2).Infof("Delete DiskVolume %s/%s owner label", namespace, diskVolumeName)
+
+	copy_dv := dv.DeepCopy()
+	delete(copy_dv.Labels, virtzv1alpha1.VirtualizationDiskVolumeOwner)
+
+	if err := r.Update(rootCtx, copy_dv); err != nil {
+		return err
 	}
 
 	return nil
@@ -719,7 +753,7 @@ func addVolume(vmiName, volumeName, namespace string, virtClient kubecli.Kubevir
 	if err != nil {
 		return fmt.Errorf("error adding volume, %v", err)
 	}
-	fmt.Printf("Successfully submitted add volume request to VM %s for volume %s\n", vmiName, volumeName)
+	klog.Infof("Successfully submitted add volume request to VM %s for volume %s\n", vmiName, volumeName)
 	return nil
 }
 
@@ -778,6 +812,6 @@ func removeVolume(vmiName, volumeName, namespace string, virtClient kubecli.Kube
 	if err != nil {
 		return fmt.Errorf("error removing volume, %v", err)
 	}
-	fmt.Printf("Successfully submitted remove volume request to VM %s for volume %s\n", vmiName, volumeName)
+	klog.Infof("Successfully submitted remove volume request to VM %s for volume %s\n", vmiName, volumeName)
 	return nil
 }
