@@ -5,12 +5,19 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
 package virtualization
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 
+	"github.com/emicklei/go-restful"
 	fakek8s "k8s.io/client-go/kubernetes/fake"
 	fakeks "kubesphere.io/kubesphere/pkg/client/clientset/versioned/fake"
+	"kubesphere.io/kubesphere/pkg/utils/reflectutils"
 
 	vm_ctrl "kubesphere.io/kubesphere/pkg/controller/virtualization/virtualmachine"
 
@@ -75,7 +82,7 @@ func prepareFakeImageTemplate(ksClient *fakeks.Clientset, fakeImageTemlate *Fake
 	return nil
 }
 
-func createVirtualMachine(h *virtzhandler, ui_virtz_vm *ui_virtz.VirtualMachineRequest, namespace string) (*virtzv1alpha1.VirtualMachine, error) {
+func performModelCreateVirtualMachine(h *virtzhandler, ui_virtz_vm *ui_virtz.VirtualMachineRequest, namespace string) (*virtzv1alpha1.VirtualMachine, error) {
 	vm, err := h.virtz.CreateVirtualMachine(namespace, ui_virtz_vm)
 	if err != nil {
 		return nil, err
@@ -84,7 +91,7 @@ func createVirtualMachine(h *virtzhandler, ui_virtz_vm *ui_virtz.VirtualMachineR
 	return vm, nil
 }
 
-func createImage(h *virtzhandler, ui_virtz_image *ui_virtz.ImageRequest, namespace string) (*virtzv1alpha1.ImageTemplate, error) {
+func performModelCreateImage(h *virtzhandler, ui_virtz_image *ui_virtz.ImageRequest, namespace string) (*virtzv1alpha1.ImageTemplate, error) {
 	image, err := h.virtz.CreateImage(namespace, ui_virtz_image)
 	if err != nil {
 		return nil, err
@@ -93,7 +100,7 @@ func createImage(h *virtzhandler, ui_virtz_image *ui_virtz.ImageRequest, namespa
 	return image, nil
 }
 
-func createDisk(h *virtzhandler, ui_virtz_disk *ui_virtz.DiskRequest, namespace string) (*virtzv1alpha1.DiskVolume, error) {
+func performModelCreateDisk(h *virtzhandler, ui_virtz_disk *ui_virtz.DiskRequest, namespace string) (*virtzv1alpha1.DiskVolume, error) {
 	disk, err := h.virtz.CreateDisk(namespace, ui_virtz_disk)
 	if err != nil {
 		return nil, err
@@ -189,4 +196,252 @@ func checkVirtualMachineResult(t *testing.T, vm *virtzv1alpha1.VirtualMachine, u
 			}
 		}
 	}
+}
+
+func performRestfulPOSTVirtualMachine(handler virtzhandler, namespace string, ui_vm_req ui_virtz.VirtualMachineRequest, t *testing.T) ui_virtz.VirtualMachineIDResponse {
+	url := fmt.Sprintf("/namespaces/%s/virtualmachines", namespace)
+
+	vmRequestBodyBytes, err := json.Marshal(ui_vm_req)
+	if err != nil {
+		t.Fatalf("Error marshaling JSON: %v", err)
+	}
+
+	request := httptest.NewRequest("POST", url, bytes.NewReader(vmRequestBodyBytes))
+	request.Header.Set("Content-Type", "application/json")
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.CreateVirtualMahcine(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var vmIDResponse ui_virtz.VirtualMachineIDResponse
+	err = json.Unmarshal(res.Body.Bytes(), &vmIDResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return vmIDResponse
+
+}
+
+func performRestfulGETVirtualMachine(handler virtzhandler, namespace string, vmID string, t *testing.T) ui_virtz.VirtualMachineResponse {
+	url := fmt.Sprintf("/namespaces/%s/virtualmachines/%s", namespace, vmID)
+
+	request := httptest.NewRequest("GET", url, nil)
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	pathMap["id"] = vmID
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.GetVirtualMachine(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var vmResponse ui_virtz.VirtualMachineResponse
+	err := json.Unmarshal(res.Body.Bytes(), &vmResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return vmResponse
+}
+
+func performRestfulPUTVirtualMachine(handler virtzhandler, namespace string, vmID string, ui_vm_req ui_virtz.ModifyVirtualMachineRequest, t *testing.T) *httptest.ResponseRecorder {
+	url := fmt.Sprintf("/namespaces/%s/virtualmachines/%s", namespace, vmID)
+
+	vmModifyRequestBodyBytes, err := json.Marshal(ui_vm_req)
+	if err != nil {
+		t.Fatalf("Error marshaling JSON: %v", err)
+	}
+
+	request := httptest.NewRequest("PUT", url, bytes.NewReader(vmModifyRequestBodyBytes))
+	request.Header.Set("Content-Type", "application/json")
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	pathMap["id"] = vmID
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.UpdateVirtualMahcine(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("unmount disk handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	return restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+}
+
+func performRestfulPOSTDisk(handler virtzhandler, namespace string, ui_disk_req ui_virtz.DiskRequest, t *testing.T) ui_virtz.DiskIDResponse {
+	url := fmt.Sprintf("/namespaces/%s/disks", namespace)
+
+	diskRequestBodyBytes, err := json.Marshal(ui_disk_req)
+	if err != nil {
+		t.Fatalf("Error marshaling JSON: %v", err)
+	}
+
+	request := httptest.NewRequest("POST", url, bytes.NewReader(diskRequestBodyBytes))
+	request.Header.Set("Content-Type", "application/json")
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.CreateDisk(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var diskIDResponse ui_virtz.DiskIDResponse
+	err = json.Unmarshal(res.Body.Bytes(), &diskIDResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return diskIDResponse
+}
+
+func performRestfulGETDisk(handler virtzhandler, namespace string, diskID string, t *testing.T) ui_virtz.DiskResponse {
+	url := fmt.Sprintf("/namespaces/%s/disks/%s", namespace, diskID)
+
+	request := httptest.NewRequest("GET", url, nil)
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	pathMap["id"] = diskID
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.GetDisk(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var diskResponse ui_virtz.DiskResponse
+	err := json.Unmarshal(res.Body.Bytes(), &diskResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return diskResponse
+
+}
+
+func performRestfulPOSTImage(handler virtzhandler, namespace string, ui_image_req ui_virtz.ImageRequest, t *testing.T) ui_virtz.ImageIDResponse {
+	url := fmt.Sprintf("/namespaces/%s/images", namespace)
+
+	imageRequestBodyBytes, err := json.Marshal(ui_image_req)
+	if err != nil {
+		t.Fatalf("Error marshaling JSON: %v", err)
+	}
+
+	request := httptest.NewRequest("POST", url, bytes.NewReader(imageRequestBodyBytes))
+	request.Header.Set("Content-Type", "application/json")
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.CreateImage(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var imageIDResponse ui_virtz.ImageIDResponse
+	err = json.Unmarshal(res.Body.Bytes(), &imageIDResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return imageIDResponse
+
+}
+
+func performRestfulGETImage(handler virtzhandler, namespace string, imageID string, t *testing.T) ui_virtz.ImageResponse {
+	url := fmt.Sprintf("/namespaces/%s/images/%s", namespace, imageID)
+
+	request := httptest.NewRequest("GET", url, nil)
+	restfulRequest := restful.NewRequest(request)
+
+	pathMap := make(map[string]string)
+	pathMap["namespace"] = namespace
+	pathMap["id"] = imageID
+	if err := reflectutils.SetUnExportedField(restfulRequest, "pathParameters", pathMap); err != nil {
+		t.Fatalf("set pathParameters failed")
+	}
+
+	recorder := httptest.NewRecorder()
+	restfulResponse := restful.NewResponse(recorder)
+	restfulResponse.SetRequestAccepts("application/json")
+
+	handler.GetImage(restfulRequest, restfulResponse)
+	if status := restfulResponse.StatusCode(); status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	res := restfulResponse.ResponseWriter.(*httptest.ResponseRecorder)
+
+	var imageResponse ui_virtz.ImageResponse
+	err := json.Unmarshal(res.Body.Bytes(), &imageResponse)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return imageResponse
 }
