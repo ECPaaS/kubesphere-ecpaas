@@ -280,7 +280,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 	// accton extension
 	urlruntime.Must(vpcv1.AddToContainer(s.container, s.InformerFactory, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
 	urlruntime.Must(volumev1alpha1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
-	urlruntime.Must(virtualizationv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
+	urlruntime.Must(virtualizationv1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.InformerFactory))
 }
 
 // installCRDAPIs Install CRDs to the KAPIs with List and Get options

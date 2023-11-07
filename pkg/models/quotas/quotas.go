@@ -17,6 +17,9 @@ limitations under the License.
 package quotas
 
 import (
+	"context"
+
+	"github.com/minio/minio-go/v7"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/labels"
@@ -24,6 +27,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/klog"
 	"kubesphere.io/kubesphere/pkg/api"
+
 	ksinformers "kubesphere.io/kubesphere/pkg/client/informers/externalversions"
 )
 
@@ -39,8 +43,9 @@ const (
 	cronJobsKey               = "count/cronjobs.batch"
 	s2iBuilders               = "count/s2ibuilders.devops.kubesphere.io"
 	virtualmachinesKey        = "count/virtualmachines.virtualization.ecpaas.io"
-	imagetemplatesKey         = "count/imagetemplates.virtualization.ecpaas.io"
-	diskvolumesKey            = "count/diskvolumes.virtualization.ecpaas.io"
+	imagetemplatesKey         = "count/images.virtualization.ecpaas.io"
+	diskvolumesKey            = "count/disks.virtualization.ecpaas.io"
+	minioImagesKey            = "count/files.virtualization.ecpaas.io"
 )
 
 var supportedResources = map[string]schema.GroupVersionResource{
@@ -65,7 +70,7 @@ var supportedVirtualizationResources = map[string]schema.GroupVersionResource{
 type ResourceQuotaGetter interface {
 	GetClusterQuota() (*api.ResourceQuota, error)
 	GetNamespaceQuota(namespace string) (*api.NamespacedResourceQuota, error)
-	GetVirtualizationNamespaceQuota(namespace string) (*api.NamespacedResourceQuota, error)
+	GetVirtualizationNamespaceQuota(namespace string, minioClient *minio.Client) (*api.NamespacedResourceQuota, error)
 }
 
 type resourceQuotaGetter struct {
@@ -180,7 +185,7 @@ func (c *resourceQuotaGetter) GetNamespaceQuota(namespace string) (*api.Namespac
 
 }
 
-func (c *resourceQuotaGetter) GetVirtualizationNamespaceQuota(namespace string) (*api.NamespacedResourceQuota, error) {
+func (c *resourceQuotaGetter) GetVirtualizationNamespaceQuota(namespace string, minioClient *minio.Client) (*api.NamespacedResourceQuota, error) {
 	quota, err := c.getNamespaceResourceQuota(namespace)
 	if err != nil {
 		klog.Error(err)
@@ -216,6 +221,36 @@ func (c *resourceQuotaGetter) GetVirtualizationNamespaceQuota(namespace string) 
 
 			quota.Used[v1.ResourceName(key)] = *(resource.NewQuantity(int64(used), resource.DecimalSI))
 		}
+	}
+
+	minioImages := 0
+	if minioClient != nil {
+		bucketName := "ecpaas-images"
+		minioServiceName := "minio"
+		list := c.k8sInformers.Core().V1().Services().Lister()
+		serviceList, err := list.Services("").List(labels.Everything())
+
+		var minioService *v1.Service
+		for _, service := range serviceList {
+			if service.Name == minioServiceName {
+				minioService = service
+				break
+			}
+		}
+
+		if minioService == nil {
+			klog.Warning("Cannot find the minio service ", err)
+		}
+
+		objectCh := minioClient.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
+
+		for object := range objectCh {
+			if object.Err == nil {
+				minioImages++
+			}
+		}
+
+		quota.Used[minioImagesKey] = *(resource.NewQuantity(int64(minioImages), resource.DecimalSI))
 	}
 
 	var result = api.NamespacedResourceQuota{

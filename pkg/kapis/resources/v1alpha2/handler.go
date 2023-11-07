@@ -160,7 +160,7 @@ func (r *resourceHandler) handleGetNamespaceQuotas(request *restful.Request, res
 
 func (r *resourceHandler) handleVirtualizationGetNamespaceQuotas(request *restful.Request, response *restful.Response) {
 	namespace := request.PathParameter("namespace")
-	quota, err := r.resourceQuotaGetter.GetVirtualizationNamespaceQuota(namespace)
+	quota, err := r.resourceQuotaGetter.GetVirtualizationNamespaceQuota(namespace, nil)
 
 	if err != nil {
 		api.HandleInternalError(response, nil, err)

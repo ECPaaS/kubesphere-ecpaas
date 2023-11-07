@@ -170,3 +170,8 @@ type ListImageResponse struct {
 	TotalCount int             `json:"total_count" description:"Total number of images"`
 	Items      []ImageResponse `json:"items" description:"List of images"`
 }
+
+type VirtualizationResourceQuota struct {
+	Namespace string         `json:"namespace" description:"Resource Quota namespace"`
+	Data      map[string]int `json:"data" description:"Virtualization Resource Quota"`
+}

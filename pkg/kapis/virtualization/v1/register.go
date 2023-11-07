@@ -10,6 +10,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
+	"github.com/minio/minio-go/v7"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
@@ -18,6 +19,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/constants"
+	"kubesphere.io/kubesphere/pkg/informers"
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
@@ -34,9 +36,9 @@ var imagePutNotes = `Any parameters which are not provied will not be changed.`
 
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
-func AddToContainer(container *restful.Container, ksclient kubesphere.Interface, k8sclient kubernetes.Interface) error {
+func AddToContainer(container *restful.Container, minioClient *minio.Client, ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory) error {
 	webservice := runtime.NewWebService(GroupVersion)
-	handler := newHandler(ksclient, k8sclient)
+	handler := newHandler(ksclient, k8sclient, factory, minioClient)
 
 	vmPutNotes = strings.ReplaceAll(vmPutNotes, "\n", " ")
 	diskPutNotes = strings.ReplaceAll(diskPutNotes, "\n", " ")
@@ -213,6 +215,14 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
+
+	webservice.Route(webservice.GET("virtualization/namespaces/{namespace}/quotas").
+		To(handler.handleVirtualizationGetNamespaceQuotas).
+		Param(webservice.PathParameter("namespace", "the name of the project")).
+		Doc("Get specified namespace's of virtualization resource quota and usage").
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualizationResourceQuota{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ResourceQuotasTag}))
 
 	container.Add(webservice)
 

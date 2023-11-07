@@ -28,7 +28,7 @@ func TestGetVirtualMachine(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	namespace := "default"
 
@@ -85,7 +85,7 @@ func TestGetVirtualMachineWithAddDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	namespace := "default"
 
@@ -147,7 +147,7 @@ func TestPostVirtualMachine(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	// prepare a fake image template
 	fakeImageTemlate := &FakeImageTemplate{
@@ -185,7 +185,7 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	// prepare a fake image template
 	fakeImageTemlate := &FakeImageTemplate{
@@ -228,7 +228,7 @@ func TestPostVirtualMachineWithMountDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	namespace := "default"
 	// prepare a fake image template
@@ -287,7 +287,7 @@ func TestPostDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	namespace := "default"
 	diskRequest := ui_virtz.DiskRequest{
@@ -327,7 +327,7 @@ func TestGetDisk(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	namespace := "default"
 	diskName := "testdisk"
@@ -356,7 +356,7 @@ func TestPostImage(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	prepareFakeMinioService(k8sClient)
 
@@ -417,7 +417,7 @@ func TestGetImage(t *testing.T) {
 
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	prepareFakeMinioService(k8sClient)
 
@@ -478,7 +478,7 @@ func TestGetImage(t *testing.T) {
 func TestUnmountDisk(t *testing.T) {
 	ksClient := fakeks.NewSimpleClientset()
 	k8sClient := fakek8s.NewSimpleClientset()
-	handler := newHandler(ksClient, k8sClient)
+	handler := newHandler(ksClient, k8sClient, nil, nil)
 
 	namespace := "default"
 	// prepare a fake image template
