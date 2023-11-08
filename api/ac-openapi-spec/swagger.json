@@ -2517,19 +2517,31 @@
     "virtualization.VirtualizationResourceQuota": {
       "required": [
         "namespace",
-        "data"
+        "diskCount",
+        "fileCount",
+        "imageCount",
+        "virtualMachineCount"
       ],
       "properties": {
-        "data": {
-          "description": "Virtualization Resource Quota",
-          "type": "object",
-          "additionalProperties": {
-            "type": "integer"
-          }
+        "diskCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fileCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "imageCount": {
+          "type": "integer",
+          "format": "int32"
         },
         "namespace": {
           "description": "Resource Quota namespace",
           "type": "string"
+        },
+        "virtualMachineCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     }

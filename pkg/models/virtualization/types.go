@@ -172,6 +172,9 @@ type ListImageResponse struct {
 }
 
 type VirtualizationResourceQuota struct {
-	Namespace string         `json:"namespace" description:"Resource Quota namespace"`
-	Data      map[string]int `json:"data" description:"Virtualization Resource Quota"`
+	Namespace      string `json:"namespace" description:"Resource Quota namespace"`
+	Disk           int    `json:"diskCount"`
+	File           int    `json:"fileCount"`
+	Image          int    `json:"imageCount"`
+	VirtualMachine int    `json:"virtualMachineCount"`
 }

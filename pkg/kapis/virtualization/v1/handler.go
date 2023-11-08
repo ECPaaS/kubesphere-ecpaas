@@ -562,12 +562,21 @@ func (r *virtzhandler) handleVirtualizationGetNamespaceQuotas(request *restful.R
 	namespace := request.PathParameter("namespace")
 	quota, err := r.resourceQuotaGetter.GetVirtualizationNamespaceQuota(namespace, r.minioClient)
 
-	resourceQuota := ui_virtz.VirtualizationResourceQuota{
-		Data: make(map[string]int),
-	}
+	resourceQuota := ui_virtz.VirtualizationResourceQuota{}
 
 	for k, v := range quota.Data.Used {
-		resourceQuota.Data[k.String()] = int(v.Value())
+		if k.String() == "count/disks.virtualization.ecpaas.io" {
+			resourceQuota.Disk = int(v.Value())
+		}
+		if k.String() == "count/files.virtualization.ecpaas.io" {
+			resourceQuota.File = int(v.Value())
+		}
+		if k.String() == "count/images.virtualization.ecpaas.io" {
+			resourceQuota.Image = int(v.Value())
+		}
+		if k.String() == "count/virtualmachines.virtualization.ecpaas.io" {
+			resourceQuota.VirtualMachine = int(v.Value())
+		}
 	}
 
 	if err != nil {
