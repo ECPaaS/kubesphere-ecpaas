@@ -84,6 +84,18 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 		return nil, err
 	}
 
+	for _, disk := range ui_vm.Disk {
+		if disk.Action == "mount" {
+			diskVolume, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Get(context.Background(), disk.ID, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			if !IsDiskVolumeOwnerLabelEmpty(diskVolume) {
+				return nil, fmt.Errorf("disk %s is used by vm %s", disk.ID, diskVolume.Labels[v1alpha1.VirtualizationDiskVolumeOwner])
+			}
+		}
+	}
+
 	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Create(context.Background(), &vm, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -301,6 +313,18 @@ func ApplyUnmountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) error {
 	return nil
 }
 
+func IsDiskVolumeOwnerLabelEmpty(diskVolume *v1alpha1.DiskVolume) bool {
+	if diskVolume.Labels == nil {
+		return true
+	}
+
+	if diskVolume.Labels[v1alpha1.VirtualizationDiskVolumeOwner] == "" {
+		return true
+	}
+
+	return false
+}
+
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -337,6 +361,15 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 					klog.Errorf("mount disk error: %v", err)
 					return nil, err
 				}
+
+				diskVolume, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Get(context.Background(), uiDisk.ID, metav1.GetOptions{})
+				if err != nil {
+					return nil, err
+				}
+				if !IsDiskVolumeOwnerLabelEmpty(diskVolume) {
+					return nil, fmt.Errorf("disk %s is used by vm %s", uiDisk.ID, diskVolume.Labels[v1alpha1.VirtualizationDiskVolumeOwner])
+				}
+
 			} else if uiDisk.Action == "unmount" {
 				err := ApplyUnmountDisk(vm, &uiDisk)
 				if err != nil {
