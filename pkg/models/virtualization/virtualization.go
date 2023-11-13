@@ -43,6 +43,7 @@ type Interface interface {
 	DeleteDisk(namespace string, name string) (*v1alpha1.DiskVolume, error)
 	// Image
 	CreateImage(namespace string, ui_image *ImageRequest) (*v1alpha1.ImageTemplate, error)
+	CloneImage(namespace string, ui_clone_image *CloneImageRequest) (*v1alpha1.ImageTemplate, error)
 	UpdateImage(namespace string, name string, ui_image *ModifyImageRequest) (*v1alpha1.ImageTemplate, error)
 	GetImage(namespace string, name string) (*v1alpha1.ImageTemplate, error)
 	ListImage(namespace string) (*v1alpha1.ImageTemplateList, error)
@@ -531,6 +532,51 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 	size := strconv.FormatUint(uint64(ui_image.Size), 10)
 	imageTemplate.Spec.Resources.Requests = v1.ResourceList{
 		v1.ResourceStorage: resource.MustParse(size + "Gi"),
+	}
+
+	createdImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Create(context.Background(), &imageTemplate, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return createdImage, nil
+}
+
+func (v *virtualizationOperator) CloneImage(namespace string, ui_clone_image *CloneImageRequest) (*v1alpha1.ImageTemplate, error) {
+	imageTemplate := v1alpha1.ImageTemplate{}
+
+	// get source image
+	sourceImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), ui_clone_image.SourceImageID, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// clone image
+	imageTemplate.Name = imageNamePrefix + uuid.New().String()[:8]
+	imageTemplate.Namespace = namespace
+	imageTemplate.Annotations = map[string]string{
+		v1alpha1.VirtualizationAliasName: ui_clone_image.DestinationImageName,
+	}
+	imageTemplate.Labels = map[string]string{
+		v1alpha1.VirtualizationOSFamily:       sourceImage.Labels[v1alpha1.VirtualizationOSFamily],
+		v1alpha1.VirtualizationOSVersion:      sourceImage.Labels[v1alpha1.VirtualizationOSVersion],
+		v1alpha1.VirtualizationImageMemory:    sourceImage.Labels[v1alpha1.VirtualizationImageMemory],
+		v1alpha1.VirtualizationCpuCores:       sourceImage.Labels[v1alpha1.VirtualizationCpuCores],
+		v1alpha1.VirtualizationImageStorage:   sourceImage.Labels[v1alpha1.VirtualizationImageStorage],
+		v1alpha1.VirtualizationUploadFileName: sourceImage.Labels[v1alpha1.VirtualizationUploadFileName],
+	}
+
+	imageTemplate.Spec.Attributes = v1alpha1.ImageTemplateAttributes{
+		Public: false,
+	}
+
+	imageTemplate.Spec.Resources = sourceImage.Spec.Resources
+
+	imageTemplate.Spec.Source = v1alpha1.ImageTemplateSource{
+		Clone: &cdiv1.DataVolumeSourcePVC{
+			Name:      sourceImage.Name,
+			Namespace: sourceImage.Namespace,
+		},
 	}
 
 	createdImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Create(context.Background(), &imageTemplate, metav1.CreateOptions{})

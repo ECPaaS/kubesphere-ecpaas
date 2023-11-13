@@ -413,6 +413,32 @@ func (h *virtzhandler) CreateImage(req *restful.Request, resp *restful.Response)
 	resp.WriteEntity(ui_resp)
 }
 
+func (h *virtzhandler) CloneImage(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+
+	var ui_image ui_virtz.CloneImageRequest
+	err := req.ReadEntity(&ui_image)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if !isValidCloneImageRequest(ui_image, resp) {
+		return
+	}
+
+	clonedImage, err := h.virtz.CloneImage(namespace, &ui_image)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	var ui_resp ui_virtz.ImageIDResponse
+	ui_resp.ID = clonedImage.Name
+
+	resp.WriteEntity(ui_resp)
+}
+
 func (h *virtzhandler) UpdateImage(req *restful.Request, resp *restful.Response) {
 	namespace := req.PathParameter("namespace")
 	imageName := req.PathParameter("id")

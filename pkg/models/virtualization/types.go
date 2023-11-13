@@ -138,6 +138,12 @@ type ImageRequest struct {
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
 }
 
+type CloneImageRequest struct {
+	DestinationImageName string `json:"dst_img_name" description:"Destination image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	SourceImageID        string `json:"src_img_id" description:"Source image id which is got from image api"`
+	SourceImageNamespace string `json:"src_img_namespace" description:"Source Image namespace"`
+}
+
 type ModifyImageRequest struct {
 	Name        string `json:"name,omitempty" description:"Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores    uint   `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`

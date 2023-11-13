@@ -217,6 +217,20 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 	return true
 }
 
+func isValidCloneImageRequest(image ui_virtz.CloneImageRequest, resp *restful.Response) bool {
+
+	reflectType := reflect.TypeOf(image)
+	if !isValidLength(reflectType, image.DestinationImageName, "DestinationImageName", resp) {
+		return false
+	}
+
+	if !isValidString(image.DestinationImageName, resp) {
+		return false
+	}
+
+	return true
+}
+
 func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(image)

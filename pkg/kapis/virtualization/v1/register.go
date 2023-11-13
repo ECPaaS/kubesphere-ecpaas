@@ -166,6 +166,16 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
+	webservice.Route(webservice.POST("/namespaces/{namespace}/images/clone").
+		To(handler.CloneImage).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Reads(ui_virtz.CloneImageRequest{}).
+		Doc("Clone image").
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageIDResponse{}).
+		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
+
 	webservice.Route(webservice.PUT("/namespaces/{namespace}/images/{id}").
 		To(handler.UpdateImage).
 		Param(webservice.PathParameter("namespace", "namespace name")).
