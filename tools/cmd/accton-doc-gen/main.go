@@ -81,7 +81,7 @@ func generateSwaggerJson() []byte {
 
 	urlruntime.Must(vpcv1.AddToContainer(container, informerFactory, nil, nil))
 	urlruntime.Must(volumev1alpha1.AddToContainer(container, nil, nil, nil))
-	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, nil))
+	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, nil, nil, informerFactory))
 
 	config := restfulspec.Config{
 		WebServices:                   container.RegisteredWebServices(),

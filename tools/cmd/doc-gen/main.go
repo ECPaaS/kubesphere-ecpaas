@@ -136,7 +136,7 @@ func generateSwaggerJson() []byte {
 	alertingOptions := &alerting.Options{}
 	alertingClient, _ := alerting.NewRuleClient(alertingOptions)
 	urlruntime.Must(alertingv2alpha1.AddToContainer(container, informerFactory, promfake.NewSimpleClientset(), alertingClient, alertingOptions))
-	urlruntime.Must(virtualizationv1.AddToContainer(container, clientsets.KubeSphere(), clientsets.Kubernetes()))
+	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, clientsets.KubeSphere(), clientsets.Kubernetes(), informerFactory))
 
 	config := restfulspec.Config{
 		WebServices:                   container.RegisteredWebServices(),

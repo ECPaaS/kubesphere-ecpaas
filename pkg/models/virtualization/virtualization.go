@@ -70,7 +70,7 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	ApplyVMSpec(ui_vm, &vm, vm_uuid)
 
 	if ui_vm.Image != nil {
-		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), ui_vm.Image.ID, metav1.GetOptions{})
+		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(ui_vm.Image.Namespace).Get(context.Background(), ui_vm.Image.ID, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -83,6 +83,18 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	err := ApplyVMDiskSpec(ui_vm, &vm)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, disk := range ui_vm.Disk {
+		if disk.Action == "mount" {
+			diskVolume, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Get(context.Background(), disk.ID, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			if !IsDiskVolumeOwnerLabelEmpty(diskVolume) {
+				return nil, fmt.Errorf("disk %s is used by vm %s", disk.ID, diskVolume.Labels[v1alpha1.VirtualizationDiskVolumeOwner])
+			}
+		}
 	}
 
 	v1alpha1VM, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Create(context.Background(), &vm, metav1.CreateOptions{})
@@ -165,11 +177,12 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 					v1alpha1.VirtualizationBootOrder: "1",
 					v1alpha1.VirtualizationDiskType:  "system",
 				},
+				Namespace: namespace,
 			},
 			Spec: v1alpha1.DiskVolumeSpec{
 				Source: v1alpha1.DiskVolumeSource{
 					Image: &v1alpha1.DataVolumeSourceImage{
-						Namespace: namespace,
+						Namespace: imagetemplate.Namespace,
 						Name:      ui_vm.Image.ID,
 					},
 				},
@@ -302,6 +315,18 @@ func ApplyUnmountDisk(vm *v1alpha1.VirtualMachine, uiDisk *DiskSpec) error {
 	return nil
 }
 
+func IsDiskVolumeOwnerLabelEmpty(diskVolume *v1alpha1.DiskVolume) bool {
+	if diskVolume.Labels == nil {
+		return true
+	}
+
+	if diskVolume.Labels[v1alpha1.VirtualizationDiskVolumeOwner] == "" {
+		return true
+	}
+
+	return false
+}
+
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -338,6 +363,15 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 					klog.Errorf("mount disk error: %v", err)
 					return nil, err
 				}
+
+				diskVolume, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Get(context.Background(), uiDisk.ID, metav1.GetOptions{})
+				if err != nil {
+					return nil, err
+				}
+				if !IsDiskVolumeOwnerLabelEmpty(diskVolume) {
+					return nil, fmt.Errorf("disk %s is used by vm %s", uiDisk.ID, diskVolume.Labels[v1alpha1.VirtualizationDiskVolumeOwner])
+				}
+
 			} else if uiDisk.Action == "unmount" {
 				err := ApplyUnmountDisk(vm, &uiDisk)
 				if err != nil {

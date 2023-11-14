@@ -150,6 +150,7 @@ const (
 	VirtualMachineTag = "Virtualization Virtual Machine"
 	DiskTag           = "Virtualization Disk"
 	ImageTag          = "Virtualization Image"
+	ResourceQuotasTag = "Resources Quotas"
 
 	MinioImageTag = "Minio Images"
 )

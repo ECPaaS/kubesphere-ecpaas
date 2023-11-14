@@ -1099,6 +1099,38 @@
         }
       }
     },
+    "/kapis/virtualization.ecpaas.io/v1/virtualization/namespaces/{namespace}/quotas": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Resources Quotas"
+        ],
+        "summary": "Get specified namespace's of virtualization resource quota and usage",
+        "operationId": "handleVirtualizationGetNamespaceQuotas",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the name of the project",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualizationResourceQuota"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/virtualization.ecpaas.io/v1/virtualmachines": {
       "get": {
         "produces": [
@@ -2479,6 +2511,37 @@
         "status": {
           "description": "Virtual machine status",
           "$ref": "#/definitions/virtualization.VMStatus"
+        }
+      }
+    },
+    "virtualization.VirtualizationResourceQuota": {
+      "required": [
+        "namespace",
+        "diskCount",
+        "fileCount",
+        "imageCount",
+        "virtualMachineCount"
+      ],
+      "properties": {
+        "diskCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fileCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "imageCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "namespace": {
+          "description": "Resource Quota namespace",
+          "type": "string"
+        },
+        "virtualMachineCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     }

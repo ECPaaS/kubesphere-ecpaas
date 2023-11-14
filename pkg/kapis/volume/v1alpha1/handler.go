@@ -82,6 +82,21 @@ func (h *handler) ListMinioObjects(request *restful.Request, response *restful.R
 	ip := minioService.Spec.ClusterIP
 	port := minioService.Spec.Ports[0].Port
 
+	// Check minio bucket "ecpaas-images" if not exist then create it.
+	found, err := h.minioClient.BucketExists(context.Background(), bucketName)
+	if err != nil {
+		api.HandleInternalError(response, request, err)
+		return
+	}
+
+	if !found {
+		err = h.minioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			api.HandleInternalError(response, request, err)
+			return
+		}
+	}
+
 	objectCh := h.minioClient.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
 	for object := range objectCh {
 		if object.Err != nil {

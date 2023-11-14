@@ -122,8 +122,9 @@ type ImageInfo struct {
 }
 
 type ImageInfoResponse struct {
-	ID   string `json:"id" description:"Image id which is got from image api"`
-	Size uint   `json:"size" default:"20" description:"Image size, unit is GB." minimum:"10" maximum:"80"`
+	ID        string `json:"id" description:"Image id which is got from image api"`
+	Namespace string `json:"namespace" description:"Image namespace"`
+	Size      uint   `json:"size" default:"20" description:"Image size, unit is GB." minimum:"10" maximum:"80"`
 }
 
 type ImageRequest struct {
@@ -175,4 +176,12 @@ type ImageStatus struct {
 type ListImageResponse struct {
 	TotalCount int             `json:"total_count" description:"Total number of images"`
 	Items      []ImageResponse `json:"items" description:"List of images"`
+}
+
+type VirtualizationResourceQuota struct {
+	Namespace      string `json:"namespace" description:"Resource Quota namespace"`
+	Disk           int    `json:"diskCount"`
+	File           int    `json:"fileCount"`
+	Image          int    `json:"imageCount"`
+	VirtualMachine int    `json:"virtualMachineCount"`
 }

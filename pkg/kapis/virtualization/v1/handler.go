@@ -11,9 +11,13 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
+	"github.com/minio/minio-go/v7"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
+	"kubesphere.io/kubesphere/pkg/api"
+	"kubesphere.io/kubesphere/pkg/informers"
+	"kubesphere.io/kubesphere/pkg/models/quotas"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 
@@ -22,16 +26,20 @@ import (
 )
 
 type virtzhandler struct {
-	virtz ui_virtz.Interface
+	virtz               ui_virtz.Interface
+	resourceQuotaGetter quotas.ResourceQuotaGetter
+	minioClient         *minio.Client
 }
 
 type BadRequestError struct {
 	Reason string `json:"reason"`
 }
 
-func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) virtzhandler {
+func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory, minioClient *minio.Client) virtzhandler {
 	return virtzhandler{
-		virtz: ui_virtz.New(ksclient, k8sclient),
+		virtz:               ui_virtz.New(ksclient, k8sclient),
+		resourceQuotaGetter: quotas.NewResourceQuotaGetter(factory.KubernetesSharedInformerFactory(), factory.KubeSphereSharedInformerFactory()),
+		minioClient:         minioClient,
 	}
 }
 
@@ -141,8 +149,9 @@ func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) 
 	size, _ := strconv.ParseUint(vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize], 10, 32)
 
 	return ui_virtz.ImageInfoResponse{
-		ID:   uiImageInfo.ID,
-		Size: uint(size),
+		ID:        uiImageInfo.ID,
+		Namespace: uiImageInfo.Namespace,
+		Size:      uint(size),
 	}
 }
 
@@ -574,4 +583,34 @@ func (h *virtzhandler) DeleteImage(req *restful.Request, resp *restful.Response)
 	}
 
 	resp.WriteHeader(http.StatusOK)
+}
+
+func (r *virtzhandler) handleVirtualizationGetNamespaceQuotas(request *restful.Request, response *restful.Response) {
+	namespace := request.PathParameter("namespace")
+	quota, err := r.resourceQuotaGetter.GetVirtualizationNamespaceQuota(namespace, r.minioClient)
+
+	resourceQuota := ui_virtz.VirtualizationResourceQuota{}
+
+	for k, v := range quota.Data.Used {
+		if k.String() == "count/disks.virtualization.ecpaas.io" {
+			resourceQuota.Disk = int(v.Value())
+		}
+		if k.String() == "count/files.virtualization.ecpaas.io" {
+			resourceQuota.File = int(v.Value())
+		}
+		if k.String() == "count/images.virtualization.ecpaas.io" {
+			resourceQuota.Image = int(v.Value())
+		}
+		if k.String() == "count/virtualmachines.virtualization.ecpaas.io" {
+			resourceQuota.VirtualMachine = int(v.Value())
+		}
+	}
+
+	if err != nil {
+		api.HandleInternalError(response, nil, err)
+		return
+	}
+
+	resourceQuota.Namespace = namespace
+	response.WriteAsJson(resourceQuota)
 }
