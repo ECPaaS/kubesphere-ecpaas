@@ -580,9 +580,14 @@ func (v *virtualizationOperator) CloneImage(namespace string, ui_clone_image *Cl
 	imageTemplate := v1alpha1.ImageTemplate{}
 
 	// get source image
-	sourceImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), ui_clone_image.SourceImageID, metav1.GetOptions{})
+	sourceImage, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(ui_clone_image.SourceImageNamespace).Get(context.Background(), ui_clone_image.SourceImageID, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
+	}
+
+	// forbid cloning image if source image is not shared
+	if !sourceImage.Spec.Attributes.Public {
+		return nil, fmt.Errorf("source image '%s' is not shared", sourceImage.Name)
 	}
 
 	// clone image
