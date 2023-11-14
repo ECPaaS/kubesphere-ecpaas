@@ -46,8 +46,9 @@ func TestGetVirtualMachine(t *testing.T) {
 	ui_virtz_vm.Name = "testvm"
 	ui_virtz_vm.Description = "testvm"
 	ui_virtz_vm.Image = &ui_virtz.ImageInfoResponse{
-		ID:   "image-1234",
-		Size: 20,
+		ID:        "image-1234",
+		Namespace: namespace,
+		Size:      20,
 	}
 	ui_virtz_vm.CpuCores = 1
 	ui_virtz_vm.Memory = 1
@@ -103,8 +104,9 @@ func TestGetVirtualMachineWithAddDisk(t *testing.T) {
 	ui_virtz_vm.Name = "testvm"
 	ui_virtz_vm.Description = "testvm"
 	ui_virtz_vm.Image = &ui_virtz.ImageInfoResponse{
-		ID:   "image-1234",
-		Size: 20,
+		ID:        "image-1234",
+		Namespace: namespace,
+		Size:      20,
 	}
 	ui_virtz_vm.Disk = []ui_virtz.DiskSpec{
 		{
@@ -164,8 +166,9 @@ func TestPostVirtualMachine(t *testing.T) {
 		CpuCores: 2,
 		Memory:   2,
 		Image: &ui_virtz.ImageInfoResponse{
-			ID:   fakeImageTemlate.Name,
-			Size: 20,
+			ID:        fakeImageTemlate.Name,
+			Namespace: namespace,
+			Size:      20,
 		},
 	}
 
@@ -202,8 +205,9 @@ func TestPostVirtualMachineWithAddDisk(t *testing.T) {
 		CpuCores: 2,
 		Memory:   2,
 		Image: &ui_virtz.ImageInfoResponse{
-			ID:   fakeImageTemlate.Name,
-			Size: 20,
+			ID:        fakeImageTemlate.Name,
+			Namespace: namespace,
+			Size:      20,
 		},
 		Disk: []ui_virtz.DiskSpec{
 			{
@@ -259,8 +263,9 @@ func TestPostVirtualMachineWithMountDisk(t *testing.T) {
 		CpuCores: 2,
 		Memory:   2,
 		Image: &ui_virtz.ImageInfoResponse{
-			ID:   fakeImageTemlate.Name,
-			Size: 20,
+			ID:        fakeImageTemlate.Name,
+			Namespace: namespace,
+			Size:      20,
 		},
 		Disk: []ui_virtz.DiskSpec{
 			{
@@ -509,8 +514,9 @@ func TestUnmountDisk(t *testing.T) {
 		CpuCores: 2,
 		Memory:   2,
 		Image: &ui_virtz.ImageInfoResponse{
-			ID:   fakeImageTemlate.Name,
-			Size: 20,
+			ID:        fakeImageTemlate.Name,
+			Namespace: namespace,
+			Size:      20,
 		},
 		Disk: []ui_virtz.DiskSpec{
 			{

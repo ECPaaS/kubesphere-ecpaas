@@ -385,11 +385,10 @@ func GenerateDiskVolume(vm_instance *virtzv1alpha1.VirtualMachine, diskVolumeTem
 
 	blockOwnerDeletion := true
 	controller := true
-	namespace := "default"
 
 	diskVolume := &virtzv1alpha1.DiskVolume{}
 	diskVolume.Name = diskVolumeTemplate.Name
-	diskVolume.Namespace = namespace
+	diskVolume.Namespace = diskVolumeTemplate.Namespace
 	diskVolume.Annotations = diskVolumeTemplate.Annotations
 	diskVolume.Labels = diskVolumeTemplate.Labels
 	diskVolume.Spec.PVCName = pvcCreateByDiskVolumeTemplatePrefix + diskVolumeTemplate.Name

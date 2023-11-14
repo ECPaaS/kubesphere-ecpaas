@@ -141,8 +141,9 @@ func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) 
 	size, _ := strconv.ParseUint(vm.Annotations[virtzv1alpha1.VirtualizationSystemDiskSize], 10, 32)
 
 	return ui_virtz.ImageInfoResponse{
-		ID:   uiImageInfo.ID,
-		Size: uint(size),
+		ID:        uiImageInfo.ID,
+		Namespace: uiImageInfo.Namespace,
+		Size:      uint(size),
 	}
 }
 

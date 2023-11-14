@@ -69,7 +69,7 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	ApplyVMSpec(ui_vm, &vm, vm_uuid)
 
 	if ui_vm.Image != nil {
-		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(namespace).Get(context.Background(), ui_vm.Image.ID, metav1.GetOptions{})
+		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(ui_vm.Image.Namespace).Get(context.Background(), ui_vm.Image.ID, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -164,11 +164,12 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 					v1alpha1.VirtualizationBootOrder: "1",
 					v1alpha1.VirtualizationDiskType:  "system",
 				},
+				Namespace: namespace,
 			},
 			Spec: v1alpha1.DiskVolumeSpec{
 				Source: v1alpha1.DiskVolumeSource{
 					Image: &v1alpha1.DataVolumeSourceImage{
-						Namespace: namespace,
+						Namespace: imagetemplate.Namespace,
 						Name:      ui_vm.Image.ID,
 					},
 				},

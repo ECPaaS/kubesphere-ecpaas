@@ -122,8 +122,9 @@ type ImageInfo struct {
 }
 
 type ImageInfoResponse struct {
-	ID   string `json:"id" description:"Image id which is got from image api"`
-	Size uint   `json:"size" default:"20" description:"Image size, unit is GB." minimum:"10" maximum:"80"`
+	ID        string `json:"id" description:"Image id which is got from image api"`
+	Namespace string `json:"namespace" description:"Image namespace"`
+	Size      uint   `json:"size" default:"20" description:"Image size, unit is GB." minimum:"10" maximum:"80"`
 }
 
 type ImageRequest struct {
