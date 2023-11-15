@@ -590,6 +590,10 @@ func (v *virtualizationOperator) CloneImage(namespace string, ui_clone_image *Cl
 		return nil, fmt.Errorf("source image '%s' is not shared", sourceImage.Name)
 	}
 
+	if namespace == ui_clone_image.SourceImageNamespace {
+		return nil, fmt.Errorf("cannot clone image to the same namespace")
+	}
+
 	// clone image
 	imageTemplate.Name = imageNamePrefix + uuid.New().String()[:8]
 	imageTemplate.Namespace = namespace
