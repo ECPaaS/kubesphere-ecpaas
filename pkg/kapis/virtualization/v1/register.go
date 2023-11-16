@@ -33,7 +33,7 @@ When the cpu cores or memory parameter changed, the virtual machine need be rest
 var diskPutNotes = `Any parameters which are not provied will not be changed.`
 
 var imagePutNotes = `Any parameters which are not provied will not be changed.`
-var imagePostCloneNotes = `Source image's namespace shall be different from destination image's namespace.`
+var imagePostCloneNotes = `Source image's namespace shall be different from new image's namespace.`
 
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 

@@ -327,6 +327,17 @@ func IsDiskVolumeOwnerLabelEmpty(diskVolume *v1alpha1.DiskVolume) bool {
 	return false
 }
 
+func ConvertModifyDiskSpecToDiskSpec(modifyDiskSpec *ModifyDiskSpec) *DiskSpec {
+	diskSpec := DiskSpec{}
+
+	diskSpec.ID = modifyDiskSpec.ID
+	diskSpec.Size = 0
+	diskSpec.Action = modifyDiskSpec.Action
+	diskSpec.Namespace = modifyDiskSpec.Namespace
+
+	return &diskSpec
+}
+
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -358,7 +369,7 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	if ui_vm.Disk != nil {
 		for _, uiDisk := range ui_vm.Disk {
 			if uiDisk.Action == "mount" {
-				err := ApplyMountDisk(vm, &uiDisk)
+				err := ApplyMountDisk(vm, ConvertModifyDiskSpecToDiskSpec(&uiDisk))
 				if err != nil {
 					klog.Errorf("mount disk error: %v", err)
 					return nil, err
@@ -373,7 +384,7 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 				}
 
 			} else if uiDisk.Action == "unmount" {
-				err := ApplyUnmountDisk(vm, &uiDisk)
+				err := ApplyUnmountDisk(vm, ConvertModifyDiskSpecToDiskSpec(&uiDisk))
 				if err != nil {
 					klog.Errorf("unmount disk error: %v", err)
 					return nil, err
@@ -598,7 +609,7 @@ func (v *virtualizationOperator) CloneImage(namespace string, ui_clone_image *Cl
 	imageTemplate.Name = imageNamePrefix + uuid.New().String()[:8]
 	imageTemplate.Namespace = namespace
 	imageTemplate.Annotations = map[string]string{
-		v1alpha1.VirtualizationAliasName: ui_clone_image.DestinationImageName,
+		v1alpha1.VirtualizationAliasName: ui_clone_image.NewImageName,
 	}
 	imageTemplate.Labels = map[string]string{
 		v1alpha1.VirtualizationOSFamily:       sourceImage.Labels[v1alpha1.VirtualizationOSFamily],

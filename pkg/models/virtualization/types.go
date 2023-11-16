@@ -16,7 +16,7 @@ type VirtualMachineRequest struct {
 	Name        string             `json:"name" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores    uint               `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores" minimum:"1" maximum:"4"`
 	Memory      uint               `json:"memory" default:"1" description:"Virtual machine memory size, unit is GB" minimum:"1" maximum:"8"`
-	Description string             `json:"description" description:"Virtual machine description." maximum:"128"`
+	Description string             `json:"description" description:"Virtual machine description. Default is empty string." maximum:"128"`
 	Image       *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disk        []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
 	Guest       *GuestSpec         `json:"guest,omitempty" description:"Virtual machine guest operating system"`
@@ -29,17 +29,23 @@ type DiskSpec struct {
 	Size      uint   `json:"size,omitempty" default:"20" description:"Disk size, unit is GB." minimum:"10" maximum:"500"`
 }
 
+type ModifyDiskSpec struct {
+	Action    string `json:"action" description:"Disk action, the value is 'mount' or 'unmount'"`
+	ID        string `json:"id" description:"Disk id which is got from disk api"`
+	Namespace string `json:"namespace,omitempty" description:"Disk namespace"`
+}
+
 type GuestSpec struct {
 	Username string `json:"username" default:"root" description:"Guest operating system username"`
 	Password string `json:"password" default:"abc1234" description:"Guest operating system password"`
 }
 
 type ModifyVirtualMachineRequest struct {
-	Name        string     `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	CpuCores    uint       `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
-	Memory      uint       `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
-	Disk        []DiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
-	Description string     `json:"description,omitempty" description:"Virtual machine description" maximum:"128"`
+	Name        string           `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	CpuCores    uint             `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
+	Memory      uint             `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
+	Disk        []ModifyDiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
+	Description string           `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
 }
 
 type VirtualMachineResponse struct {
@@ -79,13 +85,13 @@ type ListVirtualMachineResponse struct {
 // Disk
 type DiskRequest struct {
 	Name        string `json:"name" description:"Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	Description string `json:"description" default:"" description:"Disk description" maximum:"128"`
+	Description string `json:"description" default:"" description:"Disk description. Default is empty string." maximum:"128"`
 	Size        uint   `json:"size" default:"20" description:"Disk size, unit is GB." minimum:"10" maximum:"500"`
 }
 
 type ModifyDiskRequest struct {
 	Name        string `json:"name,omitempty" description:"Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	Description string `json:"description,omitempty" default:"" description:"Disk description" maximum:"128"`
+	Description string `json:"description,omitempty" default:"" description:"Disk description. Can be empty string." maximum:"128"`
 	Size        uint   `json:"size,omitempty" default:"20" description:"Disk size, unit is GB and the size only can be increased." minimum:"10" maximum:"500"`
 }
 
@@ -134,13 +140,13 @@ type ImageRequest struct {
 	CpuCores       uint   `json:"cpu_cores" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory         uint   `json:"memory" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
 	Size           uint   `json:"size" default:"20" description:"Default image size, unit is GB." minimum:"10" maximum:"80"`
-	Description    string `json:"description" description:"Image description" maximum:"128"`
+	Description    string `json:"description" description:"Image description. Default is empty string." maximum:"128"`
 	MinioImageName string `json:"minio_image_name" description:"File name which created by minio image api"`
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
 }
 
 type CloneImageRequest struct {
-	DestinationImageName string `json:"dst_img_name" description:"Destination image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	NewImageName         string `json:"new_img_name" description:"New image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	SourceImageID        string `json:"src_img_id" description:"Source image id which is got from image api"`
 	SourceImageNamespace string `json:"src_img_namespace" description:"Source Image namespace"`
 }
@@ -150,7 +156,7 @@ type ModifyImageRequest struct {
 	CpuCores    uint   `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory      uint   `json:"memory,omitempty" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
 	Size        uint   `json:"size,omitempty" default:"20" description:"Default image size, unit is GB and the size only can be increased." minimum:"10" maximum:"80"`
-	Description string `json:"description,omitempty" default:"" description:"Image description" maximum:"128"`
+	Description string `json:"description,omitempty" default:"" description:"Image description. Can be empty string." maximum:"128"`
 	Shared      bool   `json:"shared,omitempty" default:"false" description:"Image shared or not"`
 }
 

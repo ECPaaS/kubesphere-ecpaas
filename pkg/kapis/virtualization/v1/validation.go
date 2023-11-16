@@ -17,7 +17,7 @@ import (
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
-func isValidModifyDisk(validateType reflect.Type, disk ui_virtz.DiskSpec, resp *restful.Response) bool {
+func isValidModifyDisk(validateType reflect.Type, disk ui_virtz.ModifyDiskSpec, resp *restful.Response) bool {
 	if disk.Action != "mount" && disk.Action != "unmount" {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
 			Reason: "Disk action should be 'mount' or 'unmount'",
@@ -220,11 +220,11 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 func isValidCloneImageRequest(image ui_virtz.CloneImageRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(image)
-	if !isValidLength(reflectType, image.DestinationImageName, "DestinationImageName", resp) {
+	if !isValidLength(reflectType, image.NewImageName, "DestinationImageName", resp) {
 		return false
 	}
 
-	if !isValidString(image.DestinationImageName, resp) {
+	if !isValidString(image.NewImageName, resp) {
 		return false
 	}
 

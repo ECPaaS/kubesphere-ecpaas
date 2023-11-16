@@ -549,7 +549,7 @@ func TestUnmountDisk(t *testing.T) {
 
 	// unmount disk
 	vmModifyRequest := ui_virtz.ModifyVirtualMachineRequest{
-		Disk: []ui_virtz.DiskSpec{
+		Disk: []ui_virtz.ModifyDiskSpec{
 			{
 				Action:    "unmount",
 				ID:        diskVolume.Name,
