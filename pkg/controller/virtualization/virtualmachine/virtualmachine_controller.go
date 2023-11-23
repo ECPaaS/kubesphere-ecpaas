@@ -148,9 +148,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 				err := r.Create(rootCtx, diskVolume)
 				if err != nil {
-					statusErr := err.(*errors.StatusError)
-					if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
-						klog.Infof("DiskVolume %s/%s already exists", req.Namespace, diskVolume.Name)
+					if reflect.TypeOf(err) == reflect.TypeOf(&errors.StatusError{}) {
+						statusErr := err.(*errors.StatusError)
+						if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
+							klog.Infof("DiskVolume %s/%s already exists", req.Namespace, diskVolume.Name)
+						}
 					} else {
 						klog.Infof(err.Error())
 						return ctrl.Result{}, err
@@ -207,12 +209,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
-	// requeue if the virtualmachine is not ready and not stopped
-	if vm_instance.Status.PrintableStatus != "Stopped" {
+	if strings.Title(vm_instance.Spec.RunStrategy) == string(kvapi.RunStrategyAlways) {
+		if vm_instance.Status.PrintableStatus != kvapi.VirtualMachineStatusRunning {
+			klog.V(2).Infof("VirtualMachine %s/%s is not running", req.Namespace, req.Name)
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
 		if !vm_instance.Status.Ready {
 			klog.V(2).Infof("VirtualMachine %s/%s is not ready", req.Namespace, req.Name)
 			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 		}
+	} else if strings.Title(vm_instance.Spec.RunStrategy) == string(kvapi.RunStrategyHalted) {
+		if vm_instance.Status.PrintableStatus != kvapi.VirtualMachineStatusStopped {
+			klog.V(2).Infof("VirtualMachine %s/%s is not stopped", req.Namespace, req.Name)
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+	} else {
+		klog.V(2).Infof("VirtualMachine %s/%s runStrategy is not supported", req.Namespace, req.Name)
+		return ctrl.Result{}, nil
 	}
 
 	// delete volumesnapshotcontent
@@ -462,6 +475,13 @@ func getVirtualMachineStatus(virtClient kubecli.KubevirtClient, namespace string
 func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtzv1alpha1.VirtualMachineSpec) {
 
 	runStrategy := kvapi.RunStrategyAlways
+	if virtzSpec.RunStrategy == virtzv1alpha1.VirtualMachineRunStrategyAlways {
+		runStrategy = kvapi.RunStrategyAlways
+	} else if virtzSpec.RunStrategy == virtzv1alpha1.VirtualMachineRunStrategyHalted {
+		runStrategy = kvapi.RunStrategyHalted
+	} else {
+		klog.Infof("RunStrategy %s is not supported", virtzSpec.RunStrategy)
+	}
 	kvvmSpec.RunStrategy = &runStrategy
 
 	kvvmSpec.Template = &kvapi.VirtualMachineInstanceTemplateSpec{}

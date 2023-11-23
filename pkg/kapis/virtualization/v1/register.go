@@ -66,6 +66,26 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
+	webservice.Route(webservice.PUT("/namespaces/{namespace}/virtualmachines/{id}/start").
+		To(handler.StartVirtualMahcine).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Param(webservice.PathParameter("id", "virtual machine id")).
+		Reads(ui_virtz.ModifyVirtualMachineRequest{}).
+		Doc("Start a virtual machine").
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
+
+	webservice.Route(webservice.PUT("/namespaces/{namespace}/virtualmachines/{id}/stop").
+		To(handler.StopVirtualMahcine).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Param(webservice.PathParameter("id", "virtual machine id")).
+		Reads(ui_virtz.ModifyVirtualMachineRequest{}).
+		Doc("Stop a virtual machine").
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
+
 	webservice.Route(webservice.GET("/namespaces/{namespace}/virtualmachines/{id}").
 		To(handler.GetVirtualMachine).
 		Param(webservice.PathParameter("namespace", "namespace name")).

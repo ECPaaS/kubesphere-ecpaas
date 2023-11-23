@@ -615,6 +615,9 @@ spec:
                       type: object
                     type: array
                 type: object
+              runStrategy:
+                description: RunStrategy is the run strategy of the VirtualMachine.
+                type: string
             type: object
           status:
             description: VirtualMachineStatus represents the status returned by the

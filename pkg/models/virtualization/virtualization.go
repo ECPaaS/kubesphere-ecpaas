@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/klog"
 	"kubesphere.io/api/virtualization/v1alpha1"
 	kvapi "kubevirt.io/api/core/v1"
+	"kubevirt.io/client-go/kubecli"
 	cdiv1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
@@ -33,6 +35,8 @@ type Interface interface {
 	CreateVirtualMachine(namespace string, ui_vm *VirtualMachineRequest) (*v1alpha1.VirtualMachine, error)
 	GetVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error)
+	StartVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
+	StopVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error)
 	DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	// Disk
@@ -142,6 +146,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 		},
 	}
 	vm.Spec.Hardware.Hostname = ui_vm.Name
+	vm.Spec.RunStrategy = v1alpha1.VirtualMachineRunStrategyAlways
 }
 
 func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
@@ -399,6 +404,66 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	}
 
 	return updated_vm, nil
+}
+
+func (v *virtualizationOperator) StartVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error) {
+	clientConfig := kubecli.DefaultClientConfig(&pflag.FlagSet{})
+
+	// get the kubevirt client, using which kubevirt resources can be managed.
+	virtClient, err := kubecli.GetKubevirtClientFromClientConfig(clientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	err = virtClient.VirtualMachine(namespace).Start(name, &kvapi.StartOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if vm.Spec.RunStrategy != v1alpha1.VirtualMachineRunStrategyAlways {
+		vm.Spec.RunStrategy = v1alpha1.VirtualMachineRunStrategyAlways
+		_, err = v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return vm, nil
+}
+
+func (v *virtualizationOperator) StopVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error) {
+	clientConfig := kubecli.DefaultClientConfig(&pflag.FlagSet{})
+
+	// get the kubevirt client, using which kubevirt resources can be managed.
+	virtClient, err := kubecli.GetKubevirtClientFromClientConfig(clientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	err = virtClient.VirtualMachine(namespace).Stop(name, &kvapi.StopOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if vm.Spec.RunStrategy != v1alpha1.VirtualMachineRunStrategyHalted {
+		vm.Spec.RunStrategy = v1alpha1.VirtualMachineRunStrategyHalted
+		_, err = v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return vm, nil
 }
 
 func (v *virtualizationOperator) GetVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error) {

@@ -31,6 +31,11 @@ const (
 	VirtualizationLastDiskVolumes = "virtualization.ecpaas.io/last-disk-volumes"
 )
 
+const (
+	VirtualMachineRunStrategyAlways = "always"
+	VirtualMachineRunStrategyHalted = "halted"
+)
+
 type ResourceRequirements struct {
 	// Requests is a description of the initial vmi resources.
 	// Valid resource keys are "memory" and "cpu".
@@ -123,6 +128,8 @@ type VirtualMachineSpec struct {
 	DiskVolumes []string `json:"diskVolumes,omitempty"`
 	// Hardware is the hardware of the VirtualMachine.
 	Hardware Hardware `json:"hardware,omitempty"`
+	// RunStrategy is the run strategy of the VirtualMachine.
+	RunStrategy string `json:"runStrategy,omitempty"`
 }
 
 // +kubebuilder:resource:shortName={ksvm,ksvms}

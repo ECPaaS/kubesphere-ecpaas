@@ -93,6 +93,32 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	resp.WriteHeader(http.StatusOK)
 }
 
+func (h *virtzhandler) StartVirtualMahcine(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	vmName := req.PathParameter("id")
+
+	_, err := h.virtz.StartVirtualMachine(namespace, vmName)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) StopVirtualMahcine(req *restful.Request, resp *restful.Response) {
+	namespace := req.PathParameter("namespace")
+	vmName := req.PathParameter("id")
+
+	_, err := h.virtz.StopVirtualMachine(namespace, vmName)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+}
+
 func (h *virtzhandler) GetVirtualMachine(req *restful.Request, resp *restful.Response) {
 	namespace := req.PathParameter("namespace")
 	vmName := req.PathParameter("id")
