@@ -70,7 +70,6 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		To(handler.StartVirtualMahcine).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("id", "virtual machine id")).
-		Reads(ui_virtz.ModifyVirtualMachineRequest{}).
 		Doc("Start a virtual machine").
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
@@ -80,7 +79,6 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		To(handler.StopVirtualMahcine).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("id", "virtual machine id")).
-		Reads(ui_virtz.ModifyVirtualMachineRequest{}).
 		Doc("Stop a virtual machine").
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
