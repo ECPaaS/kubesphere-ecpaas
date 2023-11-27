@@ -108,8 +108,8 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 		}
 	}
 
-	if vm.Description != "" {
-		if !isValidLength(reflectType, vm.Description, "Description", resp) {
+	if vm.Description != nil {
+		if !isValidLength(reflectType, *vm.Description, "Description", resp) {
 			return false
 		}
 	}
@@ -172,8 +172,8 @@ func isValidModifyDiskRequest(disk ui_virtz.ModifyDiskRequest, resp *restful.Res
 		}
 	}
 
-	if disk.Description != "" {
-		if !isValidLength(reflectType, disk.Description, "Description", resp) {
+	if disk.Description != nil {
+		if !isValidLength(reflectType, *disk.Description, "Description", resp) {
 			return false
 		}
 	}
@@ -244,8 +244,8 @@ func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.
 		}
 	}
 
-	if image.Description != "" {
-		if !isValidLength(reflectType, image.Description, "Description", resp) {
+	if image.Description != nil {
+		if !isValidLength(reflectType, *image.Description, "Description", resp) {
 			return false
 		}
 	}

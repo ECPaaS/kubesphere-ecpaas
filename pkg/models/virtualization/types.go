@@ -45,7 +45,7 @@ type ModifyVirtualMachineRequest struct {
 	CpuCores    uint             `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
 	Memory      uint             `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
 	Disk        []ModifyDiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
-	Description string           `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
+	Description *string          `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
 }
 
 type VirtualMachineResponse struct {
@@ -90,9 +90,9 @@ type DiskRequest struct {
 }
 
 type ModifyDiskRequest struct {
-	Name        string `json:"name,omitempty" description:"Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	Description string `json:"description,omitempty" default:"" description:"Disk description. Can be empty string." maximum:"128"`
-	Size        uint   `json:"size,omitempty" default:"20" description:"Disk size, unit is GB and the size only can be increased." minimum:"10" maximum:"500"`
+	Name        string  `json:"name,omitempty" description:"Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	Description *string `json:"description,omitempty" default:"" description:"Disk description. Can be empty string." maximum:"128"`
+	Size        uint    `json:"size,omitempty" default:"20" description:"Disk size, unit is GB and the size only can be increased." minimum:"10" maximum:"500"`
 }
 
 type DiskResponse struct {
@@ -152,12 +152,12 @@ type CloneImageRequest struct {
 }
 
 type ModifyImageRequest struct {
-	Name        string `json:"name,omitempty" description:"Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	CpuCores    uint   `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
-	Memory      uint   `json:"memory,omitempty" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
-	Size        uint   `json:"size,omitempty" default:"20" description:"Default image size, unit is GB and the size only can be increased." minimum:"10" maximum:"80"`
-	Description string `json:"description,omitempty" default:"" description:"Image description. Can be empty string." maximum:"128"`
-	Shared      bool   `json:"shared,omitempty" default:"false" description:"Image shared or not"`
+	Name        string  `json:"name,omitempty" description:"Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	CpuCores    uint    `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
+	Memory      uint    `json:"memory,omitempty" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
+	Size        uint    `json:"size,omitempty" default:"20" description:"Default image size, unit is GB and the size only can be increased." minimum:"10" maximum:"80"`
+	Description *string `json:"description,omitempty" default:"" description:"Image description. Can be empty string." maximum:"128"`
+	Shared      bool    `json:"shared,omitempty" default:"false" description:"Image shared or not"`
 }
 
 type ImageResponse struct {

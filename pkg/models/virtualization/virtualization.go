@@ -348,8 +348,8 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		vm.Annotations[v1alpha1.VirtualizationAliasName] = ui_vm.Name
 	}
 
-	if ui_vm.Description != "" && ui_vm.Description != vm.Annotations[v1alpha1.VirtualizationDescription] {
-		vm.Annotations[v1alpha1.VirtualizationDescription] = ui_vm.Description
+	if ui_vm.Description != nil {
+		vm.Annotations[v1alpha1.VirtualizationDescription] = *ui_vm.Description
 	}
 
 	if ui_vm.CpuCores != 0 && ui_vm.CpuCores != uint(vm.Spec.Hardware.Domain.CPU.Cores) {
@@ -494,8 +494,8 @@ func (v *virtualizationOperator) UpdateDisk(namespace string, name string, ui_di
 		diskVolume.Spec.Resources.Requests[v1.ResourceStorage] = resource.MustParse(size)
 	}
 
-	if ui_disk.Description != "" && ui_disk.Description != diskVolume.Annotations[v1alpha1.VirtualizationDescription] {
-		diskVolume.Annotations[v1alpha1.VirtualizationDescription] = ui_disk.Description
+	if ui_disk.Description != nil {
+		diskVolume.Annotations[v1alpha1.VirtualizationDescription] = *ui_disk.Description
 	}
 
 	updatedDisk, err := v.ksclient.VirtualizationV1alpha1().DiskVolumes(namespace).Update(context.Background(), diskVolume, metav1.UpdateOptions{})
@@ -666,8 +666,8 @@ func (v *virtualizationOperator) UpdateImage(namespace string, name string, ui_i
 		imageTemplate.Labels[v1alpha1.VirtualizationImageStorage] = strconv.FormatUint(uint64(ui_image.Size), 10)
 	}
 
-	if ui_image.Description != "" && ui_image.Description != imageTemplate.Annotations[v1alpha1.VirtualizationDescription] {
-		imageTemplate.Annotations[v1alpha1.VirtualizationDescription] = ui_image.Description
+	if ui_image.Description != nil {
+		imageTemplate.Annotations[v1alpha1.VirtualizationDescription] = *ui_image.Description
 	}
 
 	if ui_image.Shared != imageTemplate.Spec.Attributes.Public {
