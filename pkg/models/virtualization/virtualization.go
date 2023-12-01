@@ -117,16 +117,16 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 	vm.Name = vmNamePrefix + vm_uuid
 
 	memory := strconv.FormatUint(uint64(ui_vm.Memory), 10) + "Gi"
-	vm.Spec.Hardware.Domain = v1alpha1.Domain{
+	vm.Spec.Hardware.Domain = v1alpha1.DomainSpec{
 		CPU: v1alpha1.CPU{
 			Cores: uint32(ui_vm.CpuCores),
 		},
-		Devices: v1alpha1.Devices{
-			Interfaces: []v1alpha1.Interface{
+		Devices: kvapi.Devices{
+			Interfaces: []kvapi.Interface{
 				{ // network interface
 					Name: "default",
-					InterfaceBindingMethod: v1alpha1.InterfaceBindingMethod{
-						Masquerade: &v1alpha1.InterfaceMasquerade{},
+					InterfaceBindingMethod: kvapi.InterfaceBindingMethod{
+						Masquerade: &kvapi.InterfaceMasquerade{},
 					},
 				},
 			},

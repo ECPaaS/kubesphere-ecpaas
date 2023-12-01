@@ -625,10 +625,10 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 
 }
 
-func getInterfaceMethod(iface virtzv1alpha1.Interface) kvapi.InterfaceBindingMethod {
+func getInterfaceMethod(iface kvapi.Interface) kvapi.InterfaceBindingMethod {
 	interfaceMethod := kvapi.InterfaceBindingMethod{}
 
-	klog.Info("test")
+	klog.V(2).Infof("Interface %s", iface.Name)
 	if iface.Bridge != nil {
 		interfaceMethod.Bridge = &kvapi.InterfaceBridge{}
 	} else if iface.Macvtap != nil {
