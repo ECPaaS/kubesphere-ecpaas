@@ -222,13 +222,19 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 		}
 	}
 
-	request.Request.ParseMultipartForm(500 << 20)
+	request.Request.ParseMultipartForm(0)
 	file, header, err := request.Request.FormFile("uploadfile")
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return
 	}
-	filesize := file.(Sizer).Size()
+
+	filesize, err := file.Seek(0, 2)
+
+	if err != nil {
+		api.HandleInternalError(response, request, err)
+		return
+	}
 
 	request.Request.MultipartReader()
 
@@ -260,13 +266,19 @@ func (h *handler) UploadMinioObjectWithNs(request *restful.Request, response *re
 		}
 	}
 
-	request.Request.ParseMultipartForm(500 << 20)
+	request.Request.ParseMultipartForm(0)
 	file, header, err := request.Request.FormFile("uploadfile")
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return
 	}
-	filesize := file.(Sizer).Size()
+
+	filesize, err := file.Seek(0, 2)
+
+	if err != nil {
+		api.HandleInternalError(response, request, err)
+		return
+	}
 
 	request.Request.MultipartReader()
 
@@ -305,8 +317,4 @@ func (h *handler) DeleteMinioObjectWithNs(request *restful.Request, response *re
 	}
 
 	response.WriteEntity(errors.None)
-}
-
-type Sizer interface {
-	Size() int64
 }
