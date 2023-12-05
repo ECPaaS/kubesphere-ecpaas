@@ -507,20 +507,14 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 	kvvmSpec.Template.Spec.Hostname = virtzSpec.Hardware.Hostname
 
 	if virtzSpec.Hardware.Volumes != nil {
-		kvvmSpec.Template.Spec.Domain.Devices.Disks = make([]kvapi.Disk, len(virtzSpec.Hardware.Volumes))
-		for i, volume := range virtzSpec.Hardware.Volumes {
-			kvvmSpec.Template.Spec.Domain.Devices.Disks[i] = kvapi.Disk{
-				Name: volume.Name,
-				DiskDevice: kvapi.DiskDevice{
-					Disk: &kvapi.DiskTarget{
-						Bus: "virtio",
-					},
-				},
-			}
-		}
-
 		kvvmSpec.Template.Spec.Volumes = make([]kvapi.Volume, len(virtzSpec.Hardware.Volumes))
 		for i, volume := range virtzSpec.Hardware.Volumes {
+			newDisk := kvapi.Disk{}
+			newDisk.Name = volume.Name
+			newDisk.DiskDevice = kvapi.DiskDevice{}
+			newDisk.DiskDevice.Disk = &kvapi.DiskTarget{}
+			newDisk.DiskDevice.Disk.Bus = "virtio"
+
 			if volume.PersistentVolumeClaim != nil {
 				kvvmSpec.Template.Spec.Volumes[i] = kvapi.Volume{
 					Name: volume.Name,
@@ -532,6 +526,8 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 						},
 					},
 				}
+
+				kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
 			}
 			if volume.CloudInitNoCloud != nil {
 				kvvmSpec.Template.Spec.Volumes[i] = kvapi.Volume{
@@ -542,6 +538,8 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 						},
 					},
 				}
+
+				kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
 			}
 			if volume.ContainerDisk != nil {
 				kvvmSpec.Template.Spec.Volumes[i] = kvapi.Volume{
@@ -552,6 +550,50 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 						},
 					},
 				}
+
+				kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+			}
+		}
+	}
+
+	if virtzSpec.Hardware.Domain.Machine != nil {
+		kvvmSpec.Template.Spec.Domain.Machine = &kvapi.Machine{}
+		kvvmSpec.Template.Spec.Domain.Machine = virtzSpec.Hardware.Domain.Machine
+	}
+
+	if virtzSpec.Hardware.Domain.Features != nil {
+		kvvmSpec.Template.Spec.Domain.Features = &kvapi.Features{}
+		kvvmSpec.Template.Spec.Domain.Features = virtzSpec.Hardware.Domain.Features
+	}
+
+	if virtzSpec.Hardware.Domain.Devices.Disks != nil {
+		for _, disk := range virtzSpec.Hardware.Domain.Devices.Disks {
+			newDisk := kvapi.Disk{}
+			newDisk.Name = disk.Name
+			newDisk.DiskDevice = kvapi.DiskDevice{}
+			if disk.DiskDevice.Disk != nil {
+				newDisk.DiskDevice.Disk = &kvapi.DiskTarget{}
+				newDisk.DiskDevice.Disk = disk.DiskDevice.Disk.DeepCopy()
+			} else if disk.DiskDevice.CDRom != nil {
+				newDisk.DiskDevice.CDRom = &kvapi.CDRomTarget{}
+				newDisk.DiskDevice.CDRom = disk.DiskDevice.CDRom.DeepCopy()
+			}
+			if disk.BootOrder != nil {
+				boorOrder := *disk.BootOrder
+				newDisk.BootOrder = &boorOrder
+			}
+
+			kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+		}
+	}
+
+	if virtzSpec.Hardware.Domain.Devices.Inputs != nil {
+		kvvmSpec.Template.Spec.Domain.Devices.Inputs = make([]kvapi.Input, len(virtzSpec.Hardware.Domain.Devices.Inputs))
+		for i, input := range virtzSpec.Hardware.Domain.Devices.Inputs {
+			kvvmSpec.Template.Spec.Domain.Devices.Inputs[i] = kvapi.Input{
+				Type: input.Type,
+				Bus:  input.Bus,
+				Name: input.Name,
 			}
 		}
 	}
@@ -565,7 +607,6 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 				NetworkSource: networkSource,
 			}
 		}
-
 	}
 
 	if virtzSpec.DiskVolumes != nil {
