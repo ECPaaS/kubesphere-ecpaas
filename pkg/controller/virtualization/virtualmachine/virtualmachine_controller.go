@@ -583,7 +583,19 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 				newDisk.BootOrder = &boorOrder
 			}
 
-			kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+			match := false
+			for i, kvvm_disk := range kvvmSpec.Template.Spec.Domain.Devices.Disks {
+				if kvvm_disk.Name == disk.Name {
+					// replace disk
+					kvvmSpec.Template.Spec.Domain.Devices.Disks[i] = newDisk
+					match = true
+					break
+				}
+			}
+
+			if !match {
+				kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)
+			}
 		}
 	}
 
