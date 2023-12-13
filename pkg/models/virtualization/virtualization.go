@@ -602,6 +602,7 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 		v1alpha1.VirtualizationCpuCores:       strconv.FormatUint(uint64(ui_image.CpuCores), 10),
 		v1alpha1.VirtualizationImageStorage:   strconv.FormatUint(uint64(ui_image.Size), 10),
 		v1alpha1.VirtualizationUploadFileName: ui_image.MinioImageName,
+		v1alpha1.VirtualizationImageType:      ui_image.Type,
 	}
 
 	// get minio ip and port

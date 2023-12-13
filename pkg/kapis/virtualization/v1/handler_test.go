@@ -384,6 +384,7 @@ func TestPostImage(t *testing.T) {
 		OSFamily:       "ubuntu",
 		Version:        "20.04_LTS_64bit",
 		MinioImageName: "testimage",
+		Type:           "cloud",
 		Shared:         false,
 	}
 
@@ -409,6 +410,10 @@ func TestPostImage(t *testing.T) {
 
 	if image.Labels[virtzv1alpha1.VirtualizationOSVersion] != imageRequest.Version {
 		t.Errorf("image version is not correct: got %v want %v", image.Labels[virtzv1alpha1.VirtualizationOSVersion], imageRequest.Version)
+	}
+
+	if image.Labels[virtzv1alpha1.VirtualizationImageType] != imageRequest.Type {
+		t.Errorf("image type is not correct: got %v want %v", image.Labels[virtzv1alpha1.VirtualizationImageType], imageRequest.Type)
 	}
 
 	size := strconv.FormatUint(uint64(imageRequest.Size), 10) + "Gi"

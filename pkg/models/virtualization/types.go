@@ -96,13 +96,15 @@ type ModifyDiskRequest struct {
 }
 
 type DiskResponse struct {
-	ID          string     `json:"id" description:"Disk id"`
-	Name        string     `json:"name" description:"Disk name"`
-	Namespace   string     `json:"namespace" description:"Disk namespace"`
-	Description string     `json:"description" default:"" description:"Disk description"`
-	Type        string     `json:"type" description:"Disk type, the value is 'system' or 'data'"`
-	Size        uint       `json:"size" default:"20" description:"Disk size, unit is GB" minimum:"10" maximum:"500"`
-	Status      DiskStatus `json:"status" description:"Disk status"`
+	ID             string     `json:"id" description:"Disk id"`
+	Name           string     `json:"name" description:"Disk name"`
+	Namespace      string     `json:"namespace" description:"Disk namespace"`
+	Description    string     `json:"description" default:"" description:"Disk description"`
+	Type           string     `json:"type" description:"Disk type, the value is 'system' or 'data'"`
+	Size           uint       `json:"size" default:"20" description:"Disk size, unit is GB" minimum:"10" maximum:"500"`
+	Mode           string     `json:"mode" default:"rw" description:"Disk mode, the value is 'rw' or 'ro'"`
+	MinioImageName string     `json:"minio_image_name" description:"File name which created by minio image api"`
+	Status         DiskStatus `json:"status" description:"Disk status"`
 }
 
 type DiskStatus struct {
@@ -143,6 +145,7 @@ type ImageRequest struct {
 	Description    string `json:"description" description:"Image description. Default is empty string." maximum:"128"`
 	MinioImageName string `json:"minio_image_name" description:"File name which created by minio image api"`
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
+	Type           string `json:"type" default:"cloud" description:"Image type, the value is 'cloud' or 'iso'"`
 }
 
 type CloneImageRequest struct {
@@ -172,6 +175,7 @@ type ImageResponse struct {
 	MinioImageName string      `json:"minio_image_name" description:"File name which created by minio image api"`
 	Description    string      `json:"description" default:"" description:"Image description"`
 	Shared         bool        `json:"shared" default:"false" description:"Image shared or not"`
+	Type           string      `json:"type" default:"cloud" description:"Image type, the value is 'cloud' or 'iso'"`
 	Status         ImageStatus `json:"status" description:"Image status"`
 }
 

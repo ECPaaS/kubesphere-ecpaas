@@ -29,6 +29,7 @@ const (
 	VirtualizationSystemDiskName  = "virtualization.ecpaas.io/system-disk-name"
 	VirtualizationDiskVolumeOwner = "virtualization.ecpaas.io/disk-volume-owner"
 	VirtualizationLastDiskVolumes = "virtualization.ecpaas.io/last-disk-volumes"
+	VirtualizationImageType       = "virtualization.ecpaas.io/image-type"
 )
 
 const (

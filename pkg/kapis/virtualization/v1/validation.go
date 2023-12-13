@@ -214,6 +214,10 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 		return false
 	}
 
+	if !isValidImageType(image.Type, resp) {
+		return false
+	}
+
 	return true
 }
 
@@ -299,6 +303,16 @@ func isValidDiskSize(h *virtzhandler, namespace string, diskName string, newDisk
 	if int(oldDiskSize) >= newDiskSize {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
 			Reason: "The new disk size must be larger than the old disk size",
+		})
+		return false
+	}
+	return true
+}
+
+func isValidImageType(imageType string, resp *restful.Response) bool {
+	if imageType != "cloud" && imageType != "iso" {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Image type should be 'cloud' or 'iso'",
 		})
 		return false
 	}
