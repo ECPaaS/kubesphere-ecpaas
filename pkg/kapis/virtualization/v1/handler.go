@@ -213,13 +213,15 @@ func getUIDiskResponse(diskvolume *virtzv1alpha1.DiskVolume) ui_virtz.DiskRespon
 
 	size, _ := strconv.ParseUint(strings.Replace(diskvolume.Spec.Resources.Requests.Storage().String(), "Gi", "", -1), 10, 32)
 	return ui_virtz.DiskResponse{
-		Name:        diskvolume.Annotations[virtzv1alpha1.VirtualizationAliasName],
-		ID:          diskvolume.Name,
-		Namespace:   diskvolume.Namespace,
-		Description: diskvolume.Annotations[virtzv1alpha1.VirtualizationDescription],
-		Type:        diskvolume.Labels[virtzv1alpha1.VirtualizationDiskType],
-		Size:        uint(size),
-		Status:      ui_disk_status,
+		Name:           diskvolume.Annotations[virtzv1alpha1.VirtualizationAliasName],
+		ID:             diskvolume.Name,
+		Namespace:      diskvolume.Namespace,
+		Description:    diskvolume.Annotations[virtzv1alpha1.VirtualizationDescription],
+		Type:           diskvolume.Labels[virtzv1alpha1.VirtualizationDiskType],
+		Size:           uint(size),
+		Mode:           diskvolume.Labels[virtzv1alpha1.VirtualizationDiskMode],
+		MinioImageName: diskvolume.Labels[virtzv1alpha1.VirtualizationDiskMinioImageName],
+		Status:         ui_disk_status,
 	}
 }
 

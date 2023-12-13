@@ -522,11 +522,13 @@ func (v *virtualizationOperator) CreateDisk(namespace string, ui_disk *DiskReque
 
 	diskVolume.Name = diskVolumeNamePrefix + disk_uuid
 	diskVolume.Annotations = map[string]string{
-		v1alpha1.VirtualizationAliasName:   ui_disk.Name,
-		v1alpha1.VirtualizationDescription: ui_disk.Description,
+		v1alpha1.VirtualizationAliasName:          ui_disk.Name,
+		v1alpha1.VirtualizationDescription:        ui_disk.Description,
+		v1alpha1.VirtualizationDiskMinioImageName: "",
 	}
 	diskVolume.Labels = map[string]string{
 		v1alpha1.VirtualizationDiskType: "data",
+		v1alpha1.VirtualizationDiskMode: "rw",
 	}
 
 	size := strconv.FormatUint(uint64(ui_disk.Size), 10) + "Gi"
@@ -684,6 +686,7 @@ func (v *virtualizationOperator) CloneImage(namespace string, ui_clone_image *Cl
 		v1alpha1.VirtualizationCpuCores:       sourceImage.Labels[v1alpha1.VirtualizationCpuCores],
 		v1alpha1.VirtualizationImageStorage:   sourceImage.Labels[v1alpha1.VirtualizationImageStorage],
 		v1alpha1.VirtualizationUploadFileName: sourceImage.Labels[v1alpha1.VirtualizationUploadFileName],
+		v1alpha1.VirtualizationImageType:      sourceImage.Labels[v1alpha1.VirtualizationImageType],
 	}
 
 	imageTemplate.Spec.Attributes = v1alpha1.ImageTemplateAttributes{
