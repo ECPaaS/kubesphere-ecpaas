@@ -78,9 +78,19 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 		if err != nil {
 			return nil, err
 		}
-		err = ApplyImageSpec(ui_vm, &vm, imagetemplate, namespace, vm_uuid)
-		if err != nil {
-			return nil, err
+
+		imageType := imagetemplate.Labels[v1alpha1.VirtualizationImageType]
+
+		if strings.ToLower(imageType) == "cloud" {
+			err = ApplyCloudImageSpec(ui_vm, &vm, imagetemplate, namespace, vm_uuid)
+			if err != nil {
+				return nil, err
+			}
+		} else if strings.ToLower(imageType) == "iso" {
+			err = ApplyISOImageSpec(ui_vm, &vm, imagetemplate, namespace, vm_uuid)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -149,7 +159,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 	vm.Spec.RunStrategy = v1alpha1.VirtualMachineRunStrategyAlways
 }
 
-func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
+func ApplyCloudImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
 
 	imageInfo := ImageInfo{}
 	imageInfo.ID = imagetemplate.Name
@@ -179,8 +189,10 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 					v1alpha1.VirtualizationAliasName: ui_vm.Name,
 				},
 				Labels: map[string]string{
-					v1alpha1.VirtualizationBootOrder: "1",
-					v1alpha1.VirtualizationDiskType:  "system",
+					v1alpha1.VirtualizationBootOrder:        "1",
+					v1alpha1.VirtualizationDiskType:         "system",
+					v1alpha1.VirtualizationDiskHotpluggable: "false",
+					v1alpha1.VirtualizationDiskMode:         "rw",
 				},
 				Namespace: namespace,
 			},
@@ -243,6 +255,239 @@ func ApplyImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, i
 				},
 			},
 		},
+	}
+
+	return nil
+}
+
+func ApplyISOImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
+
+	osFamily := imagetemplate.Labels[v1alpha1.VirtualizationOSFamily]
+
+	if strings.ToLower(osFamily) == "windows" {
+		err := ApplyWindowsISOImageSpec(ui_vm, vm, imagetemplate, namespace, vm_uuid)
+		if err != nil {
+			return err
+		}
+	} else if strings.ToLower(osFamily) == "linux" {
+		err := ApplyLinuxISOImageSpec(ui_vm, vm, imagetemplate, namespace, vm_uuid)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ApplyWindowsISOImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
+
+	imageInfo := ImageInfo{}
+	imageInfo.ID = imagetemplate.Name
+	imageInfo.Namespace = imagetemplate.Namespace
+	// annotations
+	imageInfo.Name = imagetemplate.Annotations[v1alpha1.VirtualizationAliasName]
+	// labels
+	imageInfo.System = imagetemplate.Labels[v1alpha1.VirtualizationOSFamily]
+	imageInfo.Version = imagetemplate.Labels[v1alpha1.VirtualizationOSVersion]
+	imageInfo.ImageSize = imagetemplate.Labels[v1alpha1.VirtualizationImageStorage]
+	imageInfo.Cpu = imagetemplate.Labels[v1alpha1.VirtualizationCpuCores]
+	imageInfo.Memory = imagetemplate.Labels[v1alpha1.VirtualizationImageMemory]
+
+	jsonData, err := json.Marshal(imageInfo)
+	if err != nil {
+		return err
+	}
+
+	vm.Annotations[v1alpha1.VirtualizationImageInfo] = string(jsonData)
+
+	systemSize := strconv.FormatUint(uint64(ui_vm.Image.Size), 10) + "Gi"
+	imageSize, _ := strconv.ParseUint(imagetemplate.Labels[v1alpha1.VirtualizationImageStorage], 10, 32)
+	cdromSize := strconv.FormatUint(imageSize, 10) + "Gi"
+
+	var spinlocksRetries uint32 = 8191
+
+	vm.Spec.DiskVolumeTemplates = []v1alpha1.DiskVolume{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: diskVolumeNamePrefix + vm_uuid,
+				Annotations: map[string]string{
+					v1alpha1.VirtualizationAliasName: ui_vm.Name,
+				},
+				Labels: map[string]string{
+					v1alpha1.VirtualizationBootOrder:        "1",
+					v1alpha1.VirtualizationDiskType:         "system",
+					v1alpha1.VirtualizationDiskHotpluggable: "false",
+					v1alpha1.VirtualizationDiskMode:         "rw",
+				},
+				Namespace: namespace,
+			},
+			Spec: v1alpha1.DiskVolumeSpec{
+				Source: v1alpha1.DiskVolumeSource{
+					Blank: &v1alpha1.DataVolumeBlankImage{},
+				},
+				Resources: v1alpha1.ResourceRequirements{
+					Requests: v1.ResourceList{
+						v1.ResourceStorage: resource.MustParse(systemSize),
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: diskVolumeNamePrefix + vm_uuid + diskVolumeNameSuffix,
+				Annotations: map[string]string{
+					v1alpha1.VirtualizationAliasName: ui_vm.Name,
+				},
+				Labels: map[string]string{
+					v1alpha1.VirtualizationBootOrder:          "2",
+					v1alpha1.VirtualizationDiskType:           "data",
+					v1alpha1.VirtualizationDiskMediaType:      "cdrom",
+					v1alpha1.VirtualizationDiskHotpluggable:   "false",
+					v1alpha1.VirtualizationDiskMode:           "ro",
+					v1alpha1.VirtualizationDiskMinioImageName: imagetemplate.Labels[v1alpha1.VirtualizationDiskMinioImageName],
+				},
+				Namespace: namespace,
+			},
+			Spec: v1alpha1.DiskVolumeSpec{
+				Source: v1alpha1.DiskVolumeSource{
+					Image: &v1alpha1.DataVolumeSourceImage{
+						Namespace: imagetemplate.Namespace,
+						Name:      ui_vm.Image.ID,
+					},
+				},
+				Resources: v1alpha1.ResourceRequirements{
+					Requests: v1.ResourceList{
+						v1.ResourceStorage: resource.MustParse(cdromSize),
+					},
+				},
+			},
+		},
+	}
+	vm.Spec.DiskVolumes = []string{
+		diskVolumeNamePrefix + vm_uuid,
+		diskVolumeNamePrefix + vm_uuid + diskVolumeNameSuffix,
+	}
+
+	vm.Spec.Hardware.Domain.Features = &kvapi.Features{
+		ACPI: kvapi.FeatureState{},
+		APIC: &kvapi.FeatureAPIC{},
+		Hyperv: &kvapi.FeatureHyperv{
+			Relaxed: &kvapi.FeatureState{},
+			VAPIC:   &kvapi.FeatureState{},
+			Spinlocks: &kvapi.FeatureSpinlocks{
+				Retries: &spinlocksRetries,
+			},
+		},
+	}
+
+	vm.Spec.Hardware.Domain.Devices.Disks = []kvapi.Disk{
+		{
+			Name: "virtiocontainer",
+			DiskDevice: kvapi.DiskDevice{
+				CDRom: &kvapi.CDRomTarget{
+					Bus: "sata",
+				},
+			},
+		},
+	}
+
+	vm.Spec.Hardware.Volumes = []kvapi.Volume{
+		{
+			Name: "virtiocontainer",
+			VolumeSource: kvapi.VolumeSource{
+				ContainerDisk: &kvapi.ContainerDiskSource{
+					Image: "kubevirt/virtio-container-disk",
+				},
+			},
+		},
+	}
+
+	return nil
+}
+
+func ApplyLinuxISOImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, imagetemplate *v1alpha1.ImageTemplate, namespace string, vm_uuid string) error {
+	imageInfo := ImageInfo{}
+	imageInfo.ID = imagetemplate.Name
+	imageInfo.Namespace = imagetemplate.Namespace
+	// annotations
+	imageInfo.Name = imagetemplate.Annotations[v1alpha1.VirtualizationAliasName]
+	// labels
+	imageInfo.System = imagetemplate.Labels[v1alpha1.VirtualizationOSFamily]
+	imageInfo.Version = imagetemplate.Labels[v1alpha1.VirtualizationOSVersion]
+	imageInfo.ImageSize = imagetemplate.Labels[v1alpha1.VirtualizationImageStorage]
+	imageInfo.Cpu = imagetemplate.Labels[v1alpha1.VirtualizationCpuCores]
+	imageInfo.Memory = imagetemplate.Labels[v1alpha1.VirtualizationImageMemory]
+
+	jsonData, err := json.Marshal(imageInfo)
+	if err != nil {
+		return err
+	}
+
+	vm.Annotations[v1alpha1.VirtualizationImageInfo] = string(jsonData)
+
+	systemSize := strconv.FormatUint(uint64(ui_vm.Image.Size), 10) + "Gi"
+	imageSize, _ := strconv.ParseUint(imagetemplate.Labels[v1alpha1.VirtualizationImageStorage], 10, 32)
+	cdromSize := strconv.FormatUint(imageSize, 10) + "Gi"
+
+	vm.Spec.DiskVolumeTemplates = []v1alpha1.DiskVolume{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: diskVolumeNamePrefix + vm_uuid,
+				Annotations: map[string]string{
+					v1alpha1.VirtualizationAliasName: ui_vm.Name,
+				},
+				Labels: map[string]string{
+					v1alpha1.VirtualizationBootOrder:        "1",
+					v1alpha1.VirtualizationDiskType:         "system",
+					v1alpha1.VirtualizationDiskHotpluggable: "false",
+					v1alpha1.VirtualizationDiskMode:         "rw",
+				},
+				Namespace: namespace,
+			},
+			Spec: v1alpha1.DiskVolumeSpec{
+				Source: v1alpha1.DiskVolumeSource{
+					Blank: &v1alpha1.DataVolumeBlankImage{},
+				},
+				Resources: v1alpha1.ResourceRequirements{
+					Requests: v1.ResourceList{
+						v1.ResourceStorage: resource.MustParse(systemSize),
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: diskVolumeNamePrefix + vm_uuid + diskVolumeNameSuffix,
+				Annotations: map[string]string{
+					v1alpha1.VirtualizationAliasName: ui_vm.Name,
+				},
+				Labels: map[string]string{
+					v1alpha1.VirtualizationBootOrder:        "2",
+					v1alpha1.VirtualizationDiskType:         "data",
+					v1alpha1.VirtualizationDiskMediaType:    "cdrom",
+					v1alpha1.VirtualizationDiskHotpluggable: "false",
+					v1alpha1.VirtualizationDiskMode:         "ro",
+				},
+				Namespace: namespace,
+			},
+			Spec: v1alpha1.DiskVolumeSpec{
+				Source: v1alpha1.DiskVolumeSource{
+					Image: &v1alpha1.DataVolumeSourceImage{
+						Namespace: imagetemplate.Namespace,
+						Name:      ui_vm.Image.ID,
+					},
+				},
+				Resources: v1alpha1.ResourceRequirements{
+					Requests: v1.ResourceList{
+						v1.ResourceStorage: resource.MustParse(cdromSize),
+					},
+				},
+			},
+		},
+	}
+	vm.Spec.DiskVolumes = []string{
+		diskVolumeNamePrefix + vm_uuid,
+		diskVolumeNamePrefix + vm_uuid + diskVolumeNameSuffix,
 	}
 
 	return nil
@@ -598,13 +843,13 @@ func (v *virtualizationOperator) CreateImage(namespace string, ui_image *ImageRe
 	}
 
 	imageTemplate.Labels = map[string]string{
-		v1alpha1.VirtualizationOSFamily:       ui_image.OSFamily,
-		v1alpha1.VirtualizationOSVersion:      ui_image.Version,
-		v1alpha1.VirtualizationImageMemory:    strconv.FormatUint(uint64(ui_image.Memory), 10),
-		v1alpha1.VirtualizationCpuCores:       strconv.FormatUint(uint64(ui_image.CpuCores), 10),
-		v1alpha1.VirtualizationImageStorage:   strconv.FormatUint(uint64(ui_image.Size), 10),
-		v1alpha1.VirtualizationUploadFileName: ui_image.MinioImageName,
-		v1alpha1.VirtualizationImageType:      ui_image.Type,
+		v1alpha1.VirtualizationOSFamily:           ui_image.OSFamily,
+		v1alpha1.VirtualizationOSVersion:          ui_image.Version,
+		v1alpha1.VirtualizationImageMemory:        strconv.FormatUint(uint64(ui_image.Memory), 10),
+		v1alpha1.VirtualizationCpuCores:           strconv.FormatUint(uint64(ui_image.CpuCores), 10),
+		v1alpha1.VirtualizationImageStorage:       strconv.FormatUint(uint64(ui_image.Size), 10),
+		v1alpha1.VirtualizationDiskMinioImageName: ui_image.MinioImageName,
+		v1alpha1.VirtualizationImageType:          ui_image.Type,
 	}
 
 	// get minio ip and port
@@ -680,13 +925,13 @@ func (v *virtualizationOperator) CloneImage(namespace string, ui_clone_image *Cl
 		v1alpha1.VirtualizationAliasName: ui_clone_image.NewImageName,
 	}
 	imageTemplate.Labels = map[string]string{
-		v1alpha1.VirtualizationOSFamily:       sourceImage.Labels[v1alpha1.VirtualizationOSFamily],
-		v1alpha1.VirtualizationOSVersion:      sourceImage.Labels[v1alpha1.VirtualizationOSVersion],
-		v1alpha1.VirtualizationImageMemory:    sourceImage.Labels[v1alpha1.VirtualizationImageMemory],
-		v1alpha1.VirtualizationCpuCores:       sourceImage.Labels[v1alpha1.VirtualizationCpuCores],
-		v1alpha1.VirtualizationImageStorage:   sourceImage.Labels[v1alpha1.VirtualizationImageStorage],
-		v1alpha1.VirtualizationUploadFileName: sourceImage.Labels[v1alpha1.VirtualizationUploadFileName],
-		v1alpha1.VirtualizationImageType:      sourceImage.Labels[v1alpha1.VirtualizationImageType],
+		v1alpha1.VirtualizationOSFamily:           sourceImage.Labels[v1alpha1.VirtualizationOSFamily],
+		v1alpha1.VirtualizationOSVersion:          sourceImage.Labels[v1alpha1.VirtualizationOSVersion],
+		v1alpha1.VirtualizationImageMemory:        sourceImage.Labels[v1alpha1.VirtualizationImageMemory],
+		v1alpha1.VirtualizationCpuCores:           sourceImage.Labels[v1alpha1.VirtualizationCpuCores],
+		v1alpha1.VirtualizationImageStorage:       sourceImage.Labels[v1alpha1.VirtualizationImageStorage],
+		v1alpha1.VirtualizationDiskMinioImageName: sourceImage.Labels[v1alpha1.VirtualizationDiskMinioImageName],
+		v1alpha1.VirtualizationImageType:          sourceImage.Labels[v1alpha1.VirtualizationImageType],
 	}
 
 	imageTemplate.Spec.Attributes = v1alpha1.ImageTemplateAttributes{

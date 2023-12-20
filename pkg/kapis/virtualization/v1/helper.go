@@ -59,6 +59,9 @@ func prepareFakeImageTemplate(ksClient *fakeks.Clientset, fakeImageTemlate *Fake
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      imageName,
 			Namespace: imageNamespace,
+			Labels: map[string]string{
+				virtzv1alpha1.VirtualizationImageType: "cloud",
+			},
 		},
 		Spec: virtzv1alpha1.ImageTemplateSpec{
 			Source: virtzv1alpha1.ImageTemplateSource{

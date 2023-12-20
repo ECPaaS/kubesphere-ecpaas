@@ -20,7 +20,6 @@ const (
 	VirtualizationCpuCores           = "virtualization.ecpaas.io/cpu-cores"
 	VirtualizationImageMemory        = "virtualization.ecpaas.io/image-memory"
 	VirtualizationImageStorage       = "virtualization.ecpaas.io/image-storage"
-	VirtualizationUploadFileName     = "virtualization.ecpaas.io/upload-file-name"
 	VirtualizationOSFamily           = "virtualization.ecpaas.io/os-family"
 	VirtualizationOSVersion          = "virtualization.ecpaas.io/os-version"
 	VirtualizationOSPlatform         = "virtualization.ecpaas.io/os-platform"
@@ -32,6 +31,8 @@ const (
 	VirtualizationImageType          = "virtualization.ecpaas.io/image-type"
 	VirtualizationDiskMode           = "virtualization.ecpaas.io/disk-mode"
 	VirtualizationDiskMinioImageName = "virtualization.ecpaas.io/disk-minio-image-name"
+	VirtualizationDiskMediaType      = "virtualization.ecpaas.io/disk-media-type"
+	VirtualizationDiskHotpluggable   = "virtualization.ecpaas.io/disk-hotpluggable"
 )
 
 const (

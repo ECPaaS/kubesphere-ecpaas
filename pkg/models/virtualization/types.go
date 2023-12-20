@@ -7,6 +7,7 @@ package virtualization
 const (
 	vmNamePrefix         = "vm-"   // vm: virtual machine
 	diskVolumeNamePrefix = "disk-" // disk: disk volume
+	diskVolumeNameSuffix = "-ro-mode"
 	diskVolumeNewPrefix  = "new-"
 	imageNamePrefix      = "image-"
 )

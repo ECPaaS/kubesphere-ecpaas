@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -308,6 +309,15 @@ func (r *Reconciler) updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine
 				continue
 			}
 
+			// skip hotpluggable is false
+			dv := &virtzv1alpha1.DiskVolume{}
+			if err := r.Get(context.Background(), types.NamespacedName{Name: diskVolume, Namespace: req.Namespace}, dv); err != nil {
+				return err
+			}
+			if dv.Labels[virtzv1alpha1.VirtualizationDiskHotpluggable] == "false" {
+				continue
+			}
+
 			if vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes] != "" {
 				lastDiskVolumes := strings.Split(vm_instance.Annotations[virtzv1alpha1.VirtualizationLastDiskVolumes], ",")
 				if ContainsString(lastDiskVolumes, diskVolume, nil) {
@@ -414,7 +424,8 @@ func GenerateDiskVolume(vm_instance *virtzv1alpha1.VirtualMachine, diskVolumeTem
 	}
 	diskVolume.Annotations["cdi.kubevirt.io/storage.deleteAfterCompletion"] = "false"
 
-	if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskType] == "system" {
+	if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskType] == "system" ||
+		diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskMediaType] == "cdrom" {
 		diskVolume.OwnerReferences = []metav1.OwnerReference{
 			{
 				APIVersion:         vm_instance.APIVersion,
@@ -626,19 +637,27 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 			// check boot order from spec.diskvolumeTemplates label
 			bootorder := uint(0)
 			isMappingTodiskVolumeTemplate := false
-			isSystemDisk := false
+			diskMediaType := "disk"
+			isHotpluggable := false
+
 			for _, diskVolumeTemplate := range virtzSpec.DiskVolumeTemplates {
 				if diskVolumeTemplate.Name == volume {
 					isMappingTodiskVolumeTemplate = true
 
 					if diskVolumeTemplate.Labels != nil {
-						if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationBootOrder] == "1" {
-							bootorder = uint(1)
+						val, ok := diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationBootOrder]
+						if ok {
+							uint64, _ := strconv.ParseUint(val, 10, 32)
+							bootorder = uint(uint64)
 						}
-					}
-
-					if diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskType] == "system" {
-						isSystemDisk = true
+						val, ok = diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskMediaType]
+						if ok {
+							diskMediaType = val
+						}
+						val, ok = diskVolumeTemplate.Labels[virtzv1alpha1.VirtualizationDiskHotpluggable]
+						if ok {
+							isHotpluggable, _ = strconv.ParseBool(val)
+						}
 					}
 				}
 			}
@@ -653,21 +672,27 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 					},
 				}
 
-				if isSystemDisk {
+				// system disk and cdrom disk is not hotpluggable
+				if !isHotpluggable {
 					newVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pvcCreateByDiskVolumeTemplatePrefix + volume
 					kvvmSpec.Template.Spec.Volumes = append(kvvmSpec.Template.Spec.Volumes, newVolume)
 
-					newDisk := kvapi.Disk{
-						Name: volume,
-						DiskDevice: kvapi.DiskDevice{
+					newDisk := kvapi.Disk{}
+					newDisk.Name = volume
+					newDisk.BootOrder = &bootorder
+
+					if diskMediaType == "cdrom" {
+						newDisk.DiskDevice = kvapi.DiskDevice{
+							CDRom: &kvapi.CDRomTarget{
+								Bus: "sata",
+							},
+						}
+					} else {
+						newDisk.DiskDevice = kvapi.DiskDevice{
 							Disk: &kvapi.DiskTarget{
 								Bus: "virtio",
 							},
-						},
-					}
-
-					if bootorder == 1 {
-						newDisk.BootOrder = &bootorder
+						}
 					}
 
 					kvvmSpec.Template.Spec.Domain.Devices.Disks = append(kvvmSpec.Template.Spec.Domain.Devices.Disks, newDisk)

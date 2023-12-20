@@ -548,7 +548,7 @@ func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageRespon
 		Memory:         uint(memory),
 		Size:           uint(size),
 		Description:    image.Annotations[virtzv1alpha1.VirtualizationDescription],
-		MinioImageName: image.Labels[virtzv1alpha1.VirtualizationUploadFileName],
+		MinioImageName: image.Labels[virtzv1alpha1.VirtualizationDiskMinioImageName],
 		Shared:         image.Spec.Attributes.Public,
 		Type:           image.Labels[virtzv1alpha1.VirtualizationImageType],
 		Status:         status,
