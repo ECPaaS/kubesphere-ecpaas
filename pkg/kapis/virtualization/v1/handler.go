@@ -57,6 +57,10 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
+	if !isValidDiskDuplicated(ui_vm.Disk, resp) {
+		return
+	}
+
 	createdVM, err := h.virtz.CreateVirtualMachine(namespace, &ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -81,6 +85,10 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	}
 
 	if !isValidModifyVirtualMachine(ui_vm, resp) {
+		return
+	}
+
+	if !isValidDiskDuplicated(ui_vm.Disk, resp) {
 		return
 	}
 

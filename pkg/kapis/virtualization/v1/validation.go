@@ -318,3 +318,35 @@ func isValidImageType(imageType string, resp *restful.Response) bool {
 	}
 	return true
 }
+
+func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) bool {
+	switch disks := diskSpecList.(type) {
+	case []ui_virtz.DiskSpec:
+		diskMap := make(map[string]bool)
+		for _, disk := range disks {
+			if _, ok := diskMap[disk.ID]; ok {
+				resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+					Reason: "Disk ID should be unique",
+				})
+				return false
+			}
+			diskMap[disk.ID] = true
+		}
+		return true
+	case []ui_virtz.ModifyDiskSpec:
+		diskMap := make(map[string]bool)
+		for _, disk := range disks {
+			if _, ok := diskMap[disk.ID]; ok {
+				resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+					Reason: "Disk ID should be unique",
+				})
+				return false
+			}
+			diskMap[disk.ID] = true
+		}
+		return true
+	default:
+		return false
+	}
+
+}
