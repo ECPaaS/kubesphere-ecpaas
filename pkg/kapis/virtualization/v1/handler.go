@@ -84,6 +84,30 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
+	// unmount the ro mode disk is forbidden
+	if ui_vm.Disk != nil {
+		for _, disk := range ui_vm.Disk {
+			// check if the disk is mounted
+			if disk.Action == "unmount" {
+				diskvolume, err := h.virtz.GetDisk(namespace, disk.ID)
+				if err != nil {
+					klog.Error(err)
+					if errors.IsNotFound(err) {
+						resp.WriteError(http.StatusNotFound, err)
+						return
+					}
+					resp.WriteError(http.StatusInternalServerError, err)
+					return
+				}
+
+				if diskvolume.Labels[virtzv1alpha1.VirtualizationDiskMode] == "ro" {
+					resp.WriteError(http.StatusInternalServerError, errors.NewBadRequest("disk is mounted in ro mode"))
+					return
+				}
+			}
+		}
+	}
+
 	_, err = h.virtz.UpdateVirtualMachine(namespace, vmName, &ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)

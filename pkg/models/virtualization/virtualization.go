@@ -269,7 +269,7 @@ func ApplyISOImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine
 		if err != nil {
 			return err
 		}
-	} else if strings.ToLower(osFamily) == "linux" {
+	} else {
 		err := ApplyLinuxISOImageSpec(ui_vm, vm, imagetemplate, namespace, vm_uuid)
 		if err != nil {
 			return err
