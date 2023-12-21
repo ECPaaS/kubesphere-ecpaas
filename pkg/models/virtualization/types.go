@@ -138,7 +138,7 @@ type ImageInfoResponse struct {
 
 type ImageRequest struct {
 	Name           string `json:"name" description:"Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	OSFamily       string `json:"os_family" default:"ubuntu" description:"Image operating system"`
+	OSFamily       string `json:"os_family" default:"ubuntu" description:"Image operating system, valid values are 'ubuntu', 'centos', 'debian', 'fedora', 'windows'"`
 	Version        string `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
 	CpuCores       uint   `json:"cpu_cores" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory         uint   `json:"memory" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`

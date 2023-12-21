@@ -214,6 +214,10 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 		return false
 	}
 
+	if !isValidOSFamily(image.OSFamily, resp) {
+		return false
+	}
+
 	if !isValidImageType(image.Type, resp) {
 		return false
 	}
@@ -317,6 +321,23 @@ func isValidImageType(imageType string, resp *restful.Response) bool {
 		return false
 	}
 	return true
+}
+
+func isValidOSFamily(osFamily string, resp *restful.Response) bool {
+	osFamilyList := []string{"CentOS", "Debian", "Ubuntu", "Fedora", "Windows"}
+
+	lowerCaseOSFamily := strings.ToLower(osFamily)
+	for _, family := range osFamilyList {
+		if lowerCaseOSFamily == strings.ToLower(family) {
+			return true
+		}
+	}
+
+	resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		Reason: "OS family should be one of the following: centos, debian, ubuntu, fedora, windows",
+	})
+
+	return false
 }
 
 func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) bool {

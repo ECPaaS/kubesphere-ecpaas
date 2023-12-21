@@ -764,6 +764,53 @@
         }
       }
     },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images/clone": {
+      "post": {
+        "description": "Source image's namespace shall be different from new image's namespace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Clone image",
+        "operationId": "CloneImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.CloneImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images/{id}": {
       "get": {
         "produces": [
@@ -1092,6 +1139,78 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines/{id}/start": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Start a virtual machine",
+        "operationId": "StartVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines/{id}/stop": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Stop a virtual machine",
+        "operationId": "StopVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1882,6 +2001,28 @@
         }
       }
     },
+    "virtualization.CloneImageRequest": {
+      "required": [
+        "new_img_name",
+        "src_img_id",
+        "src_img_namespace"
+      ],
+      "properties": {
+        "new_img_name": {
+          "description": "New image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "src_img_id": {
+          "description": "Source image id which is got from image api",
+          "type": "string"
+        },
+        "src_img_namespace": {
+          "description": "Source Image namespace",
+          "type": "string"
+        }
+      }
+    },
     "virtualization.DiskIDResponse": {
       "required": [
         "id"
@@ -1901,7 +2042,7 @@
       ],
       "properties": {
         "description": {
-          "description": "Disk description",
+          "description": "Disk description. Default is empty string.",
           "type": "string",
           "maximum": 128
         },
@@ -1928,6 +2069,8 @@
         "description",
         "type",
         "size",
+        "mode",
+        "minio_image_name",
         "status"
       ],
       "properties": {
@@ -1938,6 +2081,15 @@
         "id": {
           "description": "Disk id",
           "type": "string"
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
+        },
+        "mode": {
+          "description": "Disk mode, the value is 'rw' or 'ro'",
+          "type": "string",
+          "default": "rw"
         },
         "name": {
           "description": "Disk name",
@@ -2040,11 +2192,16 @@
     "virtualization.ImageInfoResponse": {
       "required": [
         "id",
+        "namespace",
         "size"
       ],
       "properties": {
         "id": {
           "description": "Image id which is got from image api",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Image namespace",
           "type": "string"
         },
         "size": {
@@ -2067,7 +2224,8 @@
         "size",
         "description",
         "minio_image_name",
-        "shared"
+        "shared",
+        "type"
       ],
       "properties": {
         "cpu_cores": {
@@ -2079,7 +2237,7 @@
           "minimum": 1
         },
         "description": {
-          "description": "Image description",
+          "description": "Image description. Default is empty string.",
           "type": "string",
           "maximum": 128
         },
@@ -2101,7 +2259,7 @@
           "maximum": 16
         },
         "os_family": {
-          "description": "Image operating system",
+          "description": "Image operating system, valid values are 'ubuntu', 'centos', 'debian', 'fedora', 'windows'",
           "type": "string",
           "default": "ubuntu"
         },
@@ -2117,6 +2275,11 @@
           "default": 20,
           "maximum": 80,
           "minimum": 10
+        },
+        "type": {
+          "description": "Image type, the value is 'cloud' or 'iso'",
+          "type": "string",
+          "default": "cloud"
         },
         "version": {
           "description": "Image version",
@@ -2138,6 +2301,7 @@
         "minio_image_name",
         "description",
         "shared",
+        "type",
         "status"
       ],
       "properties": {
@@ -2198,6 +2362,11 @@
         "status": {
           "description": "Image status",
           "$ref": "#/definitions/virtualization.ImageStatus"
+        },
+        "type": {
+          "description": "Image type, the value is 'cloud' or 'iso'",
+          "type": "string",
+          "default": "cloud"
         },
         "version": {
           "description": "Image version",
@@ -2280,7 +2449,7 @@
     "virtualization.ModifyDiskRequest": {
       "properties": {
         "description": {
-          "description": "Disk description",
+          "description": "Disk description. Can be empty string.",
           "type": "string",
           "maximum": 128
         },
@@ -2299,6 +2468,26 @@
         }
       }
     },
+    "virtualization.ModifyDiskSpec": {
+      "required": [
+        "action",
+        "id"
+      ],
+      "properties": {
+        "action": {
+          "description": "Disk action, the value is 'mount' or 'unmount'",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id which is got from disk api",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        }
+      }
+    },
     "virtualization.ModifyImageRequest": {
       "properties": {
         "cpu_cores": {
@@ -2310,7 +2499,7 @@
           "minimum": 1
         },
         "description": {
-          "description": "Image description",
+          "description": "Image description. Can be empty string.",
           "type": "string",
           "maximum": 128
         },
@@ -2353,7 +2542,7 @@
           "minimum": 1
         },
         "description": {
-          "description": "Virtual machine description",
+          "description": "Virtual machine description. Can be empty string.",
           "type": "string",
           "maximum": 128
         },
@@ -2361,7 +2550,7 @@
           "description": "Virtual machine disks",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/virtualization.DiskSpec"
+            "$ref": "#/definitions/virtualization.ModifyDiskSpec"
           }
         },
         "memory": {
@@ -2424,7 +2613,7 @@
           "minimum": 1
         },
         "description": {
-          "description": "Virtual machine description.",
+          "description": "Virtual machine description. Default is empty string.",
           "type": "string",
           "maximum": 128
         },
