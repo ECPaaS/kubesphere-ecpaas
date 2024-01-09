@@ -117,7 +117,7 @@ func (c *FakeS2iBuilders) UpdateStatus(ctx context.Context, s2iBuilder *v1alpha1
 // Delete takes name of the s2iBuilder and deletes it. Returns an error if one occurs.
 func (c *FakeS2iBuilders) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(s2ibuildersResource, c.ns, name), &v1alpha1.S2iBuilder{})
+		Invokes(testing.NewDeleteActionWithOptions(s2ibuildersResource, c.ns, name, opts), &v1alpha1.S2iBuilder{})
 
 	return err
 }

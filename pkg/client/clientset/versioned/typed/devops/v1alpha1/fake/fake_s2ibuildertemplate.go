@@ -110,7 +110,7 @@ func (c *FakeS2iBuilderTemplates) UpdateStatus(ctx context.Context, s2iBuilderTe
 // Delete takes name of the s2iBuilderTemplate and deletes it. Returns an error if one occurs.
 func (c *FakeS2iBuilderTemplates) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(s2ibuildertemplatesResource, name), &v1alpha1.S2iBuilderTemplate{})
+		Invokes(testing.NewRootDeleteActionWithOptions(s2ibuildertemplatesResource, name, opts), &v1alpha1.S2iBuilderTemplate{})
 	return err
 }
 

@@ -37,6 +37,8 @@ import (
 	fakedevopsv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha1/fake"
 	devopsv1alpha3 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha3"
 	fakedevopsv1alpha3 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha3/fake"
+	gatewayv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/gateway/v1alpha1"
+	fakegatewayv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/gateway/v1alpha1/fake"
 	iamv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/iam/v1alpha2"
 	fakeiamv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/iam/v1alpha2/fake"
 	networkv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/network/v1alpha1"
@@ -59,6 +61,8 @@ import (
 	faketypesv1beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta1/fake"
 	typesv1beta2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta2"
 	faketypesv1beta2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta2/fake"
+	virtualizationv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/virtualization/v1alpha1"
+	fakevirtualizationv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/virtualization/v1alpha1/fake"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.
@@ -106,7 +110,10 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 	return c.tracker
 }
 
-var _ clientset.Interface = &Clientset{}
+var (
+	_ clientset.Interface = &Clientset{}
+	_ testing.FakeClient  = &Clientset{}
+)
 
 // AlertingV2beta1 retrieves the AlertingV2beta1Client
 func (c *Clientset) AlertingV2beta1() alertingv2beta1.AlertingV2beta1Interface {
@@ -136,6 +143,11 @@ func (c *Clientset) DevopsV1alpha1() devopsv1alpha1.DevopsV1alpha1Interface {
 // DevopsV1alpha3 retrieves the DevopsV1alpha3Client
 func (c *Clientset) DevopsV1alpha3() devopsv1alpha3.DevopsV1alpha3Interface {
 	return &fakedevopsv1alpha3.FakeDevopsV1alpha3{Fake: &c.Fake}
+}
+
+// GatewayV1alpha1 retrieves the GatewayV1alpha1Client
+func (c *Clientset) GatewayV1alpha1() gatewayv1alpha1.GatewayV1alpha1Interface {
+	return &fakegatewayv1alpha1.FakeGatewayV1alpha1{Fake: &c.Fake}
 }
 
 // IamV1alpha2 retrieves the IamV1alpha2Client
@@ -191,4 +203,9 @@ func (c *Clientset) TypesV1beta1() typesv1beta1.TypesV1beta1Interface {
 // TypesV1beta2 retrieves the TypesV1beta2Client
 func (c *Clientset) TypesV1beta2() typesv1beta2.TypesV1beta2Interface {
 	return &faketypesv1beta2.FakeTypesV1beta2{Fake: &c.Fake}
+}
+
+// VirtualizationV1alpha1 retrieves the VirtualizationV1alpha1Client
+func (c *Clientset) VirtualizationV1alpha1() virtualizationv1alpha1.VirtualizationV1alpha1Interface {
+	return &fakevirtualizationv1alpha1.FakeVirtualizationV1alpha1{Fake: &c.Fake}
 }

@@ -117,7 +117,7 @@ func (c *FakeFederatedIngresses) UpdateStatus(ctx context.Context, federatedIngr
 // Delete takes name of the federatedIngress and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedIngresses) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedingressesResource, c.ns, name), &v1beta1.FederatedIngress{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedingressesResource, c.ns, name, opts), &v1beta1.FederatedIngress{})
 
 	return err
 }

@@ -20,6 +20,7 @@ package versioned
 
 import (
 	"fmt"
+	"net/http"
 
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
@@ -30,6 +31,7 @@ import (
 	clusterv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/cluster/v1alpha1"
 	devopsv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha1"
 	devopsv1alpha3 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/devops/v1alpha3"
+	gatewayv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/gateway/v1alpha1"
 	iamv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/iam/v1alpha2"
 	networkv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/network/v1alpha1"
 	notificationv2beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/notification/v2beta1"
@@ -41,6 +43,7 @@ import (
 	tenantv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/tenant/v1alpha2"
 	typesv1beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta1"
 	typesv1beta2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/types/v1beta2"
+	virtualizationv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/virtualization/v1alpha1"
 )
 
 type Interface interface {
@@ -51,6 +54,7 @@ type Interface interface {
 	ClusterV1alpha1() clusterv1alpha1.ClusterV1alpha1Interface
 	DevopsV1alpha1() devopsv1alpha1.DevopsV1alpha1Interface
 	DevopsV1alpha3() devopsv1alpha3.DevopsV1alpha3Interface
+	GatewayV1alpha1() gatewayv1alpha1.GatewayV1alpha1Interface
 	IamV1alpha2() iamv1alpha2.IamV1alpha2Interface
 	NetworkV1alpha1() networkv1alpha1.NetworkV1alpha1Interface
 	NotificationV2beta1() notificationv2beta1.NotificationV2beta1Interface
@@ -62,29 +66,31 @@ type Interface interface {
 	TenantV1alpha2() tenantv1alpha2.TenantV1alpha2Interface
 	TypesV1beta1() typesv1beta1.TypesV1beta1Interface
 	TypesV1beta2() typesv1beta2.TypesV1beta2Interface
+	VirtualizationV1alpha1() virtualizationv1alpha1.VirtualizationV1alpha1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	alertingV2beta1     *alertingv2beta1.AlertingV2beta1Client
-	applicationV1alpha1 *applicationv1alpha1.ApplicationV1alpha1Client
-	auditingV1alpha1    *auditingv1alpha1.AuditingV1alpha1Client
-	clusterV1alpha1     *clusterv1alpha1.ClusterV1alpha1Client
-	devopsV1alpha1      *devopsv1alpha1.DevopsV1alpha1Client
-	devopsV1alpha3      *devopsv1alpha3.DevopsV1alpha3Client
-	iamV1alpha2         *iamv1alpha2.IamV1alpha2Client
-	networkV1alpha1     *networkv1alpha1.NetworkV1alpha1Client
-	notificationV2beta1 *notificationv2beta1.NotificationV2beta1Client
-	notificationV2beta2 *notificationv2beta2.NotificationV2beta2Client
-	quotaV1alpha2       *quotav1alpha2.QuotaV1alpha2Client
-	servicemeshV1alpha2 *servicemeshv1alpha2.ServicemeshV1alpha2Client
-	storageV1alpha1     *storagev1alpha1.StorageV1alpha1Client
-	tenantV1alpha1      *tenantv1alpha1.TenantV1alpha1Client
-	tenantV1alpha2      *tenantv1alpha2.TenantV1alpha2Client
-	typesV1beta1        *typesv1beta1.TypesV1beta1Client
-	typesV1beta2        *typesv1beta2.TypesV1beta2Client
+	alertingV2beta1        *alertingv2beta1.AlertingV2beta1Client
+	applicationV1alpha1    *applicationv1alpha1.ApplicationV1alpha1Client
+	auditingV1alpha1       *auditingv1alpha1.AuditingV1alpha1Client
+	clusterV1alpha1        *clusterv1alpha1.ClusterV1alpha1Client
+	devopsV1alpha1         *devopsv1alpha1.DevopsV1alpha1Client
+	devopsV1alpha3         *devopsv1alpha3.DevopsV1alpha3Client
+	gatewayV1alpha1        *gatewayv1alpha1.GatewayV1alpha1Client
+	iamV1alpha2            *iamv1alpha2.IamV1alpha2Client
+	networkV1alpha1        *networkv1alpha1.NetworkV1alpha1Client
+	notificationV2beta1    *notificationv2beta1.NotificationV2beta1Client
+	notificationV2beta2    *notificationv2beta2.NotificationV2beta2Client
+	quotaV1alpha2          *quotav1alpha2.QuotaV1alpha2Client
+	servicemeshV1alpha2    *servicemeshv1alpha2.ServicemeshV1alpha2Client
+	storageV1alpha1        *storagev1alpha1.StorageV1alpha1Client
+	tenantV1alpha1         *tenantv1alpha1.TenantV1alpha1Client
+	tenantV1alpha2         *tenantv1alpha2.TenantV1alpha2Client
+	typesV1beta1           *typesv1beta1.TypesV1beta1Client
+	typesV1beta2           *typesv1beta2.TypesV1beta2Client
+	virtualizationV1alpha1 *virtualizationv1alpha1.VirtualizationV1alpha1Client
 }
 
 // AlertingV2beta1 retrieves the AlertingV2beta1Client
@@ -115,6 +121,11 @@ func (c *Clientset) DevopsV1alpha1() devopsv1alpha1.DevopsV1alpha1Interface {
 // DevopsV1alpha3 retrieves the DevopsV1alpha3Client
 func (c *Clientset) DevopsV1alpha3() devopsv1alpha3.DevopsV1alpha3Interface {
 	return c.devopsV1alpha3
+}
+
+// GatewayV1alpha1 retrieves the GatewayV1alpha1Client
+func (c *Clientset) GatewayV1alpha1() gatewayv1alpha1.GatewayV1alpha1Interface {
+	return c.gatewayV1alpha1
 }
 
 // IamV1alpha2 retrieves the IamV1alpha2Client
@@ -172,6 +183,11 @@ func (c *Clientset) TypesV1beta2() typesv1beta2.TypesV1beta2Interface {
 	return c.typesV1beta2
 }
 
+// VirtualizationV1alpha1 retrieves the VirtualizationV1alpha1Client
+func (c *Clientset) VirtualizationV1alpha1() virtualizationv1alpha1.VirtualizationV1alpha1Interface {
+	return c.virtualizationV1alpha1
+}
+
 // Discovery retrieves the DiscoveryClient
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	if c == nil {
@@ -183,7 +199,29 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 // NewForConfig creates a new Clientset for the given config.
 // If config's RateLimiter is not set and QPS and Burst are acceptable,
 // NewForConfig will generate a rate-limiter in configShallowCopy.
+// NewForConfig is equivalent to NewForConfigAndClient(c, httpClient),
+// where httpClient was generated with rest.HTTPClientFor(c).
 func NewForConfig(c *rest.Config) (*Clientset, error) {
+	configShallowCopy := *c
+
+	if configShallowCopy.UserAgent == "" {
+		configShallowCopy.UserAgent = rest.DefaultKubernetesUserAgent()
+	}
+
+	// share the transport between all clients
+	httpClient, err := rest.HTTPClientFor(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewForConfigAndClient(&configShallowCopy, httpClient)
+}
+
+// NewForConfigAndClient creates a new Clientset for the given config and http client.
+// Note the http client provided takes precedence over the configured transport values.
+// If config's RateLimiter is not set and QPS and Burst are acceptable,
+// NewForConfigAndClient will generate a rate-limiter in configShallowCopy.
+func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset, error) {
 	configShallowCopy := *c
 	if configShallowCopy.RateLimiter == nil && configShallowCopy.QPS > 0 {
 		if configShallowCopy.Burst <= 0 {
@@ -191,78 +229,87 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 		}
 		configShallowCopy.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(configShallowCopy.QPS, configShallowCopy.Burst)
 	}
+
 	var cs Clientset
 	var err error
-	cs.alertingV2beta1, err = alertingv2beta1.NewForConfig(&configShallowCopy)
+	cs.alertingV2beta1, err = alertingv2beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.applicationV1alpha1, err = applicationv1alpha1.NewForConfig(&configShallowCopy)
+	cs.applicationV1alpha1, err = applicationv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.auditingV1alpha1, err = auditingv1alpha1.NewForConfig(&configShallowCopy)
+	cs.auditingV1alpha1, err = auditingv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.clusterV1alpha1, err = clusterv1alpha1.NewForConfig(&configShallowCopy)
+	cs.clusterV1alpha1, err = clusterv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.devopsV1alpha1, err = devopsv1alpha1.NewForConfig(&configShallowCopy)
+	cs.devopsV1alpha1, err = devopsv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.devopsV1alpha3, err = devopsv1alpha3.NewForConfig(&configShallowCopy)
+	cs.devopsV1alpha3, err = devopsv1alpha3.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.iamV1alpha2, err = iamv1alpha2.NewForConfig(&configShallowCopy)
+	cs.gatewayV1alpha1, err = gatewayv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.networkV1alpha1, err = networkv1alpha1.NewForConfig(&configShallowCopy)
+	cs.iamV1alpha2, err = iamv1alpha2.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.notificationV2beta1, err = notificationv2beta1.NewForConfig(&configShallowCopy)
+	cs.networkV1alpha1, err = networkv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.notificationV2beta2, err = notificationv2beta2.NewForConfig(&configShallowCopy)
+	cs.notificationV2beta1, err = notificationv2beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.quotaV1alpha2, err = quotav1alpha2.NewForConfig(&configShallowCopy)
+	cs.notificationV2beta2, err = notificationv2beta2.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.servicemeshV1alpha2, err = servicemeshv1alpha2.NewForConfig(&configShallowCopy)
+	cs.quotaV1alpha2, err = quotav1alpha2.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.storageV1alpha1, err = storagev1alpha1.NewForConfig(&configShallowCopy)
+	cs.servicemeshV1alpha2, err = servicemeshv1alpha2.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.tenantV1alpha1, err = tenantv1alpha1.NewForConfig(&configShallowCopy)
+	cs.storageV1alpha1, err = storagev1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.tenantV1alpha2, err = tenantv1alpha2.NewForConfig(&configShallowCopy)
+	cs.tenantV1alpha1, err = tenantv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.typesV1beta1, err = typesv1beta1.NewForConfig(&configShallowCopy)
+	cs.tenantV1alpha2, err = tenantv1alpha2.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.typesV1beta2, err = typesv1beta2.NewForConfig(&configShallowCopy)
+	cs.typesV1beta1, err = typesv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
+	cs.typesV1beta2, err = typesv1beta2.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
+	cs.virtualizationV1alpha1, err = virtualizationv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(&configShallowCopy)
+	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -272,27 +319,11 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // NewForConfigOrDie creates a new Clientset for the given config and
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
-	var cs Clientset
-	cs.alertingV2beta1 = alertingv2beta1.NewForConfigOrDie(c)
-	cs.applicationV1alpha1 = applicationv1alpha1.NewForConfigOrDie(c)
-	cs.auditingV1alpha1 = auditingv1alpha1.NewForConfigOrDie(c)
-	cs.clusterV1alpha1 = clusterv1alpha1.NewForConfigOrDie(c)
-	cs.devopsV1alpha1 = devopsv1alpha1.NewForConfigOrDie(c)
-	cs.devopsV1alpha3 = devopsv1alpha3.NewForConfigOrDie(c)
-	cs.iamV1alpha2 = iamv1alpha2.NewForConfigOrDie(c)
-	cs.networkV1alpha1 = networkv1alpha1.NewForConfigOrDie(c)
-	cs.notificationV2beta1 = notificationv2beta1.NewForConfigOrDie(c)
-	cs.notificationV2beta2 = notificationv2beta2.NewForConfigOrDie(c)
-	cs.quotaV1alpha2 = quotav1alpha2.NewForConfigOrDie(c)
-	cs.servicemeshV1alpha2 = servicemeshv1alpha2.NewForConfigOrDie(c)
-	cs.storageV1alpha1 = storagev1alpha1.NewForConfigOrDie(c)
-	cs.tenantV1alpha1 = tenantv1alpha1.NewForConfigOrDie(c)
-	cs.tenantV1alpha2 = tenantv1alpha2.NewForConfigOrDie(c)
-	cs.typesV1beta1 = typesv1beta1.NewForConfigOrDie(c)
-	cs.typesV1beta2 = typesv1beta2.NewForConfigOrDie(c)
-
-	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
-	return &cs
+	cs, err := NewForConfig(c)
+	if err != nil {
+		panic(err)
+	}
+	return cs
 }
 
 // New creates a new Clientset for the given RESTClient.
@@ -304,6 +335,7 @@ func New(c rest.Interface) *Clientset {
 	cs.clusterV1alpha1 = clusterv1alpha1.New(c)
 	cs.devopsV1alpha1 = devopsv1alpha1.New(c)
 	cs.devopsV1alpha3 = devopsv1alpha3.New(c)
+	cs.gatewayV1alpha1 = gatewayv1alpha1.New(c)
 	cs.iamV1alpha2 = iamv1alpha2.New(c)
 	cs.networkV1alpha1 = networkv1alpha1.New(c)
 	cs.notificationV2beta1 = notificationv2beta1.New(c)
@@ -315,6 +347,7 @@ func New(c rest.Interface) *Clientset {
 	cs.tenantV1alpha2 = tenantv1alpha2.New(c)
 	cs.typesV1beta1 = typesv1beta1.New(c)
 	cs.typesV1beta2 = typesv1beta2.New(c)
+	cs.virtualizationV1alpha1 = virtualizationv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

@@ -117,7 +117,7 @@ func (c *FakeFederatedNamespaces) UpdateStatus(ctx context.Context, federatedNam
 // Delete takes name of the federatedNamespace and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedNamespaces) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatednamespacesResource, c.ns, name), &v1beta1.FederatedNamespace{})
+		Invokes(testing.NewDeleteActionWithOptions(federatednamespacesResource, c.ns, name, opts), &v1beta1.FederatedNamespace{})
 
 	return err
 }

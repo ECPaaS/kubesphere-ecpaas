@@ -117,7 +117,7 @@ func (c *FakeFederatedDeployments) UpdateStatus(ctx context.Context, federatedDe
 // Delete takes name of the federatedDeployment and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedDeployments) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federateddeploymentsResource, c.ns, name), &v1beta1.FederatedDeployment{})
+		Invokes(testing.NewDeleteActionWithOptions(federateddeploymentsResource, c.ns, name, opts), &v1beta1.FederatedDeployment{})
 
 	return err
 }

@@ -99,7 +99,7 @@ func (c *FakeGlobalRoles) Update(ctx context.Context, globalRole *v1alpha2.Globa
 // Delete takes name of the globalRole and deletes it. Returns an error if one occurs.
 func (c *FakeGlobalRoles) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(globalrolesResource, name), &v1alpha2.GlobalRole{})
+		Invokes(testing.NewRootDeleteActionWithOptions(globalrolesResource, name, opts), &v1alpha2.GlobalRole{})
 	return err
 }
 

@@ -99,7 +99,7 @@ func (c *FakeWorkspaceTemplates) Update(ctx context.Context, workspaceTemplate *
 // Delete takes name of the workspaceTemplate and deletes it. Returns an error if one occurs.
 func (c *FakeWorkspaceTemplates) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(workspacetemplatesResource, name), &v1alpha2.WorkspaceTemplate{})
+		Invokes(testing.NewRootDeleteActionWithOptions(workspacetemplatesResource, name, opts), &v1alpha2.WorkspaceTemplate{})
 	return err
 }
 

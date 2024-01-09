@@ -110,7 +110,7 @@ func (c *FakeHelmCategories) UpdateStatus(ctx context.Context, helmCategory *v1a
 // Delete takes name of the helmCategory and deletes it. Returns an error if one occurs.
 func (c *FakeHelmCategories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(helmcategoriesResource, name), &v1alpha1.HelmCategory{})
+		Invokes(testing.NewRootDeleteActionWithOptions(helmcategoriesResource, name, opts), &v1alpha1.HelmCategory{})
 	return err
 }
 

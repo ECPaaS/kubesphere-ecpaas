@@ -110,7 +110,7 @@ func (c *FakeHelmRepos) UpdateStatus(ctx context.Context, helmRepo *v1alpha1.Hel
 // Delete takes name of the helmRepo and deletes it. Returns an error if one occurs.
 func (c *FakeHelmRepos) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(helmreposResource, name), &v1alpha1.HelmRepo{})
+		Invokes(testing.NewRootDeleteActionWithOptions(helmreposResource, name, opts), &v1alpha1.HelmRepo{})
 	return err
 }
 

@@ -110,7 +110,7 @@ func (c *FakeFederatedGroups) UpdateStatus(ctx context.Context, federatedGroup *
 // Delete takes name of the federatedGroup and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(federatedgroupsResource, name), &v1beta1.FederatedGroup{})
+		Invokes(testing.NewRootDeleteActionWithOptions(federatedgroupsResource, name, opts), &v1beta1.FederatedGroup{})
 	return err
 }
 

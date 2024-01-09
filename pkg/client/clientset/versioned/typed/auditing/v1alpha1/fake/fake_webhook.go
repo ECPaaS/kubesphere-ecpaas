@@ -99,7 +99,7 @@ func (c *FakeWebhooks) Update(ctx context.Context, webhook *v1alpha1.Webhook, op
 // Delete takes name of the webhook and deletes it. Returns an error if one occurs.
 func (c *FakeWebhooks) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(webhooksResource, name), &v1alpha1.Webhook{})
+		Invokes(testing.NewRootDeleteActionWithOptions(webhooksResource, name, opts), &v1alpha1.Webhook{})
 	return err
 }
 

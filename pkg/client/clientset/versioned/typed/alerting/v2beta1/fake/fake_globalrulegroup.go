@@ -110,7 +110,7 @@ func (c *FakeGlobalRuleGroups) UpdateStatus(ctx context.Context, globalRuleGroup
 // Delete takes name of the globalRuleGroup and deletes it. Returns an error if one occurs.
 func (c *FakeGlobalRuleGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(globalrulegroupsResource, name), &v2beta1.GlobalRuleGroup{})
+		Invokes(testing.NewRootDeleteActionWithOptions(globalrulegroupsResource, name, opts), &v2beta1.GlobalRuleGroup{})
 	return err
 }
 

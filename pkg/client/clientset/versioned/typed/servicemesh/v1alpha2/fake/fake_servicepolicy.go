@@ -117,7 +117,7 @@ func (c *FakeServicePolicies) UpdateStatus(ctx context.Context, servicePolicy *v
 // Delete takes name of the servicePolicy and deletes it. Returns an error if one occurs.
 func (c *FakeServicePolicies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(servicepoliciesResource, c.ns, name), &v1alpha2.ServicePolicy{})
+		Invokes(testing.NewDeleteActionWithOptions(servicepoliciesResource, c.ns, name, opts), &v1alpha2.ServicePolicy{})
 
 	return err
 }

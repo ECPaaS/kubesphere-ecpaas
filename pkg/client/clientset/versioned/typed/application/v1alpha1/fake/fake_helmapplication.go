@@ -110,7 +110,7 @@ func (c *FakeHelmApplications) UpdateStatus(ctx context.Context, helmApplication
 // Delete takes name of the helmApplication and deletes it. Returns an error if one occurs.
 func (c *FakeHelmApplications) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(helmapplicationsResource, name), &v1alpha1.HelmApplication{})
+		Invokes(testing.NewRootDeleteActionWithOptions(helmapplicationsResource, name, opts), &v1alpha1.HelmApplication{})
 	return err
 }
 

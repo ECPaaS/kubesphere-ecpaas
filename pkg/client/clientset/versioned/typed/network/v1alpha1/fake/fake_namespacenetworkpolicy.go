@@ -105,7 +105,7 @@ func (c *FakeNamespaceNetworkPolicies) Update(ctx context.Context, namespaceNetw
 // Delete takes name of the namespaceNetworkPolicy and deletes it. Returns an error if one occurs.
 func (c *FakeNamespaceNetworkPolicies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(namespacenetworkpoliciesResource, c.ns, name), &v1alpha1.NamespaceNetworkPolicy{})
+		Invokes(testing.NewDeleteActionWithOptions(namespacenetworkpoliciesResource, c.ns, name, opts), &v1alpha1.NamespaceNetworkPolicy{})
 
 	return err
 }

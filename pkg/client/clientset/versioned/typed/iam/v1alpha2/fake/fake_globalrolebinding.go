@@ -99,7 +99,7 @@ func (c *FakeGlobalRoleBindings) Update(ctx context.Context, globalRoleBinding *
 // Delete takes name of the globalRoleBinding and deletes it. Returns an error if one occurs.
 func (c *FakeGlobalRoleBindings) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(globalrolebindingsResource, name), &v1alpha2.GlobalRoleBinding{})
+		Invokes(testing.NewRootDeleteActionWithOptions(globalrolebindingsResource, name, opts), &v1alpha2.GlobalRoleBinding{})
 	return err
 }
 

@@ -99,7 +99,7 @@ func (c *FakeProvisionerCapabilities) Update(ctx context.Context, provisionerCap
 // Delete takes name of the provisionerCapability and deletes it. Returns an error if one occurs.
 func (c *FakeProvisionerCapabilities) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(provisionercapabilitiesResource, name), &v1alpha1.ProvisionerCapability{})
+		Invokes(testing.NewRootDeleteActionWithOptions(provisionercapabilitiesResource, name, opts), &v1alpha1.ProvisionerCapability{})
 	return err
 }
 

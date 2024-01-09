@@ -110,7 +110,7 @@ func (c *FakeResourceQuotas) UpdateStatus(ctx context.Context, resourceQuota *v1
 // Delete takes name of the resourceQuota and deletes it. Returns an error if one occurs.
 func (c *FakeResourceQuotas) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(resourcequotasResource, name), &v1alpha2.ResourceQuota{})
+		Invokes(testing.NewRootDeleteActionWithOptions(resourcequotasResource, name, opts), &v1alpha2.ResourceQuota{})
 	return err
 }
 

@@ -117,7 +117,7 @@ func (c *FakeStrategies) UpdateStatus(ctx context.Context, strategy *v1alpha2.St
 // Delete takes name of the strategy and deletes it. Returns an error if one occurs.
 func (c *FakeStrategies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(strategiesResource, c.ns, name), &v1alpha2.Strategy{})
+		Invokes(testing.NewDeleteActionWithOptions(strategiesResource, c.ns, name, opts), &v1alpha2.Strategy{})
 
 	return err
 }

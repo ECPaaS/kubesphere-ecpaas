@@ -117,7 +117,7 @@ func (c *FakeFederatedStatefulSets) UpdateStatus(ctx context.Context, federatedS
 // Delete takes name of the federatedStatefulSet and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedStatefulSets) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedstatefulsetsResource, c.ns, name), &v1beta1.FederatedStatefulSet{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedstatefulsetsResource, c.ns, name, opts), &v1beta1.FederatedStatefulSet{})
 
 	return err
 }

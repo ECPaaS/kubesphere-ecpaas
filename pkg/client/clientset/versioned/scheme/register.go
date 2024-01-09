@@ -30,6 +30,7 @@ import (
 	clusterv1alpha1 "kubesphere.io/api/cluster/v1alpha1"
 	devopsv1alpha1 "kubesphere.io/api/devops/v1alpha1"
 	devopsv1alpha3 "kubesphere.io/api/devops/v1alpha3"
+	gatewayv1alpha1 "kubesphere.io/api/gateway/v1alpha1"
 	iamv1alpha2 "kubesphere.io/api/iam/v1alpha2"
 	networkv1alpha1 "kubesphere.io/api/network/v1alpha1"
 	notificationv2beta1 "kubesphere.io/api/notification/v2beta1"
@@ -41,6 +42,7 @@ import (
 	tenantv1alpha2 "kubesphere.io/api/tenant/v1alpha2"
 	typesv1beta1 "kubesphere.io/api/types/v1beta1"
 	typesv1beta2 "kubesphere.io/api/types/v1beta2"
+	virtualizationv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 )
 
 var Scheme = runtime.NewScheme()
@@ -53,6 +55,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	clusterv1alpha1.AddToScheme,
 	devopsv1alpha1.AddToScheme,
 	devopsv1alpha3.AddToScheme,
+	gatewayv1alpha1.AddToScheme,
 	iamv1alpha2.AddToScheme,
 	networkv1alpha1.AddToScheme,
 	notificationv2beta1.AddToScheme,
@@ -64,6 +67,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	tenantv1alpha2.AddToScheme,
 	typesv1beta1.AddToScheme,
 	typesv1beta2.AddToScheme,
+	virtualizationv1alpha1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

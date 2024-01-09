@@ -99,7 +99,7 @@ func (c *FakeIPAMBlocks) Update(ctx context.Context, iPAMBlock *v1alpha1.IPAMBlo
 // Delete takes name of the iPAMBlock and deletes it. Returns an error if one occurs.
 func (c *FakeIPAMBlocks) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(ipamblocksResource, name), &v1alpha1.IPAMBlock{})
+		Invokes(testing.NewRootDeleteActionWithOptions(ipamblocksResource, name, opts), &v1alpha1.IPAMBlock{})
 	return err
 }
 

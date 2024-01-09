@@ -110,7 +110,7 @@ func (c *FakeReceivers) UpdateStatus(ctx context.Context, receiver *v2beta1.Rece
 // Delete takes name of the receiver and deletes it. Returns an error if one occurs.
 func (c *FakeReceivers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(receiversResource, name), &v2beta1.Receiver{})
+		Invokes(testing.NewRootDeleteActionWithOptions(receiversResource, name, opts), &v2beta1.Receiver{})
 	return err
 }
 

@@ -29,6 +29,7 @@ import (
 	clusterv1alpha1 "kubesphere.io/api/cluster/v1alpha1"
 	devopsv1alpha1 "kubesphere.io/api/devops/v1alpha1"
 	v1alpha3 "kubesphere.io/api/devops/v1alpha3"
+	gatewayv1alpha1 "kubesphere.io/api/gateway/v1alpha1"
 	v1alpha2 "kubesphere.io/api/iam/v1alpha2"
 	networkv1alpha1 "kubesphere.io/api/network/v1alpha1"
 	notificationv2beta1 "kubesphere.io/api/notification/v2beta1"
@@ -40,6 +41,7 @@ import (
 	tenantv1alpha2 "kubesphere.io/api/tenant/v1alpha2"
 	v1beta1 "kubesphere.io/api/types/v1beta1"
 	v1beta2 "kubesphere.io/api/types/v1beta2"
+	virtualizationv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 )
 
 // GenericInformer is type of SharedIndexInformer which will locate and delegate to other
@@ -113,6 +115,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Devops().V1alpha3().DevOpsProjects().Informer()}, nil
 	case v1alpha3.SchemeGroupVersion.WithResource("pipelines"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Devops().V1alpha3().Pipelines().Informer()}, nil
+
+		// Group=gateway, Version=v1alpha1
+	case gatewayv1alpha1.SchemeGroupVersion.WithResource("gateways"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gateway().V1alpha1().Gateways().Informer()}, nil
 
 		// Group=iam.kubesphere.io, Version=v1alpha2
 	case v1alpha2.SchemeGroupVersion.WithResource("globalroles"):
@@ -229,6 +235,14 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Types().V1beta2().FederatedNotificationRouters().Informer()}, nil
 	case v1beta2.SchemeGroupVersion.WithResource("federatednotificationsilences"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Types().V1beta2().FederatedNotificationSilences().Informer()}, nil
+
+		// Group=virtualization.ecpaas.io, Version=v1alpha1
+	case virtualizationv1alpha1.SchemeGroupVersion.WithResource("diskvolumes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Virtualization().V1alpha1().DiskVolumes().Informer()}, nil
+	case virtualizationv1alpha1.SchemeGroupVersion.WithResource("imagetemplates"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Virtualization().V1alpha1().ImageTemplates().Informer()}, nil
+	case virtualizationv1alpha1.SchemeGroupVersion.WithResource("virtualmachines"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Virtualization().V1alpha1().VirtualMachines().Informer()}, nil
 
 	}
 

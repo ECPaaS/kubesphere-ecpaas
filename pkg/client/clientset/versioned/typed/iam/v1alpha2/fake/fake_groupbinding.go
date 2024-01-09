@@ -99,7 +99,7 @@ func (c *FakeGroupBindings) Update(ctx context.Context, groupBinding *v1alpha2.G
 // Delete takes name of the groupBinding and deletes it. Returns an error if one occurs.
 func (c *FakeGroupBindings) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(groupbindingsResource, name), &v1alpha2.GroupBinding{})
+		Invokes(testing.NewRootDeleteActionWithOptions(groupbindingsResource, name, opts), &v1alpha2.GroupBinding{})
 	return err
 }
 

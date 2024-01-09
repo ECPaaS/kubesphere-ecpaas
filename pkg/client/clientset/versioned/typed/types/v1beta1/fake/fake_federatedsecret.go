@@ -117,7 +117,7 @@ func (c *FakeFederatedSecrets) UpdateStatus(ctx context.Context, federatedSecret
 // Delete takes name of the federatedSecret and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedSecrets) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedsecretsResource, c.ns, name), &v1beta1.FederatedSecret{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedsecretsResource, c.ns, name, opts), &v1beta1.FederatedSecret{})
 
 	return err
 }
