@@ -30,7 +30,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ldap/ldap v3.0.3+incompatible
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.2.4
 	github.com/go-openapi/loads v0.21.2
 	github.com/go-openapi/spec v0.20.7
 	github.com/go-openapi/strfmt v0.21.3
@@ -86,19 +86,19 @@ require (
 	helm.sh/helm/v3 v3.11.1
 	istio.io/api v0.0.0-20201113182140-d4b7e3fc2b44
 	istio.io/client-go v0.0.0-20201113183938-0734e976e785
-	k8s.io/api v0.26.1
-	k8s.io/apiextensions-apiserver v0.26.1
-	k8s.io/apimachinery v0.26.1
+	k8s.io/api v0.27.1
+	k8s.io/apiextensions-apiserver v0.26.3
+	k8s.io/apimachinery v0.27.1
 	k8s.io/apiserver v0.26.1
 	k8s.io/cli-runtime v0.26.1
 	k8s.io/client-go v0.26.1
 	k8s.io/code-generator v0.26.1
 	k8s.io/component-base v0.26.1
-	k8s.io/klog/v2 v2.90.0
-	k8s.io/kube-openapi v0.0.0-20230224204730-66828de6f33b
+	k8s.io/klog/v2 v2.90.1
+	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a
 	k8s.io/kubectl v0.26.1
 	k8s.io/metrics v0.26.1
-	k8s.io/utils v0.0.0-20230202215443-34013725500c
+	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	kubesphere.io/api v0.0.0
 	kubesphere.io/client-go v0.0.0
 	kubesphere.io/monitoring-dashboard v0.2.2
@@ -166,7 +166,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/cel-go v0.12.6 // indirect
@@ -221,9 +221,12 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
+	github.com/openshift/api v0.0.0-20230503133300-8bbcb7ca7183 // indirect
+	github.com/openshift/custom-resource-status v1.1.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/operator-framework/operator-lib v0.11.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -272,14 +275,14 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874 // indirect
-	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
+	golang.org/x/tools v0.7.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230124163310-31e0e69b6fc2 // indirect
@@ -293,6 +296,9 @@ require (
 	istio.io/gogo-genproto v0.0.0-20201113182723-5b8563d8a012 // indirect
 	k8s.io/gengo v0.0.0-20220902162205-c0856e24416d // indirect
 	k8s.io/kms v0.26.1 // indirect
+	kubevirt.io/api v1.1.1 // indirect
+	kubevirt.io/containerized-data-importer-api v1.57.0-alpha1 // indirect
+	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
 	oras.land/oras-go v1.2.2 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.35 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
@@ -537,6 +543,9 @@ replace (
 	kubesphere.io/client-go => ./staging/src/kubesphere.io/client-go
 	kubesphere.io/monitoring-dashboard => kubesphere.io/monitoring-dashboard v0.2.2
 	kubesphere.io/utils => ./staging/src/kubesphere.io/utils
+	kubevirt.io/client-go => kubevirt.io/client-go v1.1.1
+	kubevirt.io/containerized-data-importer => kubevirt.io/containerized-data-importer v1.58.0
+	kubevirt.io/containerized-data-importer-api => kubevirt.io/containerized-data-importer-api v1.58.0
 	oras.land/oras-go => oras.land/oras-go v1.2.2
 	sigs.k8s.io/application => sigs.k8s.io/application v0.8.4-0.20201016185654-c8e2959e57a0
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.14.4
