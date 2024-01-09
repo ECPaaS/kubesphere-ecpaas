@@ -1,0 +1,139 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: (unknown)
+  creationTimestamp: null
+  name: imagetemplates.virtualization.ecpaas.io
+spec:
+  group: virtualization.ecpaas.io
+  names:
+    kind: ImageTemplate
+    listKind: ImageTemplateList
+    plural: imagetemplates
+    singular: imagetemplate
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ImageTemplate is the Schema for the diskvolumes API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ImageTemplateSpec defines the desired state of ImageTemplate
+            properties:
+              attributes:
+                properties:
+                  public:
+                    type: boolean
+                type: object
+              resources:
+                description: Resources represents the minimum resources the volume
+                  should have.
+                properties:
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Limits describes the maximum amount of compute resources
+                      allowed. Valid resource keys are "memory" and "cpu".
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Requests is a description of the initial vmi resources.
+                      Valid resource keys are "memory" and "cpu".
+                    type: object
+                type: object
+              source:
+                description: Source is the source of the volume.
+                properties:
+                  clone:
+                    description: DataVolumeSourcePVC provides the parameters to create
+                      a Data Volume from an existing PVC
+                    properties:
+                      name:
+                        description: The name of the source PVC
+                        type: string
+                      namespace:
+                        description: The namespace of the source PVC
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  http:
+                    description: DataVolumeSourceHTTP can be either an http or https
+                      endpoint, with an optional basic auth user name and password,
+                      and an optional configmap containing additional CAs
+                    properties:
+                      certConfigMap:
+                        description: CertConfigMap is a configmap reference, containing
+                          a Certificate Authority(CA) public key, and a base64 encoded
+                          pem certificate
+                        type: string
+                      extraHeaders:
+                        description: ExtraHeaders is a list of strings containing
+                          extra headers to include with HTTP transfer requests
+                        items:
+                          type: string
+                        type: array
+                      secretExtraHeaders:
+                        description: SecretExtraHeaders is a list of Secret references,
+                          each containing an extra HTTP header that may include sensitive
+                          information
+                        items:
+                          type: string
+                        type: array
+                      secretRef:
+                        description: SecretRef A Secret reference, the secret should
+                          contain accessKeyId (user name) base64 encoded, and secretKey
+                          (password) also base64 encoded
+                        type: string
+                      url:
+                        description: URL is the URL of the http(s) endpoint
+                        type: string
+                    required:
+                    - url
+                    type: object
+                type: object
+            required:
+            - source
+            type: object
+          status:
+            description: ImageTemplateStatus defines the observed state of ImageTemplate
+            properties:
+              created:
+                type: boolean
+              owner:
+                type: string
+              ready:
+                type: boolean
+              target:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

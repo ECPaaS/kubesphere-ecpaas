@@ -1,0 +1,104 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: (unknown)
+  creationTimestamp: null
+  name: diskvolumes.virtualization.ecpaas.io
+spec:
+  group: virtualization.ecpaas.io
+  names:
+    kind: DiskVolume
+    listKind: DiskVolumeList
+    plural: diskvolumes
+    singular: diskvolume
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: DiskVolume is the Schema for the diskvolumes API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DiskVolumeSpec defines the desired state of DiskVolume
+            properties:
+              pvcName:
+                type: string
+              resources:
+                description: Resources represents the minimum resources the volume
+                  should have.
+                properties:
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Limits describes the maximum amount of compute resources
+                      allowed. Valid resource keys are "memory" and "cpu".
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Requests is a description of the initial vmi resources.
+                      Valid resource keys are "memory" and "cpu".
+                    type: object
+                type: object
+              source:
+                description: Source is the source of the volume.
+                properties:
+                  blank:
+                    type: object
+                  image:
+                    description: DataVolumeSourceImage provides the parameters to
+                      create a Data Volume from an existing Image
+                    properties:
+                      name:
+                        description: The name of the source Image
+                        type: string
+                      namespace:
+                        description: The namespace of the source Image
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                type: object
+            required:
+            - source
+            type: object
+          status:
+            description: DiskVolumeStatus defines the observed state of DiskVolume
+            properties:
+              created:
+                type: boolean
+              owner:
+                type: string
+              ready:
+                type: boolean
+              target:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
