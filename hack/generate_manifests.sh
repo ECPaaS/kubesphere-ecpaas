@@ -14,9 +14,9 @@ cd "${KUBE_ROOT}" || exit
 for PKG in "${PKGS[@]}"; do
   if grep -qw "deepcopy" <<<"${GENS}"; then
     echo "Generating deepcopy for ${PKG}"
-    go run ./vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go object:headerFile=./hack/boilerplate.go.txt paths=kubesphere.io/api/"${PKG}"
+    go run ./vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go object:headerFile=./hack/boilerplate.go.txt paths=./staging/src/kubesphere.io/api/"${PKG}"
   else
     echo "Generating manifests for ${PKG}"
-    go run ./vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go object:headerFile=./hack/boilerplate.go.txt paths=kubesphere.io/api/"${PKG}" rbac:roleName=controller-perms "${CRD_OPTIONS}" output:crd:artifacts:config=config/ks-core/crds
+    go run ./vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go object:headerFile=./hack/boilerplate.go.txt paths=./staging/src/kubesphere.io/api/"${PKG}" rbac:roleName=controller-perms "${CRD_OPTIONS}" output:crd:artifacts:config=config/ks-core/crds
   fi
 done
