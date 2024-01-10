@@ -107,7 +107,7 @@ require (
 	kubesphere.io/monitoring-dashboard v0.2.2
 	kubevirt.io/api v1.1.1
 	kubevirt.io/client-go v0.0.0-00010101000000-000000000000
-	kubevirt.io/containerized-data-importer-api v1.57.0-alpha1
+	kubevirt.io/containerized-data-importer-api v1.58.0
 	sigs.k8s.io/application v0.8.4-0.20201016185654-c8e2959e57a0
 	sigs.k8s.io/controller-runtime v0.14.4
 	sigs.k8s.io/controller-tools v0.11.1

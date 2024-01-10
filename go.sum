@@ -1187,6 +1187,7 @@ github.com/opensearch-project/opensearch-go v1.1.0/go.mod h1:+6/XHCuTH+fwsMJikZE
 github.com/opensearch-project/opensearch-go/v2 v2.0.0 h1:Ij3CpuHwey29cYPVMgi5h1pWBH2O0JaTXsa4c7pqhK4=
 github.com/opensearch-project/opensearch-go/v2 v2.0.0/go.mod h1:G3kbnV+SeVf4QTbNcrT7Ga3FCsavtp5NQfdRelJikIQ=
 github.com/openshift/api v0.0.0-20210105115604-44119421ec6b/go.mod h1:aqU5Cq+kqKKPbDMqxo9FojgDeSpNJI7iuskjXjtojDg=
+github.com/openshift/api v0.0.0-20230406152840-ce21e3fe5da2/go.mod h1:ctXNyWanKEjGj8sss1KjjHQ3ENKFm33FFnS5BKaIPh4=
 github.com/openshift/api v0.0.0-20230503133300-8bbcb7ca7183 h1:t/CahSnpqY46sQR01SoS+Jt0jtjgmhgE6lFmRnO4q70=
 github.com/openshift/api v0.0.0-20230503133300-8bbcb7ca7183/go.mod h1:4VWG+W22wrB4HfBL88P40DxLEpSOaiBVxUnfalfJo9k=
 github.com/openshift/build-machinery-go v0.0.0-20200917070002-f171684f77ab/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
