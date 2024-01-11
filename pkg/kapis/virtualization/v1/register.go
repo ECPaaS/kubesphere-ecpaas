@@ -51,7 +51,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Doc("Create virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineIDResponse{}).
 		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.PUT("/namespaces/{namespace}/virtualmachines/{id}").
@@ -63,7 +63,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Notes(vmPutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.PUT("/namespaces/{namespace}/virtualmachines/{id}/start").
@@ -72,7 +72,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Start a virtual machine").
 		Returns(http.StatusOK, api.StatusOK, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.PUT("/namespaces/{namespace}/virtualmachines/{id}/stop").
@@ -81,7 +81,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Stop a virtual machine").
 		Returns(http.StatusOK, api.StatusOK, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/namespaces/{namespace}/virtualmachines/{id}").
@@ -90,8 +90,8 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Get virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineResponse{}).
-		// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/namespaces/{namespace}/virtualmachines").
@@ -99,14 +99,14 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all virtual machine with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListVirtualMachineResponse{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.GET("/virtualmachines").
 		To(handler.ListVirtualMachine).
 		Doc("List all virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListVirtualMachineResponse{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
 	webservice.Route(webservice.DELETE("/namespaces/{namespace}/virtualmachines/{id}").
@@ -115,9 +115,9 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "virtual machine id")).
 		Doc("Delete virtual machine").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}).
-		Returns(http.StatusOK, api.StatusOK, nil))
-	// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-	// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
 
 	webservice.Route(webservice.POST("/namespaces/{namespace}/disks").
 		To(handler.CreateDisk).
@@ -126,7 +126,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Doc("Create disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskIDResponse{}).
 		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.PUT("/namespaces/{namespace}/disks/{id}").
@@ -138,8 +138,8 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Notes(diskPutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
-		// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/namespaces/{namespace}/disks/{id}").
@@ -148,8 +148,8 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "disk id")).
 		Doc("Get disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskResponse{}).
-		// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/namespaces/{namespace}/disks").
@@ -157,14 +157,14 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all disk with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListDiskResponse{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.GET("/disks").
 		To(handler.ListDisk).
 		Doc("List all disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListDiskResponse{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
 	webservice.Route(webservice.DELETE("/namespaces/{namespace}/disks/{id}").
@@ -173,9 +173,9 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "disk id")).
 		Doc("Delete disk").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}).
-		Returns(http.StatusOK, api.StatusOK, nil))
-	// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-	// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
 
 	webservice.Route(webservice.POST("/namespaces/{namespace}/images").
 		To(handler.CreateImage).
@@ -184,7 +184,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Doc("Create image").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageIDResponse{}).
 		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.POST("/namespaces/{namespace}/images/clone").
@@ -195,7 +195,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Notes(imagePostCloneNotes).
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageIDResponse{}).
 		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.PUT("/namespaces/{namespace}/images/{id}").
@@ -207,8 +207,8 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Notes(imagePutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
-		// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/namespaces/{namespace}/images/{id}").
@@ -217,8 +217,8 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "image id")).
 		Doc("Get image").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageResponse{}).
-		// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/namespaces/{namespace}/images").
@@ -226,14 +226,14 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all image with namespace").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListImageResponse{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("/images").
 		To(handler.ListImage).
 		Doc("List all image").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListImageResponse{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.DELETE("/namespaces/{namespace}/images/{id}").
@@ -242,8 +242,8 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("id", "image id")).
 		Doc("Delete image").
 		Returns(http.StatusOK, api.StatusOK, nil).
-		// Returns(http.StatusNotFound, api.StatusNotFound, nil).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
 	webservice.Route(webservice.GET("virtualization/namespaces/{namespace}/quotas").
@@ -251,7 +251,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, ksc
 		Param(webservice.PathParameter("namespace", "the name of the project")).
 		Doc("Get specified namespace's of virtualization resource quota and usage").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualizationResourceQuota{}).
-		// Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ResourceQuotasTag}))
 
 	container.Add(webservice)
