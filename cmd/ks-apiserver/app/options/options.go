@@ -24,6 +24,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"kubesphere.io/kubesphere/pkg/simple/client/cache"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -219,6 +221,21 @@ func (s *ServerRunOptions) NewAPIServer(stopCh <-chan struct{}) (*apiserver.APIS
 	apiServer.Issuer, err = token.NewIssuer(s.AuthenticationOptions)
 	if err != nil {
 		klog.Fatalf("unable to create issuer: %v", err)
+	}
+
+	endpoint := "minio.kubesphere-system.svc:9000"
+	accessKeyID := "openpitrixminioaccesskey"
+	secretAccessKey := "openpitrixminiosecretkey"
+	// accessKeyID := "minioadmin"
+	// secretAccessKey := "minioadmin"
+	useSSL := false
+
+	apiServer.MinioClient, err = minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure: useSSL,
+	})
+	if err != nil {
+		klog.Fatalf("unable to create MinioClient: %v", err)
 	}
 
 	apiServer.Server = server
