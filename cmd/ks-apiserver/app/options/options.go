@@ -24,8 +24,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"kubesphere.io/kubesphere/pkg/simple/client/cache"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -52,6 +50,7 @@ import (
 	eventsclient "kubesphere.io/kubesphere/pkg/simple/client/events/elasticsearch"
 	"kubesphere.io/kubesphere/pkg/simple/client/k8s"
 	esclient "kubesphere.io/kubesphere/pkg/simple/client/logging/elasticsearch"
+	"kubesphere.io/kubesphere/pkg/simple/client/minio"
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring/metricsserver"
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring/prometheus"
 	"kubesphere.io/kubesphere/pkg/simple/client/sonarqube"
@@ -223,17 +222,8 @@ func (s *ServerRunOptions) NewAPIServer(stopCh <-chan struct{}) (*apiserver.APIS
 		klog.Fatalf("unable to create issuer: %v", err)
 	}
 
-	endpoint := "minio.kubesphere-system.svc:9000"
-	accessKeyID := "openpitrixminioaccesskey"
-	secretAccessKey := "openpitrixminiosecretkey"
-	// accessKeyID := "minioadmin"
-	// secretAccessKey := "minioadmin"
-	useSSL := false
+	apiServer.MinioClient, err = minio.NewMinioClient(s.MinioOptions)
 
-	apiServer.MinioClient, err = minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: useSSL,
-	})
 	if err != nil {
 		klog.Fatalf("unable to create MinioClient: %v", err)
 	}

@@ -92,6 +92,7 @@ import (
 	terminalv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/terminal/v1alpha2"
 	"kubesphere.io/kubesphere/pkg/kapis/version"
 	virtualizationv1 "kubesphere.io/kubesphere/pkg/kapis/virtualization/v1"
+	volumev1alpha1 "kubesphere.io/kubesphere/pkg/kapis/volume/v1alpha1"
 	"kubesphere.io/kubesphere/pkg/models/auth"
 	"kubesphere.io/kubesphere/pkg/models/iam/am"
 	"kubesphere.io/kubesphere/pkg/models/iam/group"
@@ -278,7 +279,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 	urlruntime.Must(gatewayv1alpha1.AddToContainer(s.container, s.Config.GatewayOptions, s.RuntimeCache, s.RuntimeClient, s.InformerFactory, s.KubernetesClient.Kubernetes(), s.LoggingClient))
 	// accton extension
 	// urlruntime.Must(vpcv1.AddToContainer(s.container, s.InformerFactory, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
-	// urlruntime.Must(volumev1alpha1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
+	urlruntime.Must(volumev1alpha1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
 	urlruntime.Must(virtualizationv1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.InformerFactory))
 }
 
