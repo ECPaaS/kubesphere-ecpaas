@@ -136,9 +136,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			},
 		}
 
-		if dv, err = virtClient.CdiClient().CdiV1beta1().DataVolumes(imageTemplate.Namespace).Create(rootCtx, dv, metav1.CreateOptions{}); err != nil {
-			klog.Infof("Cannot create DataVolume: %v\n", err)
-			return ctrl.Result{}, err
+		if _, err = virtClient.CdiClient().CdiV1beta1().DataVolumes(imageTemplate.Namespace).Create(rootCtx, dv, metav1.CreateOptions{}); err != nil {
+			if errors.IsAlreadyExists(err) {
+				klog.Infof("DataVolume %s/%s already exists", dv.Namespace, dv.Name)
+			} else {
+				klog.Infof("Cannot create DataVolume: %v\n", err)
+				return ctrl.Result{}, err
+			}
 		}
 
 		if dv.Status.Phase != cdiv1.Succeeded {
@@ -148,6 +152,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 		imageTemplate_instance.Status.Created = true
 		klog.Infof("DataVolume %s/%s created", dv.Namespace, dv.Name)
+
+		// Update status
+		if err := r.Status().Update(rootCtx, imageTemplate_instance); err != nil {
+			return ctrl.Result{}, err
+		}
+
 	}
 
 	if !reflect.DeepEqual(imageTemplate, imageTemplate_instance) {
