@@ -526,7 +526,8 @@ func AddDiskVolume(diskVolumeName string, uiDisk *DiskSpec) v1alpha1.DiskVolume 
 		v1alpha1.VirtualizationAliasName: diskVolumeName,
 	}
 	diskVolume.Labels = map[string]string{
-		v1alpha1.VirtualizationDiskType: "data",
+		v1alpha1.VirtualizationDiskHotpluggable: "true",
+		v1alpha1.VirtualizationDiskType:         "data",
 	}
 
 	size := strconv.FormatUint(uint64(uiDisk.Size), 10) + "Gi"
