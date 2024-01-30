@@ -679,9 +679,7 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 
 					newDisk := kvapi.Disk{}
 					newDisk.Name = volume
-					if bootorder != 0 {
-						newDisk.BootOrder = &bootorder
-					}
+					newDisk.BootOrder = &bootorder
 
 					if diskMediaType == "cdrom" {
 						newDisk.DiskDevice = kvapi.DiskDevice{

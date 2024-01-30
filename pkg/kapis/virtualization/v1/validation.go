@@ -345,9 +345,6 @@ func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) boo
 	case []ui_virtz.DiskSpec:
 		diskMap := make(map[string]bool)
 		for _, disk := range disks {
-			if disk.Action != "mount" {
-				continue
-			}
 			if _, ok := diskMap[disk.ID]; ok {
 				resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
 					Reason: "Disk ID should be unique",
@@ -360,9 +357,6 @@ func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) boo
 	case []ui_virtz.ModifyDiskSpec:
 		diskMap := make(map[string]bool)
 		for _, disk := range disks {
-			if disk.Action != "mount" {
-				continue
-			}
 			if _, ok := diskMap[disk.ID]; ok {
 				resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
 					Reason: "Disk ID should be unique",
