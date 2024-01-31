@@ -155,7 +155,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 			},
 		},
 	}
-	vm.Spec.Hardware.Hostname = ui_vm.Name
+	vm.Spec.Hardware.Hostname = strings.ToLower(ui_vm.Name)
 	vm.Spec.RunStrategy = v1alpha1.VirtualMachineRunStrategyAlways
 }
 
