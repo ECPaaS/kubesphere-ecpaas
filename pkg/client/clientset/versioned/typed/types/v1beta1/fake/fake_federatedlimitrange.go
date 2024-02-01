@@ -117,7 +117,7 @@ func (c *FakeFederatedLimitRanges) UpdateStatus(ctx context.Context, federatedLi
 // Delete takes name of the federatedLimitRange and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedLimitRanges) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedlimitrangesResource, c.ns, name), &v1beta1.FederatedLimitRange{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedlimitrangesResource, c.ns, name, opts), &v1beta1.FederatedLimitRange{})
 
 	return err
 }

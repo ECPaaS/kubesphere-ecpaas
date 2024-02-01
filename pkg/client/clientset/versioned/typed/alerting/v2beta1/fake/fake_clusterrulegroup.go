@@ -110,7 +110,7 @@ func (c *FakeClusterRuleGroups) UpdateStatus(ctx context.Context, clusterRuleGro
 // Delete takes name of the clusterRuleGroup and deletes it. Returns an error if one occurs.
 func (c *FakeClusterRuleGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(clusterrulegroupsResource, name), &v2beta1.ClusterRuleGroup{})
+		Invokes(testing.NewRootDeleteActionWithOptions(clusterrulegroupsResource, name, opts), &v2beta1.ClusterRuleGroup{})
 	return err
 }
 

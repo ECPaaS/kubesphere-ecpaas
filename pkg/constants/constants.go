@@ -142,6 +142,15 @@ const (
 	NotificationManagedLabel    = "notification.kubesphere.io/managed"
 
 	DashboardTag = "Dashboard"
+	// accton extension
+	VpcNetworkTag     = "VPC Network"
+	VpcSubnetTag      = "VPC Subnet"
+	VirtualMachineTag = "Virtualization Virtual Machine"
+	DiskTag           = "Virtualization Disk"
+	ImageTag          = "Virtualization Image"
+	ResourceQuotasTag = "Resources Quotas"
+
+	MinioImageTag = "Minio Images"
 )
 
 var (

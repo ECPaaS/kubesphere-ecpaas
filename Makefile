@@ -6,8 +6,8 @@
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:allowDangerousTypes=true"
 
-GV="network:v1alpha1 servicemesh:v1alpha2 tenant:v1alpha1 tenant:v1alpha2 devops:v1alpha1 iam:v1alpha2 devops:v1alpha3 cluster:v1alpha1 storage:v1alpha1 auditing:v1alpha1 types:v1beta1 types:v1beta2 quota:v1alpha2 application:v1alpha1 notification:v2beta1 notification:v2beta2 gateway:v1alpha1 alerting:v2beta1"
-MANIFESTS="application/v1alpha1 cluster/v1alpha1 iam/v1alpha2 network/v1alpha1 quota/v1alpha2 storage/v1alpha1 tenant/... gateway/... alerting/..."
+GV="network:v1alpha1 servicemesh:v1alpha2 tenant:v1alpha1 tenant:v1alpha2 devops:v1alpha1 iam:v1alpha2 devops:v1alpha3 cluster:v1alpha1 storage:v1alpha1 auditing:v1alpha1 types:v1beta1 types:v1beta2 quota:v1alpha2 application:v1alpha1 notification:v2beta1 notification:v2beta2 gateway:v1alpha1 alerting:v2beta1 virtualization:v1alpha1"
+MANIFESTS="application/v1alpha1 cluster/v1alpha1 iam/v1alpha2 network/v1alpha1 quota/v1alpha2 storage/v1alpha1 tenant/... gateway/... alerting/...  virtualization/v1alpha1"
 
 # App Version
 APP_VERSION = v3.2.0
@@ -110,6 +110,7 @@ openapi: ;$(info $(M)...Begin to openapi.)  @ ## Openapi.
 	go run ./vendor/k8s.io/kube-openapi/cmd/openapi-gen/openapi-gen.go -O openapi_generated -i ./vendor/k8s.io/apimachinery/pkg/apis/meta/v1,./vendor/kubesphere.io/api/devops/v1alpha3,./vendor/k8s.io/apimachinery/pkg/runtime -p kubesphere.io/api/devops/v1alpha3 -h ./hack/boilerplate.go.txt --report-filename ./api/api-rules/violation_exceptions.list  --output-base=staging/src/
 	go run ./tools/cmd/crd-doc-gen/main.go
 	go run ./tools/cmd/doc-gen/main.go
+	go run ./tools/cmd/accton-doc-gen/main.go
 
 container: ;$(info $(M)...Begin to build the docker image.)  @ ## Build the docker image.
 	DRY_RUN=true hack/docker_build.sh

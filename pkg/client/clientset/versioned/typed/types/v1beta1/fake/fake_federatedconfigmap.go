@@ -117,7 +117,7 @@ func (c *FakeFederatedConfigMaps) UpdateStatus(ctx context.Context, federatedCon
 // Delete takes name of the federatedConfigMap and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedConfigMaps) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedconfigmapsResource, c.ns, name), &v1beta1.FederatedConfigMap{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedconfigmapsResource, c.ns, name, opts), &v1beta1.FederatedConfigMap{})
 
 	return err
 }

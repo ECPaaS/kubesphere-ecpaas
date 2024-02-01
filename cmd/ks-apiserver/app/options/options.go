@@ -50,6 +50,7 @@ import (
 	eventsclient "kubesphere.io/kubesphere/pkg/simple/client/events/elasticsearch"
 	"kubesphere.io/kubesphere/pkg/simple/client/k8s"
 	esclient "kubesphere.io/kubesphere/pkg/simple/client/logging/elasticsearch"
+	"kubesphere.io/kubesphere/pkg/simple/client/minio"
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring/metricsserver"
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring/prometheus"
 	"kubesphere.io/kubesphere/pkg/simple/client/sonarqube"
@@ -219,6 +220,12 @@ func (s *ServerRunOptions) NewAPIServer(stopCh <-chan struct{}) (*apiserver.APIS
 	apiServer.Issuer, err = token.NewIssuer(s.AuthenticationOptions)
 	if err != nil {
 		klog.Fatalf("unable to create issuer: %v", err)
+	}
+
+	apiServer.MinioClient, err = minio.NewMinioClient(s.MinioOptions)
+
+	if err != nil {
+		klog.Fatalf("unable to create MinioClient: %v", err)
 	}
 
 	apiServer.Server = server

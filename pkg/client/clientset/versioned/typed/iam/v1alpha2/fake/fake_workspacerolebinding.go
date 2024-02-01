@@ -99,7 +99,7 @@ func (c *FakeWorkspaceRoleBindings) Update(ctx context.Context, workspaceRoleBin
 // Delete takes name of the workspaceRoleBinding and deletes it. Returns an error if one occurs.
 func (c *FakeWorkspaceRoleBindings) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(workspacerolebindingsResource, name), &v1alpha2.WorkspaceRoleBinding{})
+		Invokes(testing.NewRootDeleteActionWithOptions(workspacerolebindingsResource, name, opts), &v1alpha2.WorkspaceRoleBinding{})
 	return err
 }
 

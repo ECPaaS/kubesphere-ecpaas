@@ -131,6 +131,13 @@
         "tags": [
           "Network Topology"
         ]
+      },
+      {
+        "name": "Virtaulization",
+        "tags": [
+          "Virtualization Virtual Machine",
+          "Virtualization Disk"
+        ]
       }
     ]
   },
@@ -1314,6 +1321,7 @@
         ],
         "summary": "List all cluster roles.",
         "operationId": "ListClusterRoles",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "ok",
@@ -1332,6 +1340,7 @@
         ],
         "summary": "Create cluster role.",
         "operationId": "CreateClusterRole",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -1362,6 +1371,7 @@
         ],
         "summary": "Retrieve cluster role details.",
         "operationId": "DescribeClusterRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1389,6 +1399,7 @@
         ],
         "summary": "Update cluster role.",
         "operationId": "UpdateClusterRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1424,6 +1435,7 @@
         ],
         "summary": "Delete cluster role.",
         "operationId": "DeleteClusterRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1451,6 +1463,7 @@
         ],
         "summary": "Patch cluster role.",
         "operationId": "PatchClusterRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1706,6 +1719,7 @@
         ],
         "summary": "List all roles in the specified devops project.",
         "operationId": "ListRoles",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1733,6 +1747,7 @@
         ],
         "summary": "Create role in the specified devops project.",
         "operationId": "CreateNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -1770,6 +1785,7 @@
         ],
         "summary": "Retrieve devops project role details.",
         "operationId": "DescribeNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1804,6 +1820,7 @@
         ],
         "summary": "Update devops project role.",
         "operationId": "UpdateNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1846,6 +1863,7 @@
         ],
         "summary": "Delete role in the specified devops project.",
         "operationId": "DeleteNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1880,6 +1898,7 @@
         ],
         "summary": "Patch devops project role.",
         "operationId": "PatchNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1924,6 +1943,7 @@
         ],
         "summary": "List all global roles.",
         "operationId": "ListGlobalRoles",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "ok",
@@ -1942,6 +1962,7 @@
         ],
         "summary": "Create global role.",
         "operationId": "CreateGlobalRole",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -1972,6 +1993,7 @@
         ],
         "summary": "Retrieve global role details.",
         "operationId": "DescribeGlobalRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -1999,6 +2021,7 @@
         ],
         "summary": "Update global role.",
         "operationId": "UpdateGlobalRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2034,6 +2057,7 @@
         ],
         "summary": "Delete global role.",
         "operationId": "DeleteGlobalRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2061,6 +2085,7 @@
         ],
         "summary": "Patch global role.",
         "operationId": "PatchGlobalRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2083,40 +2108,6 @@
             "description": "ok",
             "schema": {
               "$ref": "#/definitions/v1alpha2.GlobalRole"
-            }
-          }
-        }
-      }
-    },
-    "/kapis/iam.kubesphere.io/v1alpha2/login": {
-      "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "KubeSphere APIs support token-based authentication via the Authtoken request header. The POST Login API is used to retrieve the authentication token. After the authentication token is obtained, it must be inserted into the Authtoken header for all requests.",
-        "operationId": "login",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/oauth.LoginRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/oauth.Token"
             }
           }
         }
@@ -2350,6 +2341,7 @@
         ],
         "summary": "Create rolebinding in the specified namespace.",
         "operationId": "CreateRoleBinding",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -2393,6 +2385,7 @@
         ],
         "summary": "Delete rolebinding under namespace.",
         "operationId": "DeleteRoleBinding",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2436,6 +2429,7 @@
         ],
         "summary": "List all roles in the specified namespace.",
         "operationId": "ListRoles",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2463,6 +2457,7 @@
         ],
         "summary": "Create role in the specified namespace.",
         "operationId": "CreateNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -2500,6 +2495,7 @@
         ],
         "summary": "Retrieve role details.",
         "operationId": "DescribeNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2534,6 +2530,7 @@
         ],
         "summary": "Update namespace role.",
         "operationId": "UpdateNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2576,6 +2573,7 @@
         ],
         "summary": "Delete role in the specified namespace.",
         "operationId": "DeleteNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2610,6 +2608,7 @@
         ],
         "summary": "Patch namespace role.",
         "operationId": "PatchNamespaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3497,6 +3496,7 @@
         ],
         "summary": "Create group's workspacerolebindings of the workspace.",
         "operationId": "CreateWorkspaceRoleBinding",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3540,6 +3540,7 @@
         ],
         "summary": "Delete workspacerolebinding.",
         "operationId": "DeleteWorkspaceRoleBinding",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3576,6 +3577,7 @@
         ],
         "summary": "List all workspace roles.",
         "operationId": "ListWorkspaceRoles",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3603,6 +3605,7 @@
         ],
         "summary": "Create workspace role.",
         "operationId": "CreateWorkspaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -3640,6 +3643,7 @@
         ],
         "summary": "Retrieve workspace role details.",
         "operationId": "DescribeWorkspaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3674,6 +3678,7 @@
         ],
         "summary": "Update workspace role.",
         "operationId": "UpdateWorkspaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3716,6 +3721,7 @@
         ],
         "summary": "Delete workspace role.",
         "operationId": "DeleteWorkspaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3750,6 +3756,7 @@
         ],
         "summary": "Patch workspace role.",
         "operationId": "PatchWorkspaceRole",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -10718,9 +10725,6 @@
         "produces": [
           "application/json"
         ],
-        "tags": [
-          "Namespaced Resource"
-        ],
         "summary": "List repository tags, this is an experimental API, use it by your own caution.",
         "operationId": "handleGetRepositoryTags",
         "parameters": [
@@ -10742,6 +10746,27 @@
             "type": "string",
             "description": "Secret name of the image repository credential, left empty means anonymous fetch.",
             "name": "secret",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "page=%d",
+            "default": "page=1",
+            "description": "page",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "limit",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "ascending=false",
+            "description": "sort parameters, e.g. reverse=true",
+            "name": "ascending",
             "in": "query"
           }
         ],
@@ -13440,6 +13465,844 @@
         }
       }
     },
+    "/kapis/virtualization.ecpaas.io/v1/disks": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "List all disk",
+        "operationId": "ListDisk",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListDiskResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/images": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "List all image",
+        "operationId": "ListImage",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListImageResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/disks": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "List all disk with namespace",
+        "operationId": "ListDiskWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListDiskResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Create disk",
+        "operationId": "CreateDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/disks/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Get disk",
+        "operationId": "GetDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.DiskResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Update disk",
+        "operationId": "UpdateDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyDiskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Disk"
+        ],
+        "summary": "Delete disk",
+        "operationId": "DeleteDisk",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "disk id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "List all image with namespace",
+        "operationId": "ListImageWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListImageResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Create image",
+        "operationId": "CreateImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images/clone": {
+      "post": {
+        "description": "Source image's namespace shall be different from new image's namespace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Clone image",
+        "operationId": "CloneImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.CloneImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/images/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Get image",
+        "operationId": "GetImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ImageResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Update image",
+        "operationId": "UpdateImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyImageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Image"
+        ],
+        "summary": "Delete image",
+        "operationId": "DeleteImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "image id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all virtual machine with namespace",
+        "operationId": "ListVirtualMachineWithNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Create virtual machine",
+        "operationId": "CreateVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineIDResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Get virtual machine",
+        "operationId": "GetVirtualMachine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualMachineResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provied will not be changed. When the cpu cores or memory parameter changed, the virtual machine need be restarted.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Update virtual machine",
+        "operationId": "UpdateVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/virtualization.ModifyVirtualMachineRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/virtualization.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Delete virtual machine",
+        "operationId": "DeleteVirtualMachine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines/{id}/start": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Start a virtual machine",
+        "operationId": "StartVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/namespaces/{namespace}/virtualmachines/{id}/stop": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "Stop a virtual machine",
+        "operationId": "StopVirtualMahcine",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "virtual machine id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/virtualization/namespaces/{namespace}/quotas": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Resources Quotas"
+        ],
+        "summary": "Get specified namespace's of virtualization resource quota and usage",
+        "operationId": "handleVirtualizationGetNamespaceQuotas",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the name of the project",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.VirtualizationResourceQuota"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/virtualization.ecpaas.io/v1/virtualmachines": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all virtual machine",
+        "operationId": "ListVirtualMachine",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListVirtualMachineResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/oauth/.well-known/openid-configuration": {
       "get": {
         "consumes": [
@@ -13664,6 +14527,50 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/oauth/login/{identityprovider}": {
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login by identity provider user",
+        "operationId": "loginByIdentityProvider",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The identity provider name",
+            "name": "identityprovider",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The username of the relevant user in ldap",
+            "name": "username",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "description": "The password of the relevant user in ldap",
+            "name": "password",
+            "in": "formData"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/oauth.Token"
+            }
           }
         }
       }
@@ -13941,7 +14848,8 @@
         "abs": {
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "format": "integer"
           }
         },
         "neg": {
@@ -14315,14 +15223,14 @@
     },
     "metering.OpenPitrixStatistic": {
       "required": [
+        "net_bytes_received",
         "pvc_bytes_total",
         "deployments",
         "statefulsets",
         "daemonsets",
         "cpu_usage",
         "memory_usage_wo_cache",
-        "net_bytes_transmitted",
-        "net_bytes_received"
+        "net_bytes_transmitted"
       ],
       "properties": {
         "cpu_usage": {
@@ -14576,6 +15484,12 @@
         }
       }
     },
+    "monitoring.ExportPoint": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
     "monitoring.Metadata": {
       "required": [
         "data"
@@ -14740,20 +15654,10 @@
         }
       }
     },
-    "oauth.LoginRequest": {
-      "required": [
-        "username",
-        "password"
-      ],
-      "properties": {
-        "password": {
-          "description": "password",
-          "type": "string"
-        },
-        "username": {
-          "description": "username",
-          "type": "string"
-        }
+    "monitoring.Point": {
+      "type": "array",
+      "items": {
+        "type": "number"
       }
     },
     "oauth.Spec": {
@@ -15775,6 +16679,54 @@
         }
       }
     },
+    "panels.CommonPanel": {
+      "properties": {
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "datasource": {
+          "type": "string"
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "height": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "legend": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/panels.Target"
+          }
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
     "panels.Gauge": {
       "properties": {
         "maxValue": {
@@ -16647,6 +17599,19 @@
         }
       }
     },
+    "v1.ClaimSource": {
+      "description": "ClaimSource describes a reference to a ResourceClaim.\n\nExactly one of these fields should be set.  Consumers of this type must treat an empty object as if it has an unknown value.",
+      "properties": {
+        "resourceClaimName": {
+          "description": "ResourceClaimName is the name of a ResourceClaim object in the same namespace as this pod.",
+          "type": "string"
+        },
+        "resourceClaimTemplateName": {
+          "description": "ResourceClaimTemplateName is the name of a ResourceClaimTemplate object in the same namespace as this pod.\n\nThe template will be used to create a new ResourceClaim, which will be bound to this pod. When this pod is deleted, the ResourceClaim will also be deleted. The name of the ResourceClaim will be \u003cpod name\u003e-\u003cresource name\u003e, where \u003cresource name\u003e is the PodResourceClaim.Name. Pod validation will reject the pod if the concatenated name is not valid for a ResourceClaim (e.g. too long).\n\nAn existing ResourceClaim with that name that is not owned by the pod will not be used for the pod to avoid using an unrelated resource by mistake. Scheduling and pod startup are then blocked until the unrelated ResourceClaim is removed.\n\nThis field is immutable and no changes will be made to the corresponding ResourceClaim by the control plane after creating the ResourceClaim.",
+          "type": "string"
+        }
+      }
+    },
     "v1.ClientIPConfig": {
       "description": "ClientIPConfig represents the configurations of Client IP based session affinity.",
       "properties": {
@@ -17502,6 +18467,123 @@
         }
       }
     },
+    "v1.EphemeralContainerCommon": {
+      "description": "EphemeralContainerCommon is a copy of all fields in Container to be inlined in EphemeralContainer. This separate type allows easy conversion from EphemeralContainer to Container and allows separate documentation for the fields of EphemeralContainer. When a new field is added to Container it must be added here as well.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "args": {
+          "description": "Arguments to the entrypoint. The image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "command": {
+          "description": "Entrypoint array. Not executed within a shell. The image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "description": "List of environment variables to set in the container. Cannot be updated.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.EnvVar"
+          }
+        },
+        "envFrom": {
+          "description": "List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.EnvFromSource"
+          }
+        },
+        "image": {
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images",
+          "type": "string"
+        },
+        "imagePullPolicy": {
+          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+          "type": "string"
+        },
+        "lifecycle": {
+          "description": "Lifecycle is not allowed for ephemeral containers.",
+          "$ref": "#/definitions/v1.Lifecycle"
+        },
+        "livenessProbe": {
+          "description": "Probes are not allowed for ephemeral containers.",
+          "$ref": "#/definitions/v1.Probe"
+        },
+        "name": {
+          "description": "Name of the ephemeral container specified as a DNS_LABEL. This name must be unique among all containers, init containers and ephemeral containers.",
+          "type": "string"
+        },
+        "ports": {
+          "description": "Ports are not allowed for ephemeral containers.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.ContainerPort"
+          }
+        },
+        "readinessProbe": {
+          "description": "Probes are not allowed for ephemeral containers.",
+          "$ref": "#/definitions/v1.Probe"
+        },
+        "resources": {
+          "description": "Resources are not allowed for ephemeral containers. Ephemeral containers use spare resources already allocated to the pod.",
+          "$ref": "#/definitions/v1.ResourceRequirements"
+        },
+        "securityContext": {
+          "description": "Optional: SecurityContext defines the security options the ephemeral container should be run with. If set, the fields of SecurityContext override the equivalent fields of PodSecurityContext.",
+          "$ref": "#/definitions/v1.SecurityContext"
+        },
+        "startupProbe": {
+          "description": "Probes are not allowed for ephemeral containers.",
+          "$ref": "#/definitions/v1.Probe"
+        },
+        "stdin": {
+          "description": "Whether this container should allocate a buffer for stdin in the container runtime. If this is not set, reads from stdin in the container will always result in EOF. Default is false.",
+          "type": "boolean"
+        },
+        "stdinOnce": {
+          "description": "Whether the container runtime should close the stdin channel after it has been opened by a single attach. When stdin is true the stdin stream will remain open across multiple attach sessions. If stdinOnce is set to true, stdin is opened on container start, is empty until the first client attaches to stdin, and then remains open and accepts data until the client disconnects, at which time stdin is closed and remains closed until the container is restarted. If this flag is false, a container processes that reads from stdin will never receive an EOF. Default is false",
+          "type": "boolean"
+        },
+        "terminationMessagePath": {
+          "description": "Optional: Path at which the file to which the container's termination message will be written is mounted into the container's filesystem. Message written is intended to be brief final status, such as an assertion failure message. Will be truncated by the node if greater than 4096 bytes. The total message length across all containers will be limited to 12kb. Defaults to /dev/termination-log. Cannot be updated.",
+          "type": "string"
+        },
+        "terminationMessagePolicy": {
+          "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.",
+          "type": "string"
+        },
+        "tty": {
+          "description": "Whether this container should allocate a TTY for itself, also requires 'stdin' to be true. Default is false.",
+          "type": "boolean"
+        },
+        "volumeDevices": {
+          "description": "volumeDevices is the list of block devices to be used by the container.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.VolumeDevice"
+          }
+        },
+        "volumeMounts": {
+          "description": "Pod volumes to mount into the container's filesystem. Subpath mounts are not allowed for ephemeral containers. Cannot be updated.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.VolumeMount"
+          }
+        },
+        "workingDir": {
+          "description": "Container's working directory. If not specified, the container runtime's default will be used, which might be configured in the container image. Cannot be updated.",
+          "type": "string"
+        }
+      }
+    },
     "v1.EphemeralVolumeSource": {
       "description": "Represents an ephemeral volume that is handled by a normal storage driver.",
       "properties": {
@@ -17748,7 +18830,7 @@
       "properties": {
         "Interval": {
           "type": "integer",
-          "format": "integer"
+          "format": "int64"
         },
         "Retries": {
           "type": "integer",
@@ -17756,7 +18838,7 @@
         },
         "StartPeriod": {
           "type": "integer",
-          "format": "integer"
+          "format": "int64"
         },
         "Test": {
           "type": "array",
@@ -17766,7 +18848,7 @@
         },
         "Timeout": {
           "type": "integer",
-          "format": "integer"
+          "format": "int64"
         }
       }
     },
@@ -18422,12 +19504,12 @@
           }
         },
         "dataSource": {
-          "description": "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field.",
+          "description": "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource.",
           "$ref": "#/definitions/v1.TypedLocalObjectReference"
         },
         "dataSourceRef": {
-          "description": "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef\n  allows any non-core object, as well as PersistentVolumeClaim objects.\n* While DataSource ignores disallowed values (dropping them), DataSourceRef\n  preserves all values, and generates an error if a disallowed value is\n  specified.\n(Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled.",
-          "$ref": "#/definitions/v1.TypedLocalObjectReference"
+          "description": "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef\n  allows any non-core object, as well as PersistentVolumeClaim objects.\n* While dataSource ignores disallowed values (dropping them), dataSourceRef\n  preserves all values, and generates an error if a disallowed value is\n  specified.\n* While dataSource only allows local objects, dataSourceRef allows objects\n  in any namespaces.\n(Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
+          "$ref": "#/definitions/v1.TypedObjectReference"
         },
         "resources": {
           "description": "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources",
@@ -18667,6 +19749,34 @@
         }
       }
     },
+    "v1.PodResourceClaim": {
+      "description": "PodResourceClaim references exactly one ResourceClaim through a ClaimSource. It adds a name to it that uniquely identifies the ResourceClaim inside the Pod. Containers that need access to the ResourceClaim reference it with this name.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Name uniquely identifies this resource claim inside the pod. This must be a DNS_LABEL.",
+          "type": "string"
+        },
+        "source": {
+          "description": "Source describes where to find the ResourceClaim.",
+          "$ref": "#/definitions/v1.ClaimSource"
+        }
+      }
+    },
+    "v1.PodSchedulingGate": {
+      "description": "PodSchedulingGate is associated to a Pod to guard its scheduling.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Name of the scheduling gate. Each scheduling gate must have a unique name field.",
+          "type": "string"
+        }
+      }
+    },
     "v1.PodSecurityContext": {
       "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
       "properties": {
@@ -18702,10 +19812,11 @@
           "$ref": "#/definitions/v1.SeccompProfile"
         },
         "supplementalGroups": {
-          "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID.  If unspecified, no groups will be added to any container. Note that this field cannot be set when spec.os.name is windows.",
+          "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           }
         },
         "sysctls": {
@@ -18849,6 +19960,13 @@
             "$ref": "#/definitions/v1.PodReadinessGate"
           }
         },
+        "resourceClaims": {
+          "description": "ResourceClaims defines which ResourceClaims must be allocated and reserved before the Pod is allowed to start. The resources will be made available to those containers which consume them by name.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.PodResourceClaim"
+          }
+        },
         "restartPolicy": {
           "description": "Restart policy for all containers within the pod. One of Always, OnFailure, Never. Default to Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy",
           "type": "string"
@@ -18860,6 +19978,13 @@
         "schedulerName": {
           "description": "If specified, the pod will be dispatched by specified scheduler. If not specified, the pod will be dispatched by default scheduler.",
           "type": "string"
+        },
+        "schedulingGates": {
+          "description": "SchedulingGates is an opaque list of values that if specified will block scheduling the pod. More info:  https://git.k8s.io/enhancements/keps/sig-scheduling/3521-pod-scheduling-readiness.\n\nThis is an alpha-level feature enabled by PodSchedulingReadiness feature gate.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.PodSchedulingGate"
+          }
         },
         "securityContext": {
           "description": "SecurityContext holds pod-level security attributes and common container settings. Optional: Defaults to empty.  See type description for default values of each field.",
@@ -19079,6 +20204,27 @@
         }
       }
     },
+    "v1.ProbeHandler": {
+      "description": "ProbeHandler defines a specific action that should be taken in a probe. One and only one of the fields must be specified.",
+      "properties": {
+        "exec": {
+          "description": "Exec specifies the action to take.",
+          "$ref": "#/definitions/v1.ExecAction"
+        },
+        "grpc": {
+          "description": "GRPC specifies an action involving a GRPC port. This is a beta field and requires enabling GRPCContainerProbe feature gate.",
+          "$ref": "#/definitions/v1.GRPCAction"
+        },
+        "httpGet": {
+          "description": "HTTPGet specifies the http request to perform.",
+          "$ref": "#/definitions/v1.HTTPGetAction"
+        },
+        "tcpSocket": {
+          "description": "TCPSocket specifies an action involving a TCP port.",
+          "$ref": "#/definitions/v1.TCPSocketAction"
+        }
+      }
+    },
     "v1.ProjectedVolumeSource": {
       "description": "Represents a projected volume source",
       "required": [
@@ -19290,9 +20436,21 @@
           "format": "int32"
         },
         "replicas": {
-          "description": "Replicas is the most recently oberved number of replicas. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/#what-is-a-replicationcontroller",
+          "description": "Replicas is the most recently observed number of replicas. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/#what-is-a-replicationcontroller",
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "v1.ResourceClaim": {
+      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+          "type": "string"
         }
       }
     },
@@ -19361,6 +20519,13 @@
     "v1.ResourceRequirements": {
       "description": "ResourceRequirements describes the compute resource requirements.",
       "properties": {
+        "claims": {
+          "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.ResourceClaim"
+          }
+        },
         "limits": {
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": "object",
@@ -20064,6 +21229,19 @@
         }
       }
     },
+    "v1.StatefulSetOrdinals": {
+      "description": "StatefulSetOrdinals describes the policy used for replica ordinal assignment in this StatefulSet.",
+      "required": [
+        "start"
+      ],
+      "properties": {
+        "start": {
+          "description": "start is the number representing the first replica's index. It may be used to number replicas from an alternate index (eg: 1-indexed) over the default 0-indexed names, or to orchestrate progressive movement of replicas from one StatefulSet to another. If set, replica indices will be in the range:\n  [.spec.ordinals.start, .spec.ordinals.start + .spec.replicas).\nIf unset, defaults to 0. Replica indices will be in the range:\n  [0, .spec.replicas).",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "v1.StatefulSetPersistentVolumeClaimRetentionPolicy": {
       "description": "StatefulSetPersistentVolumeClaimRetentionPolicy describes the policy used for PVCs created from the StatefulSet VolumeClaimTemplates.",
       "properties": {
@@ -20089,6 +21267,10 @@
           "description": "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)",
           "type": "integer",
           "format": "int32"
+        },
+        "ordinals": {
+          "description": "ordinals controls the numbering of replica indices in a StatefulSet. The default ordinals behavior assigns a \"0\" index to the first replica and increments the index by one for each additional replica requested. Using the ordinals field requires the StatefulSetStartOrdinal feature gate to be enabled, which is alpha.",
+          "$ref": "#/definitions/v1.StatefulSetOrdinals"
         },
         "persistentVolumeClaimRetentionPolicy": {
           "description": "persistentVolumeClaimRetentionPolicy describes the lifecycle of persistent volume claims created from volumeClaimTemplates. By default, all persistent volume claims are created as needed and retained until manually deleted. This policy allows the lifecycle to be altered, for example by deleting persistent volume claims when their stateful set is deleted, or when their pod is scaled down. This requires the StatefulSetAutoDeletePVC feature gate to be enabled, which is alpha.  +optional",
@@ -20117,7 +21299,7 @@
           "type": "string"
         },
         "template": {
-          "description": "template is the object that describes the pod that will be created if insufficient replicas are detected. Each pod stamped out by the StatefulSet will fulfill this Template, but have a unique identity from the rest of the StatefulSet.",
+          "description": "template is the object that describes the pod that will be created if insufficient replicas are detected. Each pod stamped out by the StatefulSet will fulfill this Template, but have a unique identity from the rest of the StatefulSet. Each pod will be named with the format \u003cstatefulsetname\u003e-\u003cpodindex\u003e. For example, a pod in a StatefulSet named \"web\" with index number \"3\" would be named \"web-3\".",
           "$ref": "#/definitions/v1.PodTemplateSpec"
         },
         "updateStrategy": {
@@ -20344,11 +21526,11 @@
           "format": "int32"
         },
         "nodeAffinityPolicy": {
-          "description": "NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.\n\nIf this value is nil, the behavior is equivalent to the Honor policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+          "description": "NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.\n\nIf this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
           "type": "string"
         },
         "nodeTaintsPolicy": {
-          "description": "NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included.\n\nIf this value is nil, the behavior is equivalent to the Ignore policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+          "description": "NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included.\n\nIf this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
           "type": "string"
         },
         "topologyKey": {
@@ -20357,6 +21539,19 @@
         },
         "whenUnsatisfiable": {
           "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy the spread constraint. - DoNotSchedule (default) tells the scheduler not to schedule it. - ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod if and only if every possible node assignment for that pod would violate \"MaxSkew\" on some topology. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 3/1/1: ",
+          "type": "string"
+        }
+      }
+    },
+    "v1.TypeMeta": {
+      "description": "TypeMeta describes an individual object in an API response or request with strings representing the type of the object and its API schema version. Structures that are versioned or persisted should inline TypeMeta.",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
           "type": "string"
         }
       }
@@ -20379,6 +21574,31 @@
         },
         "name": {
           "description": "Name is the name of resource being referenced",
+          "type": "string"
+        }
+      }
+    },
+    "v1.TypedObjectReference": {
+      "required": [
+        "apiGroup",
+        "kind",
+        "name"
+      ],
+      "properties": {
+        "apiGroup": {
+          "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is the type of resource being referenced",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of resource being referenced",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
           "type": "string"
         }
       }
@@ -20579,6 +21799,127 @@
         "serviceAccountToken": {
           "description": "serviceAccountToken is information about the serviceAccountToken data to project",
           "$ref": "#/definitions/v1.ServiceAccountTokenProjection"
+        }
+      }
+    },
+    "v1.VolumeSource": {
+      "description": "Represents the source of a volume to mount. Only one of its members may be specified.",
+      "properties": {
+        "awsElasticBlockStore": {
+          "description": "awsElasticBlockStore represents an AWS Disk resource that is attached to a kubelet's host machine and then exposed to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore",
+          "$ref": "#/definitions/v1.AWSElasticBlockStoreVolumeSource"
+        },
+        "azureDisk": {
+          "description": "azureDisk represents an Azure Data Disk mount on the host and bind mount to the pod.",
+          "$ref": "#/definitions/v1.AzureDiskVolumeSource"
+        },
+        "azureFile": {
+          "description": "azureFile represents an Azure File Service mount on the host and bind mount to the pod.",
+          "$ref": "#/definitions/v1.AzureFileVolumeSource"
+        },
+        "cephfs": {
+          "description": "cephFS represents a Ceph FS mount on the host that shares a pod's lifetime",
+          "$ref": "#/definitions/v1.CephFSVolumeSource"
+        },
+        "cinder": {
+          "description": "cinder represents a cinder volume attached and mounted on kubelets host machine. More info: https://examples.k8s.io/mysql-cinder-pd/README.md",
+          "$ref": "#/definitions/v1.CinderVolumeSource"
+        },
+        "configMap": {
+          "description": "configMap represents a configMap that should populate this volume",
+          "$ref": "#/definitions/v1.ConfigMapVolumeSource"
+        },
+        "csi": {
+          "description": "csi (Container Storage Interface) represents ephemeral storage that is handled by certain external CSI drivers (Beta feature).",
+          "$ref": "#/definitions/v1.CSIVolumeSource"
+        },
+        "downwardAPI": {
+          "description": "downwardAPI represents downward API about the pod that should populate this volume",
+          "$ref": "#/definitions/v1.DownwardAPIVolumeSource"
+        },
+        "emptyDir": {
+          "description": "emptyDir represents a temporary directory that shares a pod's lifetime. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir",
+          "$ref": "#/definitions/v1.EmptyDirVolumeSource"
+        },
+        "ephemeral": {
+          "description": "ephemeral represents a volume that is handled by a cluster storage driver. The volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts, and deleted when the pod is removed.\n\nUse this if: a) the volume is only needed while the pod runs, b) features of normal volumes like restoring from snapshot or capacity\n   tracking are needed,\nc) the storage driver is specified through a storage class, and d) the storage driver supports dynamic volume provisioning through\n   a PersistentVolumeClaim (see EphemeralVolumeSource for more\n   information on the connection between this volume type\n   and PersistentVolumeClaim).\n\nUse PersistentVolumeClaim or one of the vendor-specific APIs for volumes that persist for longer than the lifecycle of an individual pod.\n\nUse CSI for light-weight local ephemeral volumes if the CSI driver is meant to be used that way - see the documentation of the driver for more information.\n\nA pod can use both types of ephemeral volumes and persistent volumes at the same time.",
+          "$ref": "#/definitions/v1.EphemeralVolumeSource"
+        },
+        "fc": {
+          "description": "fc represents a Fibre Channel resource that is attached to a kubelet's host machine and then exposed to the pod.",
+          "$ref": "#/definitions/v1.FCVolumeSource"
+        },
+        "flexVolume": {
+          "description": "flexVolume represents a generic volume resource that is provisioned/attached using an exec based plugin.",
+          "$ref": "#/definitions/v1.FlexVolumeSource"
+        },
+        "flocker": {
+          "description": "flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running",
+          "$ref": "#/definitions/v1.FlockerVolumeSource"
+        },
+        "gcePersistentDisk": {
+          "description": "gcePersistentDisk represents a GCE Disk resource that is attached to a kubelet's host machine and then exposed to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk",
+          "$ref": "#/definitions/v1.GCEPersistentDiskVolumeSource"
+        },
+        "gitRepo": {
+          "description": "gitRepo represents a git repository at a particular revision. DEPRECATED: GitRepo is deprecated. To provision a container with a git repo, mount an EmptyDir into an InitContainer that clones the repo using git, then mount the EmptyDir into the Pod's container.",
+          "$ref": "#/definitions/v1.GitRepoVolumeSource"
+        },
+        "glusterfs": {
+          "description": "glusterfs represents a Glusterfs mount on the host that shares a pod's lifetime. More info: https://examples.k8s.io/volumes/glusterfs/README.md",
+          "$ref": "#/definitions/v1.GlusterfsVolumeSource"
+        },
+        "hostPath": {
+          "description": "hostPath represents a pre-existing file or directory on the host machine that is directly exposed to the container. This is generally used for system agents or other privileged things that are allowed to see the host machine. Most containers will NOT need this. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath",
+          "$ref": "#/definitions/v1.HostPathVolumeSource"
+        },
+        "iscsi": {
+          "description": "iscsi represents an ISCSI Disk resource that is attached to a kubelet's host machine and then exposed to the pod. More info: https://examples.k8s.io/volumes/iscsi/README.md",
+          "$ref": "#/definitions/v1.ISCSIVolumeSource"
+        },
+        "nfs": {
+          "description": "nfs represents an NFS mount on the host that shares a pod's lifetime More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
+          "$ref": "#/definitions/v1.NFSVolumeSource"
+        },
+        "persistentVolumeClaim": {
+          "description": "persistentVolumeClaimVolumeSource represents a reference to a PersistentVolumeClaim in the same namespace. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
+          "$ref": "#/definitions/v1.PersistentVolumeClaimVolumeSource"
+        },
+        "photonPersistentDisk": {
+          "description": "photonPersistentDisk represents a PhotonController persistent disk attached and mounted on kubelets host machine",
+          "$ref": "#/definitions/v1.PhotonPersistentDiskVolumeSource"
+        },
+        "portworxVolume": {
+          "description": "portworxVolume represents a portworx volume attached and mounted on kubelets host machine",
+          "$ref": "#/definitions/v1.PortworxVolumeSource"
+        },
+        "projected": {
+          "description": "projected items for all in one resources secrets, configmaps, and downward API",
+          "$ref": "#/definitions/v1.ProjectedVolumeSource"
+        },
+        "quobyte": {
+          "description": "quobyte represents a Quobyte mount on the host that shares a pod's lifetime",
+          "$ref": "#/definitions/v1.QuobyteVolumeSource"
+        },
+        "rbd": {
+          "description": "rbd represents a Rados Block Device mount on the host that shares a pod's lifetime. More info: https://examples.k8s.io/volumes/rbd/README.md",
+          "$ref": "#/definitions/v1.RBDVolumeSource"
+        },
+        "scaleIO": {
+          "description": "scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes.",
+          "$ref": "#/definitions/v1.ScaleIOVolumeSource"
+        },
+        "secret": {
+          "description": "secret represents a secret that should populate this volume. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "$ref": "#/definitions/v1.SecretVolumeSource"
+        },
+        "storageos": {
+          "description": "storageOS represents a StorageOS volume attached and mounted on Kubernetes nodes.",
+          "$ref": "#/definitions/v1.StorageOSVolumeSource"
+        },
+        "vsphereVolume": {
+          "description": "vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine",
+          "$ref": "#/definitions/v1.VsphereVirtualDiskVolumeSource"
         }
       }
     },
@@ -20954,6 +22295,16 @@
         }
       }
     },
+    "v1alpha1.S3Config": {
+      "properties": {
+        "accessKeyID": {
+          "type": "string"
+        },
+        "secretAccessKey": {
+          "type": "string"
+        }
+      }
+    },
     "v1alpha1.Workspace": {
       "properties": {
         "apiVersion": {
@@ -20986,6 +22337,16 @@
       }
     },
     "v1alpha1.WorkspaceStatus": {},
+    "v1alpha2.APINode": {
+      "required": [
+        "node"
+      ],
+      "properties": {
+        "node": {
+          "$ref": "#/definitions/v1alpha2.Node"
+        }
+      }
+    },
     "v1alpha2.APIResponse": {
       "properties": {
         "histogram": {
@@ -21002,6 +22363,19 @@
         }
       }
     },
+    "v1alpha2.APITopology": {
+      "required": [
+        "nodes"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1alpha2.NodeSummary"
+          }
+        }
+      }
+    },
     "v1alpha2.BadRequestError": {
       "required": [
         "status",
@@ -21014,6 +22388,40 @@
         "status": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "v1alpha2.BasicNodeSummary": {
+      "required": [
+        "id",
+        "label",
+        "labelMinor",
+        "rank"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelMinor": {
+          "type": "string"
+        },
+        "pseudo": {
+          "type": "boolean"
+        },
+        "rank": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "string"
+        },
+        "stack": {
+          "type": "boolean"
+        },
+        "tag": {
+          "type": "string"
         }
       }
     },
@@ -21503,10 +22911,10 @@
     },
     "v1alpha2.Node": {
       "required": [
-        "label",
-        "rank",
         "id",
+        "label",
         "labelMinor",
+        "rank",
         "controls"
       ],
       "properties": {
@@ -21614,10 +23022,10 @@
     },
     "v1alpha2.NodeSummary": {
       "required": [
+        "id",
         "label",
         "labelMinor",
-        "rank",
-        "id"
+        "rank"
       ],
       "properties": {
         "adjacency": {
@@ -22157,7 +23565,8 @@
       "required": [
         "registry",
         "repository",
-        "tags"
+        "tags",
+        "total"
       ],
       "properties": {
         "registry": {
@@ -22171,6 +23580,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -22228,6 +23641,40 @@
         "total": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "v2alpha1.AlertingRule": {
+      "properties": {
+        "annotations": {
+          "description": "non-identifying key/value pairs. summary, message, description are the commonly used annotation names",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "duration": {
+          "description": "duration an alert transitions from Pending to Firing state, which must match ^([0-9]+)(y|w|d|h|m|s|ms)$",
+          "type": "string"
+        },
+        "id": {
+          "description": "rule id is only used by built-in alerting rules",
+          "type": "string"
+        },
+        "labels": {
+          "description": "extra labels to attach to the resulting alert sample vectors (the key string has to match [a-zA-Z_][a-zA-Z0-9_]*). eg: a typical label called severity, whose value may be info, warning, error, critical, is usually used to indicate the severity of an alert",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "description": "rule name should be unique in one namespace for custom alerting rules",
+          "type": "string"
+        },
+        "query": {
+          "description": "prometheus query expression, grammars of which may be referred to https://prometheus.io/docs/prometheus/latest/querying/basics/",
+          "type": "string"
         }
       }
     },
@@ -22385,6 +23832,749 @@
         "query": {
           "description": "prometheus query expression, grammars of which may be referred to https://prometheus.io/docs/prometheus/latest/querying/basics/",
           "type": "string"
+        }
+      }
+    },
+    "virtualization.BadRequestError": {
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.CloneImageRequest": {
+      "required": [
+        "new_img_name",
+        "src_img_id",
+        "src_img_namespace"
+      ],
+      "properties": {
+        "new_img_name": {
+          "description": "New image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "src_img_id": {
+          "description": "Source image id which is got from image api",
+          "type": "string"
+        },
+        "src_img_namespace": {
+          "description": "Source Image namespace",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "disk id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskRequest": {
+      "required": [
+        "name",
+        "description",
+        "size"
+      ],
+      "properties": {
+        "description": {
+          "description": "Disk description. Default is empty string.",
+          "type": "string",
+          "maximum": 128
+        },
+        "name": {
+          "description": "Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "size": {
+          "description": "Disk size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.DiskResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "description",
+        "type",
+        "size",
+        "mode",
+        "minio_image_name",
+        "status"
+      ],
+      "properties": {
+        "description": {
+          "description": "Disk description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id",
+          "type": "string"
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
+        },
+        "mode": {
+          "description": "Disk mode, the value is 'rw' or 'ro'",
+          "type": "string",
+          "default": "rw"
+        },
+        "name": {
+          "description": "Disk name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        },
+        "status": {
+          "description": "Disk status",
+          "$ref": "#/definitions/virtualization.DiskStatus"
+        },
+        "type": {
+          "description": "Disk type, the value is 'system' or 'data'",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.DiskSpec": {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "description": "Disk action, the value is 'add', 'mount' or 'unmount'",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id which is got from disk api",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        },
+        "size": {
+          "description": "Disk size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.DiskStatus": {
+      "required": [
+        "ready",
+        "owner"
+      ],
+      "properties": {
+        "owner": {
+          "description": "Disk owner, if empty, means not owned by any virtual machine",
+          "type": "string"
+        },
+        "ready": {
+          "description": "Disk is ready or not",
+          "type": "boolean"
+        }
+      }
+    },
+    "virtualization.GuestSpec": {
+      "required": [
+        "username",
+        "password"
+      ],
+      "properties": {
+        "password": {
+          "description": "Guest operating system password",
+          "type": "string",
+          "default": "abc1234"
+        },
+        "username": {
+          "description": "Guest operating system username",
+          "type": "string",
+          "default": "root"
+        }
+      }
+    },
+    "virtualization.ImageIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "image id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.ImageInfoResponse": {
+      "required": [
+        "id",
+        "namespace",
+        "size"
+      ],
+      "properties": {
+        "id": {
+          "description": "Image id which is got from image api",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Image namespace",
+          "type": "string"
+        },
+        "size": {
+          "description": "Image size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.ImageRequest": {
+      "required": [
+        "name",
+        "os_family",
+        "version",
+        "cpu_cores",
+        "memory",
+        "size",
+        "description",
+        "minio_image_name",
+        "shared",
+        "type"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Image description. Default is empty string.",
+          "type": "string",
+          "maximum": 128
+        },
+        "memory": {
+          "description": "Default image memory, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
+        },
+        "name": {
+          "description": "Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "os_family": {
+          "description": "Image operating system, valid values are 'ubuntu', 'centos', 'debian', 'fedora', 'windows'",
+          "type": "string",
+          "default": "ubuntu"
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        },
+        "type": {
+          "description": "Image type, the value is 'cloud' or 'iso'",
+          "type": "string",
+          "default": "cloud"
+        },
+        "version": {
+          "description": "Image version",
+          "type": "string",
+          "default": "20.04_LTS_64bit"
+        }
+      }
+    },
+    "virtualization.ImageResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "os_family",
+        "version",
+        "cpu_cores",
+        "memory",
+        "size",
+        "minio_image_name",
+        "description",
+        "shared",
+        "type",
+        "status"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Image description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Image id",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Default image memory, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "minio_image_name": {
+          "description": "File name which created by minio image api",
+          "type": "string"
+        },
+        "name": {
+          "description": "Image name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Image namespace",
+          "type": "string"
+        },
+        "os_family": {
+          "description": "Image operating system",
+          "type": "string",
+          "default": "ubuntu"
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        },
+        "status": {
+          "description": "Image status",
+          "$ref": "#/definitions/virtualization.ImageStatus"
+        },
+        "type": {
+          "description": "Image type, the value is 'cloud' or 'iso'",
+          "type": "string",
+          "default": "cloud"
+        },
+        "version": {
+          "description": "Image version",
+          "type": "string",
+          "default": "20.04_LTS_64bit"
+        }
+      }
+    },
+    "virtualization.ImageStatus": {
+      "required": [
+        "ready"
+      ],
+      "properties": {
+        "ready": {
+          "description": "Image is ready or not",
+          "type": "boolean"
+        }
+      }
+    },
+    "virtualization.ListDiskResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of disks",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ListImageResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of images",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.ImageResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of images",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ListVirtualMachineResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of virtual machines",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.VirtualMachineResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of virtual machines",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.ModifyDiskRequest": {
+      "properties": {
+        "description": {
+          "description": "Disk description. Can be empty string.",
+          "type": "string",
+          "maximum": 128
+        },
+        "name": {
+          "description": "Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "size": {
+          "description": "Disk size, unit is GB and the size only can be increased.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 500,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.ModifyDiskSpec": {
+      "required": [
+        "action",
+        "id"
+      ],
+      "properties": {
+        "action": {
+          "description": "Disk action, the value is 'mount' or 'unmount'",
+          "type": "string"
+        },
+        "id": {
+          "description": "Disk id which is got from disk api",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Disk namespace",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.ModifyImageRequest": {
+      "properties": {
+        "cpu_cores": {
+          "description": "Default image cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Image description. Can be empty string.",
+          "type": "string",
+          "maximum": 128
+        },
+        "memory": {
+          "description": "Default image memory, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "name": {
+          "description": "Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        },
+        "shared": {
+          "description": "Image shared or not",
+          "type": "boolean",
+          "default": false
+        },
+        "size": {
+          "description": "Default image size, unit is GB and the size only can be increased.",
+          "type": "integer",
+          "format": "integer",
+          "default": 20,
+          "maximum": 80,
+          "minimum": 10
+        }
+      }
+    },
+    "virtualization.ModifyVirtualMachineRequest": {
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Virtual machine description. Can be empty string.",
+          "type": "string",
+          "maximum": 128
+        },
+        "disk": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.ModifyDiskSpec"
+          }
+        },
+        "memory": {
+          "description": "Virtual machine memory size, unit is GB.",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "name": {
+          "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        }
+      }
+    },
+    "virtualization.VMStatus": {
+      "required": [
+        "ready",
+        "state"
+      ],
+      "properties": {
+        "ready": {
+          "description": "Virtual machine is ready or not",
+          "type": "boolean"
+        },
+        "state": {
+          "description": "Virtual machine state",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VirtualMachineIDResponse": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "virtual machine id",
+          "type": "string"
+        }
+      }
+    },
+    "virtualization.VirtualMachineRequest": {
+      "required": [
+        "name",
+        "cpu_cores",
+        "memory",
+        "description",
+        "image"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1
+        },
+        "description": {
+          "description": "Virtual machine description. Default is empty string.",
+          "type": "string",
+          "maximum": 128
+        },
+        "disk": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskSpec"
+          }
+        },
+        "guest": {
+          "description": "Virtual machine guest operating system",
+          "$ref": "#/definitions/virtualization.GuestSpec"
+        },
+        "image": {
+          "description": "Virtual machine image source",
+          "$ref": "#/definitions/virtualization.ImageInfoResponse"
+        },
+        "memory": {
+          "description": "Virtual machine memory size, unit is GB",
+          "type": "integer",
+          "format": "integer",
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1
+        },
+        "name": {
+          "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 16
+        }
+      }
+    },
+    "virtualization.VirtualMachineResponse": {
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "description",
+        "cpu_cores",
+        "memory",
+        "image",
+        "disks",
+        "status"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "description": "Virtual machine cpu cores",
+          "type": "integer",
+          "format": "integer"
+        },
+        "description": {
+          "description": "Virtual machine description",
+          "type": "string"
+        },
+        "disks": {
+          "description": "Virtual machine disks",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.DiskResponse"
+          }
+        },
+        "id": {
+          "description": "Virtual machine id",
+          "type": "string"
+        },
+        "image": {
+          "description": "Virtual machine image source",
+          "$ref": "#/definitions/virtualization.ImageInfoResponse"
+        },
+        "memory": {
+          "description": "Virtual machine memory size",
+          "type": "integer",
+          "format": "integer"
+        },
+        "name": {
+          "description": "Virtual machine name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Virtual machine namespace",
+          "type": "string"
+        },
+        "status": {
+          "description": "Virtual machine status",
+          "$ref": "#/definitions/virtualization.VMStatus"
+        }
+      }
+    },
+    "virtualization.VirtualizationResourceQuota": {
+      "required": [
+        "namespace",
+        "diskCount",
+        "fileCount",
+        "imageCount",
+        "virtualMachineCount"
+      ],
+      "properties": {
+        "diskCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fileCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "imageCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "namespace": {
+          "description": "Resource Quota namespace",
+          "type": "string"
+        },
+        "virtualMachineCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     }

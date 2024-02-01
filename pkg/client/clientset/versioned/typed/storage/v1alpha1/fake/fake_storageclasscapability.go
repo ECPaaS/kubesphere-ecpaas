@@ -99,7 +99,7 @@ func (c *FakeStorageClassCapabilities) Update(ctx context.Context, storageClassC
 // Delete takes name of the storageClassCapability and deletes it. Returns an error if one occurs.
 func (c *FakeStorageClassCapabilities) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(storageclasscapabilitiesResource, name), &v1alpha1.StorageClassCapability{})
+		Invokes(testing.NewRootDeleteActionWithOptions(storageclasscapabilitiesResource, name, opts), &v1alpha1.StorageClassCapability{})
 	return err
 }
 

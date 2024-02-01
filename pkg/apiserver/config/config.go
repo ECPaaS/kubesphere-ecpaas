@@ -47,6 +47,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/simple/client/ldap"
 	"kubesphere.io/kubesphere/pkg/simple/client/logging"
 	"kubesphere.io/kubesphere/pkg/simple/client/metering"
+	"kubesphere.io/kubesphere/pkg/simple/client/minio"
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring/prometheus"
 	"kubesphere.io/kubesphere/pkg/simple/client/multicluster"
 	"kubesphere.io/kubesphere/pkg/simple/client/network"
@@ -176,6 +177,7 @@ type Config struct {
 	GatewayOptions        *gateway.Options        `json:"gateway,omitempty" yaml:"gateway,omitempty" mapstructure:"gateway"`
 	GPUOptions            *gpu.Options            `json:"gpu,omitempty" yaml:"gpu,omitempty" mapstructure:"gpu"`
 	TerminalOptions       *terminal.Options       `json:"terminal,omitempty" yaml:"terminal,omitempty" mapstructure:"terminal"`
+	MinioOptions          *minio.Options          `json:"minio,omitempty" yaml:"minio,omitempty" mapstructure:"minio"`
 }
 
 // newConfig creates a default non-empty Config
@@ -205,6 +207,7 @@ func New() *Config {
 		GatewayOptions:        gateway.NewGatewayOptions(),
 		GPUOptions:            gpu.NewGPUOptions(),
 		TerminalOptions:       terminal.NewTerminalOptions(),
+		MinioOptions:          minio.NewMinioOptions(),
 	}
 }
 

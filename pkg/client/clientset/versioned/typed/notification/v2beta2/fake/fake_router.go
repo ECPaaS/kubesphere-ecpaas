@@ -110,7 +110,7 @@ func (c *FakeRouters) UpdateStatus(ctx context.Context, router *v2beta2.Router, 
 // Delete takes name of the router and deletes it. Returns an error if one occurs.
 func (c *FakeRouters) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(routersResource, name), &v2beta2.Router{})
+		Invokes(testing.NewRootDeleteActionWithOptions(routersResource, name, opts), &v2beta2.Router{})
 	return err
 }
 

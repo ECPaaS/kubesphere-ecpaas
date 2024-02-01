@@ -99,7 +99,7 @@ func (c *FakeIPAMHandles) Update(ctx context.Context, iPAMHandle *v1alpha1.IPAMH
 // Delete takes name of the iPAMHandle and deletes it. Returns an error if one occurs.
 func (c *FakeIPAMHandles) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(ipamhandlesResource, name), &v1alpha1.IPAMHandle{})
+		Invokes(testing.NewRootDeleteActionWithOptions(ipamhandlesResource, name, opts), &v1alpha1.IPAMHandle{})
 	return err
 }
 

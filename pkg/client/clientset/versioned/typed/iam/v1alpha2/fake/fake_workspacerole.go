@@ -99,7 +99,7 @@ func (c *FakeWorkspaceRoles) Update(ctx context.Context, workspaceRole *v1alpha2
 // Delete takes name of the workspaceRole and deletes it. Returns an error if one occurs.
 func (c *FakeWorkspaceRoles) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(workspacerolesResource, name), &v1alpha2.WorkspaceRole{})
+		Invokes(testing.NewRootDeleteActionWithOptions(workspacerolesResource, name, opts), &v1alpha2.WorkspaceRole{})
 	return err
 }
 

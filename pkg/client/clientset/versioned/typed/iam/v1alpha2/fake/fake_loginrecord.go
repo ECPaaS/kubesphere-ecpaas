@@ -99,7 +99,7 @@ func (c *FakeLoginRecords) Update(ctx context.Context, loginRecord *v1alpha2.Log
 // Delete takes name of the loginRecord and deletes it. Returns an error if one occurs.
 func (c *FakeLoginRecords) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(loginrecordsResource, name), &v1alpha2.LoginRecord{})
+		Invokes(testing.NewRootDeleteActionWithOptions(loginrecordsResource, name, opts), &v1alpha2.LoginRecord{})
 	return err
 }
 

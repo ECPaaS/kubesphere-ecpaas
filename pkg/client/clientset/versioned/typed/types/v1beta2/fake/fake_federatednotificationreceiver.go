@@ -110,7 +110,7 @@ func (c *FakeFederatedNotificationReceivers) UpdateStatus(ctx context.Context, f
 // Delete takes name of the federatedNotificationReceiver and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedNotificationReceivers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(federatednotificationreceiversResource, name), &v1beta2.FederatedNotificationReceiver{})
+		Invokes(testing.NewRootDeleteActionWithOptions(federatednotificationreceiversResource, name, opts), &v1beta2.FederatedNotificationReceiver{})
 	return err
 }
 

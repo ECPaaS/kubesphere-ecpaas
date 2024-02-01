@@ -117,7 +117,7 @@ func (c *FakeFederatedPersistentVolumeClaims) UpdateStatus(ctx context.Context, 
 // Delete takes name of the federatedPersistentVolumeClaim and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedPersistentVolumeClaims) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedpersistentvolumeclaimsResource, c.ns, name), &v1beta1.FederatedPersistentVolumeClaim{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedpersistentvolumeclaimsResource, c.ns, name, opts), &v1beta1.FederatedPersistentVolumeClaim{})
 
 	return err
 }

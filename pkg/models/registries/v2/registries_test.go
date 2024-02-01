@@ -97,7 +97,6 @@ func TestRegistryerListRepoTags(t *testing.T) {
 				Tags: []string{
 					"v3.1.1",
 					"v3.1.0",
-					"latest",
 				},
 			},
 		},

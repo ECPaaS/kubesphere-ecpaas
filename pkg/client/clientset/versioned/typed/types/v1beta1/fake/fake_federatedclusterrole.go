@@ -117,7 +117,7 @@ func (c *FakeFederatedClusterRoles) UpdateStatus(ctx context.Context, federatedC
 // Delete takes name of the federatedClusterRole and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedClusterRoles) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedclusterrolesResource, c.ns, name), &v1beta1.FederatedClusterRole{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedclusterrolesResource, c.ns, name, opts), &v1beta1.FederatedClusterRole{})
 
 	return err
 }

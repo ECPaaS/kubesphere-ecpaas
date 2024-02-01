@@ -117,7 +117,7 @@ func (c *FakeFederatedServices) UpdateStatus(ctx context.Context, federatedServi
 // Delete takes name of the federatedService and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(federatedservicesResource, c.ns, name), &v1beta1.FederatedService{})
+		Invokes(testing.NewDeleteActionWithOptions(federatedservicesResource, c.ns, name, opts), &v1beta1.FederatedService{})
 
 	return err
 }

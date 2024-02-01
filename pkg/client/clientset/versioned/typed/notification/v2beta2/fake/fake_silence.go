@@ -110,7 +110,7 @@ func (c *FakeSilences) UpdateStatus(ctx context.Context, silence *v2beta2.Silenc
 // Delete takes name of the silence and deletes it. Returns an error if one occurs.
 func (c *FakeSilences) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(silencesResource, name), &v2beta2.Silence{})
+		Invokes(testing.NewRootDeleteActionWithOptions(silencesResource, name, opts), &v2beta2.Silence{})
 	return err
 }
 

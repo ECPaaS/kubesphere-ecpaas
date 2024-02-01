@@ -61,7 +61,7 @@ func newResourceHandler(k8sClient kubernetes.Interface, factory informers.Inform
 	return &resourceHandler{
 		resourcesGetter:     resource.NewResourceGetter(factory),
 		componentsGetter:    components.NewComponentsGetter(factory.KubernetesSharedInformerFactory()),
-		resourceQuotaGetter: quotas.NewResourceQuotaGetter(factory.KubernetesSharedInformerFactory()),
+		resourceQuotaGetter: quotas.NewResourceQuotaGetter(factory.KubernetesSharedInformerFactory(), factory.KubeSphereSharedInformerFactory()),
 		revisionGetter:      revisions.NewRevisionGetter(factory.KubernetesSharedInformerFactory()),
 		routerOperator:      routers.NewRouterOperator(k8sClient, factory.KubernetesSharedInformerFactory()),
 		gitVerifier:         git.NewGitVerifier(factory.KubernetesSharedInformerFactory()),

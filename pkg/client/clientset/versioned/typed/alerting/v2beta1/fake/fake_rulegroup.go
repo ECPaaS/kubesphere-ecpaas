@@ -117,7 +117,7 @@ func (c *FakeRuleGroups) UpdateStatus(ctx context.Context, ruleGroup *v2beta1.Ru
 // Delete takes name of the ruleGroup and deletes it. Returns an error if one occurs.
 func (c *FakeRuleGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(rulegroupsResource, c.ns, name), &v2beta1.RuleGroup{})
+		Invokes(testing.NewDeleteActionWithOptions(rulegroupsResource, c.ns, name, opts), &v2beta1.RuleGroup{})
 
 	return err
 }

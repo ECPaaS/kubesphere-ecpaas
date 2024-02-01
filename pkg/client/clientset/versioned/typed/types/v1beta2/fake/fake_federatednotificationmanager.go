@@ -110,7 +110,7 @@ func (c *FakeFederatedNotificationManagers) UpdateStatus(ctx context.Context, fe
 // Delete takes name of the federatedNotificationManager and deletes it. Returns an error if one occurs.
 func (c *FakeFederatedNotificationManagers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(federatednotificationmanagersResource, name), &v1beta2.FederatedNotificationManager{})
+		Invokes(testing.NewRootDeleteActionWithOptions(federatednotificationmanagersResource, name, opts), &v1beta2.FederatedNotificationManager{})
 	return err
 }
 

@@ -117,7 +117,7 @@ func (c *FakeS2iRuns) UpdateStatus(ctx context.Context, s2iRun *v1alpha1.S2iRun,
 // Delete takes name of the s2iRun and deletes it. Returns an error if one occurs.
 func (c *FakeS2iRuns) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(s2irunsResource, c.ns, name), &v1alpha1.S2iRun{})
+		Invokes(testing.NewDeleteActionWithOptions(s2irunsResource, c.ns, name, opts), &v1alpha1.S2iRun{})
 
 	return err
 }

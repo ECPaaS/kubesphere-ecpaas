@@ -44,6 +44,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/simple/client/ldap"
 	"kubesphere.io/kubesphere/pkg/simple/client/logging"
 	"kubesphere.io/kubesphere/pkg/simple/client/metering"
+	"kubesphere.io/kubesphere/pkg/simple/client/minio"
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring/prometheus"
 	"kubesphere.io/kubesphere/pkg/simple/client/multicluster"
 	"kubesphere.io/kubesphere/pkg/simple/client/network"
@@ -195,6 +196,12 @@ func newTestConfig() (*Config, error) {
 		TerminalOptions: &terminal.Options{
 			Image:   "alpine:3.15",
 			Timeout: 600,
+		},
+		MinioOptions: &minio.Options{
+			Endpoint:        "minio.kubesphere-system.svc:9000",
+			AccessKeyID:     "openpitrixminioaccesskey",
+			SecretAccessKey: "openpitrixminiosecretkey",
+			Bucket:          "ecpaas-images",
 		},
 	}
 	return conf, nil

@@ -117,7 +117,7 @@ func (c *FakeS2iBinaries) UpdateStatus(ctx context.Context, s2iBinary *v1alpha1.
 // Delete takes name of the s2iBinary and deletes it. Returns an error if one occurs.
 func (c *FakeS2iBinaries) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(s2ibinariesResource, c.ns, name), &v1alpha1.S2iBinary{})
+		Invokes(testing.NewDeleteActionWithOptions(s2ibinariesResource, c.ns, name, opts), &v1alpha1.S2iBinary{})
 
 	return err
 }

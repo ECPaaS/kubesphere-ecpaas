@@ -110,7 +110,7 @@ func (c *FakeNotificationManagers) UpdateStatus(ctx context.Context, notificatio
 // Delete takes name of the notificationManager and deletes it. Returns an error if one occurs.
 func (c *FakeNotificationManagers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(notificationmanagersResource, name), &v2beta2.NotificationManager{})
+		Invokes(testing.NewRootDeleteActionWithOptions(notificationmanagersResource, name, opts), &v2beta2.NotificationManager{})
 	return err
 }
 

@@ -74,7 +74,9 @@ const (
 	ClientS2i         ClientType = "S2i"
 	ClientApplication ClientType = "Application"
 
-	StatusOK = "ok"
+	StatusOK                  = "ok"
+	StatusNotFound            = "Not Found"
+	StatusInternalServerError = "Internal Server Error"
 )
 
 var SupportedGroupVersionResources = map[ClientType][]schema.GroupVersionResource{

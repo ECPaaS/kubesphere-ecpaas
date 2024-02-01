@@ -53,6 +53,7 @@ import (
 	tenantv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/tenant/v1alpha2"
 	tenantv1alpha3 "kubesphere.io/kubesphere/pkg/kapis/tenant/v1alpha3"
 	terminalv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/terminal/v1alpha2"
+	virtualizationv1 "kubesphere.io/kubesphere/pkg/kapis/virtualization/v1"
 	"kubesphere.io/kubesphere/pkg/models/iam/group"
 	"kubesphere.io/kubesphere/pkg/simple/client/alerting"
 	"kubesphere.io/kubesphere/pkg/simple/client/k8s"
@@ -133,6 +134,7 @@ func generateSwaggerJson() []byte {
 	alertingOptions := &alerting.Options{}
 	alertingClient, _ := alerting.NewRuleClient(alertingOptions)
 	urlruntime.Must(alertingv2alpha1.AddToContainer(container, informerFactory, promfake.NewSimpleClientset(), alertingClient, alertingOptions))
+	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, clientsets.KubeSphere(), clientsets.Kubernetes(), informerFactory))
 
 	config := restfulspec.Config{
 		WebServices:                   container.RegisteredWebServices(),
@@ -251,6 +253,13 @@ func generateSwaggerJson() []byte {
 		{
 			Name: "Network",
 			Tags: []string{constants.NetworkTopologyTag},
+		},
+		{
+			Name: "Virtaulization",
+			Tags: []string{
+				constants.VirtualMachineTag,
+				constants.DiskTag,
+			},
 		},
 	})
 
