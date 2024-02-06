@@ -222,25 +222,23 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 		}
 	}
 
-	request.Request.ParseMultipartForm(0)
+	err = request.Request.ParseMultipartForm(0)
+	if err != nil {
+		api.HandleInternalError(response, request, err)
+		return
+	}
+
 	file, header, err := request.Request.FormFile("uploadfile")
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return
 	}
+	defer file.Close()
 
-	filesize, err := file.Seek(0, 2)
-
-	if err != nil {
-		api.HandleInternalError(response, request, err)
-		return
-	}
-
-	request.Request.MultipartReader()
+	file.Seek(0, 0) // Reset the file pointer to the beginning of the file
 
 	uploadInfo, err := h.minioClient.PutObject(context.Background(), bucketName, header.Filename,
-		file, filesize, minio.PutObjectOptions{ContentType: "application/octet-stream"})
-
+		file, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return
