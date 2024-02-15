@@ -6,7 +6,10 @@ package v1
 
 import (
 	"context"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -235,60 +238,36 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 	}
 	defer file.Close()
 
-	file.Seek(0, 0) // Reset the file pointer to the beginning of the file
+	out, err := os.Create("/tmp/" + header.Filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer out.Close()
 
-	uploadInfo, err := h.minioClient.PutObject(context.Background(), bucketName, header.Filename,
-		file, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"})
+	_, err = io.Copy(out, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	uploadInfo, err := h.minioClient.FPutObject(context.Background(), bucketName, header.Filename, "/tmp/"+header.Filename,
+		minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return
 	}
 
 	response.WriteAsJson(uploadInfo)
+
+	// delete the file after copy
+	err = os.Remove("/tmp/" + header.Filename)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (h *handler) UploadMinioObjectWithNs(request *restful.Request, response *restful.Response) {
 
-	// Check minio bucket "ecpaas-images" if not exist then create it.
-	found, err := h.minioClient.BucketExists(context.Background(), bucketName)
-	if err != nil {
-		api.HandleInternalError(response, request, err)
-		return
-	}
-
-	if !found {
-		err = h.minioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
-		if err != nil {
-			api.HandleInternalError(response, request, err)
-			return
-		}
-	}
-
-	request.Request.ParseMultipartForm(0)
-	file, header, err := request.Request.FormFile("uploadfile")
-	if err != nil {
-		api.HandleInternalError(response, request, err)
-		return
-	}
-
-	filesize, err := file.Seek(0, 2)
-
-	if err != nil {
-		api.HandleInternalError(response, request, err)
-		return
-	}
-
-	request.Request.MultipartReader()
-
-	uploadInfo, err := h.minioClient.PutObject(context.Background(), bucketName, header.Filename,
-		file, filesize, minio.PutObjectOptions{ContentType: "application/octet-stream"})
-
-	if err != nil {
-		api.HandleInternalError(response, request, err)
-		return
-	}
-
-	response.WriteAsJson(uploadInfo)
+	h.UploadMinioObject(request, response)
 }
 
 func (h *handler) DeleteMinioObject(request *restful.Request, response *restful.Response) {
