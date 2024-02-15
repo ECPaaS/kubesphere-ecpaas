@@ -127,55 +127,7 @@ func (h *handler) ListMinioObjects(request *restful.Request, response *restful.R
 
 func (h *handler) ListMinioObjectsWithNs(request *restful.Request, response *restful.Response) {
 
-	images := ImagesList{}
-	minioServiceName := "minio"
-
-	serviceList, err := h.k8sclient.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		response.WriteError(http.StatusInternalServerError, err)
-		return
-	}
-
-	var minioService *v1.Service
-
-	for _, service := range serviceList.Items {
-		if service.Name == minioServiceName {
-			minioService = &service
-			break
-		}
-	}
-
-	if minioService == nil {
-		klog.Warning("Cannot find the minio service ", err)
-		return
-	}
-
-	ip := minioService.Spec.ClusterIP
-	port := minioService.Spec.Ports[0].Port
-
-	objectCh := h.minioClient.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
-	for object := range objectCh {
-		if object.Err != nil {
-			api.HandleInternalError(response, request, object.Err)
-			return
-		}
-
-		objInfo, err := h.minioClient.StatObject(context.Background(), bucketName, object.Key, minio.StatObjectOptions{})
-		if err != nil {
-			klog.Warning(err)
-			continue
-		}
-
-		data := ObjectStatusData{}
-		data.Name = objInfo.Key
-		// "location": "http://minio.kubesphere-system.svc:9000/ecpaas-images",
-		data.Location = "http://" + ip + ":" + strconv.Itoa(int(port)) + "/" + bucketName
-		data.LastModified = objInfo.LastModified.Format(time.RFC3339)
-		data.Size = objInfo.Size
-		images.Image = append(images.Image, data)
-	}
-
-	response.WriteAsJson(images)
+	h.ListMinioObjects(request, response)
 }
 
 func (h *handler) GetMinioObjectStatus(request *restful.Request, response *restful.Response) {
@@ -195,17 +147,7 @@ func (h *handler) GetMinioObjectStatus(request *restful.Request, response *restf
 
 func (h *handler) GetMinioObjectStatusWithNs(request *restful.Request, response *restful.Response) {
 
-	imageName := request.PathParameter("imageName")
-	status := ObjectStatus{}
-
-	_, err := h.minioClient.StatObject(context.Background(), bucketName, imageName, minio.StatObjectOptions{})
-	if err != nil {
-		status.FileHas = false
-	} else {
-		status.FileHas = true
-	}
-
-	response.WriteAsJson(status)
+	h.GetMinioObjectStatus(request, response)
 }
 
 func (h *handler) UploadMinioObject(request *restful.Request, response *restful.Response) {
@@ -285,13 +227,5 @@ func (h *handler) DeleteMinioObject(request *restful.Request, response *restful.
 
 func (h *handler) DeleteMinioObjectWithNs(request *restful.Request, response *restful.Response) {
 
-	imageName := request.PathParameter("imageName")
-
-	err := h.minioClient.RemoveObject(context.Background(), bucketName, imageName, minio.RemoveObjectOptions{})
-	if err != nil {
-		api.HandleInternalError(response, request, err)
-		return
-	}
-
-	response.WriteEntity(errors.None)
+	h.DeleteMinioObject(request, response)
 }
