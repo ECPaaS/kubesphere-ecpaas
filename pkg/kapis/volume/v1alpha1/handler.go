@@ -191,20 +191,31 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 		log.Fatal(err)
 	}
 
-	uploadInfo, err := h.minioClient.FPutObject(context.Background(), bucketName, header.Filename, "/tmp/"+header.Filename,
-		minio.PutObjectOptions{ContentType: "application/octet-stream"})
+	uploadInfo, err := h.minioClient.PutObject(context.Background(), bucketName, header.Filename,
+		out, 0, minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
-		api.HandleInternalError(response, request, err)
-		return
+		klog.Warning(err)
 	}
+
+	//TODO: delete multipart temporary file
 
 	response.WriteAsJson(uploadInfo)
 
-	// delete the file after copy
-	err = os.Remove("/tmp/" + header.Filename)
-	if err != nil {
-		log.Fatal(err)
-	}
+	go func() {
+		// use FPutObject API because can not find the tmep file ("multipart-" file)
+		_, err := h.minioClient.FPutObject(context.Background(), bucketName, header.Filename, "/tmp/"+header.Filename,
+			minio.PutObjectOptions{ContentType: "application/octet-stream"})
+		if err != nil {
+			klog.Warning(err)
+		}
+
+		// delete the file after copy
+		err = os.Remove("/tmp/" + header.Filename)
+		if err != nil {
+			klog.Fatal(err)
+		}
+	}()
+
 }
 
 func (h *handler) UploadMinioObjectWithNs(request *restful.Request, response *restful.Response) {

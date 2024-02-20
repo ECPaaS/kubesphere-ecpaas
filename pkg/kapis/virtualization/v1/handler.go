@@ -470,6 +470,10 @@ func (h *virtzhandler) CreateImage(req *restful.Request, resp *restful.Response)
 		return
 	}
 
+	if !isValidMinioImageSize(h.minioClient, ui_image.MinioImageName, resp) {
+		return
+	}
+
 	createdImage, err := h.virtz.CreateImage(namespace, &ui_image)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)

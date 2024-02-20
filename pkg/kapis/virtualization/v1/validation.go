@@ -5,6 +5,7 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
 package virtualization
 
 import (
+	"context"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -12,10 +13,13 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
+	"github.com/minio/minio-go/v7"
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
+
+var bucketName = "ecpaas-images"
 
 func isValidModifyDisk(validateType reflect.Type, disk ui_virtz.ModifyDiskSpec, resp *restful.Response) bool {
 	if disk.Action != "mount" && disk.Action != "unmount" {
@@ -317,6 +321,24 @@ func isValidImageType(imageType string, resp *restful.Response) bool {
 	if imageType != "cloud" && imageType != "iso" {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
 			Reason: "Image type should be 'cloud' or 'iso'",
+		})
+		return false
+	}
+	return true
+}
+
+func isValidMinioImageSize(minioClient *minio.Client, minioImageName string, resp *restful.Response) bool {
+	objectInfo, err := minioClient.StatObject(context.Background(), bucketName, minioImageName, minio.StatObjectOptions{})
+	if err != nil {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Minio image does not exist",
+		})
+		return false
+	}
+
+	if objectInfo.Size <= 0 {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Minio image '" + minioImageName + "' size should be larger than 0",
 		})
 		return false
 	}
