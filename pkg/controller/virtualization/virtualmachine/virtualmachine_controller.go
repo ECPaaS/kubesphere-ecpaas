@@ -31,6 +31,7 @@ import (
 	kvapi "kubevirt.io/api/core/v1"
 	"kubevirt.io/client-go/kubecli"
 
+	storage "k8s.io/api/storage/v1"
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 )
 
@@ -40,7 +41,6 @@ const (
 	messageResourceSynced                 = "VirtualMachine synced successfully"
 	pvcCreateByDiskVolumeTemplatePrefix   = "tpl-" // tpl: template
 	pvcCreateByDiskVolumeControllerPrefix = "new-"
-	volumeSnapshotClassName               = "cstor-csi-disk"
 )
 
 // Reconciler reconciles a cnat object
@@ -78,26 +78,39 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	rootCtx := context.Background()
 
-	vsc := snapv1.VolumeSnapshotClass{}
-	if err := r.Get(rootCtx, client.ObjectKey{Name: volumeSnapshotClassName}, &vsc); err != nil {
+	defaultStorageClassName, err := r.getDefaultStorageClassName()
+	if err != nil {
 		if errors.IsNotFound(err) {
-			klog.Infof("VolumeSnapshotClass %s not found", volumeSnapshotClassName)
+			klog.Infof("Default StorageClassName %s not found", defaultStorageClassName)
 		} else {
-			klog.Errorf("Failed to get VolumeSnapshotClass %s: %v", volumeSnapshotClassName, err)
+			klog.Errorf("Failed to get Default StorageClassName %s: %v", defaultStorageClassName, err)
 			return ctrl.Result{}, err
 		}
 	}
-	klog.V(2).Infof("VolumeSnapshotClass %s delete policy: %s", volumeSnapshotClassName, vsc.DeletionPolicy)
 
-	if vsc.DeletionPolicy != "Retain" {
-		klog.Infof("VolumeSnapshotClass %s delete policy is not Retain", volumeSnapshotClassName)
-		vsc_instance := vsc.DeepCopy()
-		vsc_instance.DeletionPolicy = "Retain"
-		if err := r.Update(rootCtx, vsc_instance); err != nil {
-			klog.Errorf("Failed to update VolumeSnapshotClass %s : %v", volumeSnapshotClassName, err)
-			return ctrl.Result{}, err
+	if defaultStorageClassName == "cstor-csi-disk" {
+		volumeSnapshotClassName := defaultStorageClassName
+		vsc := snapv1.VolumeSnapshotClass{}
+		if err := r.Get(rootCtx, client.ObjectKey{Name: volumeSnapshotClassName}, &vsc); err != nil {
+			if errors.IsNotFound(err) {
+				klog.Infof("VolumeSnapshotClass %s not found", volumeSnapshotClassName)
+			} else {
+				klog.Errorf("Failed to get VolumeSnapshotClass %s: %v", volumeSnapshotClassName, err)
+				return ctrl.Result{}, err
+			}
 		}
-		klog.Infof("VolumeSnapshotClass %s delete policy is updated to Retain", volumeSnapshotClassName)
+		klog.V(2).Infof("VolumeSnapshotClass %s delete policy: %s", volumeSnapshotClassName, vsc.DeletionPolicy)
+
+		if vsc.DeletionPolicy != "Retain" {
+			klog.Infof("VolumeSnapshotClass %s delete policy is not Retain", volumeSnapshotClassName)
+			vsc_instance := vsc.DeepCopy()
+			vsc_instance.DeletionPolicy = "Retain"
+			if err := r.Update(rootCtx, vsc_instance); err != nil {
+				klog.Errorf("Failed to update VolumeSnapshotClass %s : %v", volumeSnapshotClassName, err)
+				return ctrl.Result{}, err
+			}
+			klog.Infof("VolumeSnapshotClass %s delete policy is updated to Retain", volumeSnapshotClassName)
+		}
 	}
 
 	vm := &virtzv1alpha1.VirtualMachine{}
@@ -913,4 +926,22 @@ func removeVolume(vmiName, volumeName, namespace string, virtClient kubecli.Kube
 	}
 	klog.Infof("Successfully submitted remove volume request to VM %s for volume %s\n", vmiName, volumeName)
 	return nil
+}
+
+func (r *Reconciler) getDefaultStorageClassName() (string, error) {
+	storageClassList := &storage.StorageClassList{}
+	if err := r.List(context.Background(), storageClassList); err != nil {
+		return "", fmt.Errorf("failed to list storage classes: %v", err)
+	}
+
+	// Get default storage class name
+	for _, sc := range storageClassList.Items {
+		if sc.Annotations != nil {
+			if isDefault, ok := sc.Annotations["storageclass.kubernetes.io/is-default-class"]; ok && isDefault == "true" {
+				return sc.Name, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("default storage class not found")
 }
