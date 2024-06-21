@@ -41,6 +41,7 @@ const (
 	messageResourceSynced                 = "VirtualMachine synced successfully"
 	pvcCreateByDiskVolumeTemplatePrefix   = "tpl-" // tpl: template
 	pvcCreateByDiskVolumeControllerPrefix = "new-"
+	volumeSnapshotClassName               = "cstor-csi-disk"
 )
 
 // Reconciler reconciles a cnat object
@@ -88,8 +89,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
-	if defaultStorageClassName == "cstor-csi-disk" {
-		volumeSnapshotClassName := defaultStorageClassName
+	if defaultStorageClassName == volumeSnapshotClassName {
 		vsc := snapv1.VolumeSnapshotClass{}
 		if err := r.Get(rootCtx, client.ObjectKey{Name: volumeSnapshotClassName}, &vsc); err != nil {
 			if errors.IsNotFound(err) {
