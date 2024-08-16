@@ -11,8 +11,11 @@ import (
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"github.com/minio/minio-go/v7"
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
+	"kubevirt.io/client-go/kubecli"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 
@@ -39,7 +42,13 @@ var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
 func AddToContainer(container *restful.Container, minioClient *minio.Client, ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory) error {
 	webservice := runtime.NewWebService(GroupVersion)
-	handler := newHandler(ksclient, k8sclient, factory, minioClient)
+	clientConfig := kubecli.DefaultClientConfig(&pflag.FlagSet{})
+	virtClient, err := kubecli.GetKubevirtClientFromClientConfig(clientConfig)
+	if err != nil {
+		klog.Infof("Cannot obtain KubeVirt client: %v\n", err)
+		return err
+	}
+	handler := newHandler(ksclient, k8sclient, factory, minioClient, virtClient)
 
 	vmPutNotes = strings.ReplaceAll(vmPutNotes, "\n", " ")
 	diskPutNotes = strings.ReplaceAll(diskPutNotes, "\n", " ")
