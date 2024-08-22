@@ -23,7 +23,7 @@
         "tags": [
           "VPC Network"
         ],
-        "summary": "Get vpcnetowkrs resources",
+        "summary": "Get vpcnetwork resources",
         "operationId": "GetVpcNetwork",
         "parameters": [
           {
@@ -38,8 +38,11 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/v1.VPCNetwork"
+              "$ref": "#/definitions/vpc.VPCNetwork"
             }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       },
@@ -63,10 +66,10 @@
         ],
         "responses": {
           "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/errors.Error"
-            }
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       },
@@ -92,7 +95,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1.VPCNetwork"
+              "$ref": "#/definitions/vpc.VPCNetworkBase"
             }
           }
         ],
@@ -100,8 +103,11 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/v1.VPCNetwork"
+              "$ref": "#/definitions/vpc.VPCNetworkBase"
             }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -158,7 +164,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1.VPCNetwork"
+              "$ref": "#/definitions/vpc.VPCNetwork"
             }
           }
         ],
@@ -166,8 +172,17 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/v1.VPCNetwork"
+              "$ref": "#/definitions/vpc.VPCNetwork"
             }
+          },
+          "400": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/v1.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -202,7 +217,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1.VPCNetwork"
+              "$ref": "#/definitions/vpc.VPCNetwork"
             }
           }
         ],
@@ -210,7 +225,13 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/v1.VPCNetwork"
+              "$ref": "#/definitions/vpc.VPCNetwork"
+            }
+          },
+          "400": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/v1.BadRequestError"
             }
           }
         }
@@ -224,13 +245,36 @@
         "tags": [
           "VPC Network"
         ],
-        "summary": "List all vpcnetowkrs resources",
+        "summary": "List all vpcnetwork resources",
         "operationId": "ListVpcNetwork",
         "responses": {
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/api.ListResult"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/vpc.VPCNetwork"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcnetworks/gatewayChassisNode": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "List available gateway chassis nodes",
+        "operationId": "GetGatewayChassisNode",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/vpc.GatewayChassisNode"
             }
           }
         }
@@ -328,10 +372,10 @@
         ],
         "responses": {
           "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/errors.Error"
-            }
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       },
@@ -1573,29 +1617,12 @@
         }
       }
     },
-    "v1.ClusterRouterPolicy": {
+    "v1.BadRequestError": {
       "required": [
-        "destination",
-        "targetPort"
+        "reason"
       ],
       "properties": {
-        "destination": {
-          "type": "string"
-        },
-        "targetPort": {
-          "type": "string"
-        }
-      }
-    },
-    "v1.GatewayChassis": {
-      "required": [
-        "ip"
-      ],
-      "properties": {
-        "ip": {
-          "type": "string"
-        },
-        "node": {
+        "reason": {
           "type": "string"
         }
       }
@@ -1610,30 +1637,6 @@
           "items": {
             "$ref": "#/definitions/v1.ObjectStatusData"
           }
-        }
-      }
-    },
-    "v1.L3Gateway": {
-      "required": [
-        "network",
-        "nexthop"
-      ],
-      "properties": {
-        "destination": {
-          "type": "string"
-        },
-        "network": {
-          "type": "string"
-        },
-        "nexthop": {
-          "type": "string"
-        },
-        "outboundNat": {
-          "type": "string"
-        },
-        "vlanid": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },
@@ -1662,27 +1665,6 @@
         },
         "time": {
           "description": "Time is timestamp of when these fields were set. It should always be empty if Operation is 'Apply'",
-          "type": "string"
-        }
-      }
-    },
-    "v1.NATRule": {
-      "required": [
-        "type",
-        "logicalIP",
-        "externalIP"
-      ],
-      "properties": {
-        "externalIP": {
-          "type": "string"
-        },
-        "logicalIP": {
-          "type": "string"
-        },
-        "port": {
-          "type": "string"
-        },
-        "type": {
           "type": "string"
         }
       }
@@ -1842,116 +1824,6 @@
         },
         "uid": {
           "description": "UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
-          "type": "string"
-        }
-      }
-    },
-    "v1.Peer": {
-      "required": [
-        "name",
-        "ip",
-        "port"
-      ],
-      "properties": {
-        "ip": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "port": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
-    "v1.VPCNetwork": {
-      "required": [
-        "spec"
-      ],
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-          "type": "string"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-          "type": "string"
-        },
-        "metadata": {
-          "$ref": "#/definitions/v1.ObjectMeta"
-        },
-        "spec": {
-          "$ref": "#/definitions/v1.VPCNetworkSpec"
-        },
-        "status": {
-          "$ref": "#/definitions/v1.VPCNetworkStatus"
-        }
-      }
-    },
-    "v1.VPCNetworkSpec": {
-      "required": [
-        "cidr",
-        "subnetLength"
-      ],
-      "properties": {
-        "cidr": {
-          "type": "string"
-        },
-        "clusterRouter": {
-          "type": "string"
-        },
-        "clusterRouterPolicy": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1.ClusterRouterPolicy"
-          }
-        },
-        "gatewayChassises": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1.GatewayChassis"
-          }
-        },
-        "l3gateways": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1.L3Gateway"
-          }
-        },
-        "nat": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1.NATRule"
-          }
-        },
-        "peers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1.Peer"
-          }
-        },
-        "subnetLength": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
-    "v1.VPCNetworkStatus": {
-      "required": [
-        "subnets"
-      ],
-      "properties": {
-        "subnets": {
-          "type": "string"
-        },
-        "transitSwitch": {
-          "type": "string"
-        },
-        "tsNetwork": {
-          "type": "string"
-        },
-        "tsPort": {
           "type": "string"
         }
       }
@@ -2731,6 +2603,149 @@
         "virtualMachineCount": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "vpc.GatewayChassis": {
+      "required": [
+        "ip"
+      ],
+      "properties": {
+        "ip": {
+          "description": "Gateway IP address",
+          "type": "string",
+          "default": "192.168.41.75"
+        },
+        "node": {
+          "description": "Name of the k8s node where the gateway is located",
+          "type": "string",
+          "default": "node1"
+        }
+      }
+    },
+    "vpc.GatewayChassisNode": {
+      "required": [
+        "node",
+        "ip"
+      ],
+      "properties": {
+        "ip": {
+          "description": "Node IP address",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "node": {
+          "description": "Name of the k8s node where the gateway is located",
+          "type": "string"
+        }
+      }
+    },
+    "vpc.L3Gateway": {
+      "required": [
+        "network",
+        "nexthop"
+      ],
+      "properties": {
+        "destination": {
+          "description": "route DST",
+          "type": "string",
+          "default": "0.0.0.0/0"
+        },
+        "network": {
+          "description": "L3 gateway address",
+          "type": "string",
+          "default": "192.168.41.75/22"
+        },
+        "nexthop": {
+          "description": "Next hop address",
+          "type": "string",
+          "default": "192.168.40.254"
+        },
+        "vlanid": {
+          "description": "VLAN id for external network",
+          "type": "integer",
+          "format": "int32",
+          "default": 0,
+          "maximum": 4094,
+          "minimum": 0
+        }
+      }
+    },
+    "vpc.VPCNetwork": {
+      "required": [
+        "name",
+        "cidr",
+        "subnetLength"
+      ],
+      "properties": {
+        "cidr": {
+          "description": "vpc network private segment address space",
+          "type": "string",
+          "default": "10.0.0.0/16"
+        },
+        "gatewayChassises": {
+          "description": "Gateway chassis information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.GatewayChassis"
+          }
+        },
+        "l3gateways": {
+          "description": "L3Gateway information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.L3Gateway"
+          }
+        },
+        "name": {
+          "description": "must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character. Allowed characters: lowercase letters (a-z), numbers (0-9), and hyphens (-)",
+          "type": "string",
+          "maximum": 253
+        },
+        "subnetLength": {
+          "description": "Length of vpc subnet managed by vpc network",
+          "type": "integer",
+          "format": "int32",
+          "default": 24,
+          "maximum": 32,
+          "minimum": 0
+        }
+      }
+    },
+    "vpc.VPCNetworkBase": {
+      "required": [
+        "cidr",
+        "subnetLength"
+      ],
+      "properties": {
+        "cidr": {
+          "description": "vpc network private segment address space",
+          "type": "string",
+          "default": "10.0.0.0/16"
+        },
+        "gatewayChassises": {
+          "description": "Gateway chassis information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.GatewayChassis"
+          }
+        },
+        "l3gateways": {
+          "description": "L3Gateway information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.L3Gateway"
+          }
+        },
+        "subnetLength": {
+          "description": "Length of vpc subnet managed by vpc network",
+          "type": "integer",
+          "format": "int32",
+          "default": 24,
+          "maximum": 32,
+          "minimum": 0
         }
       }
     }
