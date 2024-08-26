@@ -39,20 +39,22 @@ type GatewayChassis struct {
 	IP string `json:"ip" description:"Gateway IP address" default:"192.168.41.75"`
 }
 
+type VPCSubnetBase struct {
+	// +kubebuilder:validation:Required
+	CIDR string `json:"cidr" description:"vpc subnet private segment address space" default:"10.0.2.0/24"`
+	// +kubebuilder:validation:Optional
+	Vpc string `json:"vpc,omitempty" description:"vpc network name" default:"nocsys"`
+}
+
 type VPCSubnet struct {
 	// +kubebuilder:validation:Required
 	Name string `json:"name" maximum:"253" description:"must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character. Allowed characters: lowercase letters (a-z), numbers (0-9), and hyphens (-)"`
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
-	// +kubebuilder:validation:Required
-	CIDR string `json:"cidr" description:"vpc subnet private segment address space" default:"10.0.2.0/24"`
-	// +kubebuilder:validation:Required
-	Vpc string `json:"vpc" description:"vpc network name" default:"nocsys"`
+	VPCSubnetBase
 }
 
 type GatewayChassisNode struct {
 	// +kubebuilder:validation:Required
 	Node string `json:"node" description:"Name of the k8s node where the gateway is located"`
-	// +kubebuilder:validation:Required
-	IP []string `json:"ip" description:"Node IP address"`
 }

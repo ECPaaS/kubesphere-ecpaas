@@ -5,6 +5,7 @@ Copyright(c) 2024-present Accton. All rights reserved. www.accton.com
 package validation
 
 import (
+	"net"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -57,4 +58,15 @@ func IsValidString(valueToValidate string, resp *restful.Response) bool {
 	}
 	return true
 
+}
+
+func IsValidCIDR(cidr string, resp *restful.Response) bool {
+	_, _, err := net.ParseCIDR(cidr)
+	if err != nil {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+			Reason: "Invalid CIDR address: " + cidr,
+		})
+		return false
+	}
+	return true
 }

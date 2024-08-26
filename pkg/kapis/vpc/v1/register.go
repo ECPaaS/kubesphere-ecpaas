@@ -11,7 +11,6 @@ import (
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
-	v1 "kubesphere.io/api/vpc/v1"
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
@@ -49,14 +48,14 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		To(handler.GetVpcNetwork).
 		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
 		Doc("Get vpcnetwork resources").
-		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetwork{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetworkBase{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
 	webservice.Route(webservice.GET("/vpcnetwork/gatewayChassisNode").
 		To(handler.GetGatewayChassisNode).
 		Doc("List available gateway chassis nodes").
-		Returns(http.StatusOK, api.StatusOK, vpc.GatewayChassisNode{}).
+		Returns(http.StatusOK, api.StatusOK, []vpc.GatewayChassisNode{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
 	webservice.Route(webservice.POST("/vpcnetwork/{workspace}").
@@ -73,9 +72,9 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		To(handler.UpdateVpcNetwork).
 		Param(webservice.PathParameter("workspace", "workspace name")).
 		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
-		Reads(vpc.VPCNetwork{}).
+		Reads(vpc.VPCNetworkBase{}).
 		Doc("Update vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetwork{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetworkBase{}).
 		Returns(http.StatusBadRequest, "Invalid format", BadRequestError{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
@@ -100,14 +99,15 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 	webservice.Route(webservice.GET("/vpcsubnets").
 		To(handler.ListVpcSubnet).
 		Doc("List all vpcsubnet resources").
-		Returns(http.StatusOK, api.StatusOK, api.ListResult{}).
+		Returns(http.StatusOK, api.StatusOK, []vpc.VPCSubnet{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
 	webservice.Route(webservice.GET("/vpcnetwork/{vpcnetwork}/vpcsubnets").
 		To(handler.ListVpcSubnetWithinVpcNetwork).
 		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
 		Doc("List all vpcsubnet resource within vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, api.ListResult{}).
+		Returns(http.StatusOK, api.StatusOK, []vpc.VPCSubnet{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
 	webservice.Route(webservice.GET("/vpcsubnet/{namespace}/{vpcsubnet}").
@@ -115,31 +115,27 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
 		Doc("Get vpcsubnet resources").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetBase{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
 	webservice.Route(webservice.POST("/vpcsubnet").
 		To(handler.CreateVpcSubnet).
-		Reads(v1.VPCSubnet{}).
+		Reads(vpc.VPCSubnet{}).
 		Doc("Create vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnet{}).
+		Returns(http.StatusBadRequest, "Invalid format", BadRequestError{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
-	webservice.Route(webservice.PUT("/vpcsubnet/{vpcsubnet}").
+	webservice.Route(webservice.PUT("/vpcsubnet/{namespace}/{vpcsubnet}").
 		To(handler.UpdateVpcSubnet).
-		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
-		Reads(v1.VPCSubnet{}).
-		Doc("Update vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
-
-	webservice.Route(webservice.PATCH("/vpcsubnet/{namespace}/{vpcsubnet}").
-		To(handler.PatchVpcSubnet).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
-		Reads(v1.VPCSubnet{}).
-		Doc("Patch vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
+		Reads(vpc.VPCSubnetBase{}).
+		Doc("Update vpcsubnet").
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetBase{}).
+		Returns(http.StatusBadRequest, "Invalid format", BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
 	webservice.Route(webservice.DELETE("/vpcsubnet/{namespace}/{vpcsubnet}").

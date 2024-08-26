@@ -5,7 +5,6 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com.tw
 package v1
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"reflect"
@@ -13,7 +12,6 @@ import (
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
-	vpcv1 "kubesphere.io/api/vpc/v1"
 
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/apiserver/query"
@@ -197,7 +195,7 @@ func validationVPCNetworkBase(vpcnetwork vpc.VPCNetworkBase, resp *restful.Respo
 func (h *handler) UpdateVpcNetwork(request *restful.Request, response *restful.Response) {
 	workspaceName := request.PathParameter("workspace")
 	vpcnetworkName := request.PathParameter("vpcnetwork")
-	var vpcnetwork vpc.VPCNetwork
+	var vpcnetwork vpc.VPCNetworkBase
 
 	err := request.ReadEntity(&vpcnetwork)
 
@@ -206,27 +204,16 @@ func (h *handler) UpdateVpcNetwork(request *restful.Request, response *restful.R
 		return
 	}
 
-	if !validationVPCNetwork(vpcnetwork, response) {
+	if !validationVPCNetworkBase(vpcnetwork, response) {
 		return
 	}
 
-	if vpcnetworkName != vpcnetwork.Name {
-		err := fmt.Errorf("the name of the object (%s) does not match the name on the URL (%s)", vpcnetwork.Name, vpcnetworkName)
-		klog.Errorf("%+v", err)
-		api.HandleBadRequest(response, request, err)
-		return
-	}
-
-	updated, err := h.vpc.UpdateVpcNetwork(workspaceName, &vpcnetwork)
+	updated, err := h.vpc.UpdateVpcNetwork(workspaceName, &vpcnetwork, vpcnetworkName)
 
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {
 			api.HandleNotFound(response, request, err)
-			return
-		}
-		if errors.IsForbidden(err) {
-			api.HandleForbidden(response, request, err)
 			return
 		}
 		api.HandleBadRequest(response, request, err)
@@ -287,6 +274,7 @@ func (h *handler) DeleteVpcNetwork(request *restful.Request, response *restful.R
 	response.WriteEntity(servererr.None)
 }
 
+// VPC Subnet
 func (h *handler) ListVpcSubnet(request *restful.Request, response *restful.Response) {
 
 	queryParam := query.ParseQueryParameter(request)
@@ -345,7 +333,7 @@ func (h *handler) GetVpcSubnet(request *restful.Request, response *restful.Respo
 
 func (h *handler) CreateVpcSubnet(request *restful.Request, response *restful.Response) {
 
-	var vpcsubnet vpcv1.VPCSubnet
+	var vpcsubnet vpc.VPCSubnet
 
 	err := request.ReadEntity(&vpcsubnet)
 
@@ -355,11 +343,7 @@ func (h *handler) CreateVpcSubnet(request *restful.Request, response *restful.Re
 		return
 	}
 
-	err = validationVPCSubnet(vpcsubnet)
-
-	if err != nil {
-		klog.Error(err)
-		api.HandleBadRequest(response, request, err)
+	if !validation.IsValidCIDR(vpcsubnet.CIDR, response) {
 		return
 	}
 
@@ -382,17 +366,11 @@ func (h *handler) CreateVpcSubnet(request *restful.Request, response *restful.Re
 	response.WriteEntity(created)
 }
 
-func validationVPCSubnet(vpcsubnet vpcv1.VPCSubnet) error {
-
-	_, _, err := net.ParseCIDR(vpcsubnet.Spec.CIDR)
-
-	return err
-}
-
 func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Response) {
 
 	vpcsubnetName := request.PathParameter("vpcsubnet")
-	var vpcsubnet vpcv1.VPCSubnet
+	namespace := request.PathParameter("namespace")
+	var vpcsubnet vpc.VPCSubnetBase
 
 	err := request.ReadEntity(&vpcsubnet)
 
@@ -402,7 +380,9 @@ func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Re
 		return
 	}
 
-	err = validationVPCSubnet(vpcsubnet)
+	if !validation.IsValidCIDR(vpcsubnet.CIDR, response) {
+		return
+	}
 
 	if err != nil {
 		klog.Error(err)
@@ -410,23 +390,12 @@ func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Re
 		return
 	}
 
-	if vpcsubnetName != vpcsubnet.Name {
-		err := fmt.Errorf("the name of the object (%s) does not match the name on the URL (%s)", vpcsubnet.Name, vpcsubnetName)
-		klog.Errorf("%+v", err)
-		api.HandleBadRequest(response, request, err)
-		return
-	}
-
-	updated, err := h.vpc.UpdateVpcSubnet(&vpcsubnet)
+	updated, err := h.vpc.UpdateVpcSubnet(&vpcsubnet, namespace, vpcsubnetName)
 
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {
 			api.HandleNotFound(response, request, err)
-			return
-		}
-		if errors.IsForbidden(err) {
-			api.HandleForbidden(response, request, err)
 			return
 		}
 		api.HandleBadRequest(response, request, err)
@@ -434,45 +403,6 @@ func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Re
 	}
 
 	response.WriteEntity(updated)
-}
-
-func (h *handler) PatchVpcSubnet(request *restful.Request, response *restful.Response) {
-	namespace := request.PathParameter("namespace")
-	vpcsubnetName := request.PathParameter("vpcsubnet")
-
-	var vpcsubnet vpcv1.VPCSubnet
-	err := request.ReadEntity(&vpcsubnet)
-	if err != nil {
-		klog.Error(err)
-		api.HandleBadRequest(response, request, err)
-		return
-	}
-
-	err = validationVPCSubnet(vpcsubnet)
-
-	if err != nil {
-		klog.Error(err)
-		api.HandleBadRequest(response, request, err)
-		return
-	}
-
-	patched, err := h.vpc.PatchVpcSubnet(namespace, vpcsubnetName, &vpcsubnet)
-
-	if err != nil {
-		klog.Error(err)
-		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
-			return
-		}
-		if errors.IsForbidden(err) {
-			api.HandleForbidden(response, request, err)
-			return
-		}
-		api.HandleBadRequest(response, request, err)
-		return
-	}
-
-	response.WriteEntity(patched)
 }
 
 func (h *handler) DeleteVpcSubnet(request *restful.Request, response *restful.Response) {
