@@ -29,10 +29,12 @@ import (
 )
 
 const (
-	controllerName        = "diskvolume-controller"
-	successSynced         = "Synced"
-	messageResourceSynced = "DiskVolume synced successfully"
-	pvcNamePrefix         = "tpl-" // tpl: template
+	controllerName        	 = "diskvolume-controller"
+	successSynced         	 = "Synced"
+	messageResourceSynced 	 = "DiskVolume synced successfully"
+	pvcNamePrefix         	 = "tpl-" // tpl: template
+	cstorStorageClassName    = "cstor-csi-disk"
+	hostpahtStorageClassName = "openebs-hostpath"
 )
 
 // Reconciler reconciles a disk volume object
@@ -108,17 +110,35 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			dv_instance.Spec.PVCName = pvcNamePrefix + dv_instance.Name
 		}
 
-		// create pvc for blank disk
+		// for blank disk
 		if dv_instance.Spec.Source.Blank != nil {
-			err := r.createPVC(dv_instance, scName)
-			if err != nil {
-				statusErr := err.(*errors.StatusError)
-				if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
-					klog.Infof("PVC %s/%s already exists", dv_instance.Namespace, dv_instance.Spec.PVCName)
-				} else {
-					klog.Infof("Cannot create PVC: %v\n", err)
-					return ctrl.Result{}, err
+			switch scName {
+			// create pvc for cstor blank disk
+			case cstorStorageClassName:
+				err := r.createPVC(dv_instance, scName)
+				if err != nil {
+					statusErr := err.(*errors.StatusError)
+					if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
+						klog.Infof("PVC %s/%s already exists", dv_instance.Namespace, dv_instance.Spec.PVCName)
+					} else {
+						klog.Infof("Cannot create PVC: %v\n", err)
+						return ctrl.Result{}, err
+					}
 				}
+			// create dataVolume for hostpath blank disk
+			case hostpahtStorageClassName:
+				err := r.createDV(virtClient, dv_instance)
+				if err != nil {
+					statusErr := err.(*errors.StatusError)
+					if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
+						klog.Infof("DV %s/%s already exists", dv_instance.Namespace, dv_instance.Spec.PVCName)
+					} else {
+						klog.Infof("Cannot create DV: %v\n", err)
+						return ctrl.Result{}, err
+					}
+				}
+			default:
+				return ctrl.Result{}, fmt.Errorf("Default StorageClassName: %s isn't cstor-csi-disk or openebs-hostpath, so won't create pvc or dataVolume\n", scName)
 			}
 		}
 		// clone pvc for image disk
@@ -233,6 +253,59 @@ func (r *Reconciler) clonePVC(virtClient kubecli.KubevirtClient, dv_instance *vi
 				PVC: &cdiv1.DataVolumeSourcePVC{
 					Name:      dv_instance.Spec.Source.Image.Name,
 					Namespace: dv_instance.Spec.Source.Image.Namespace,
+				},
+			},
+		},
+	}
+	dv.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         dv_instance.APIVersion,
+			BlockOwnerDeletion: &blockOwnerDeletion,
+			Controller:         &controller,
+			Kind:               dv_instance.Kind,
+			Name:               dv_instance.Name,
+			UID:                dv_instance.UID,
+		},
+	}
+
+	if _, err := virtClient.CdiClient().CdiV1beta1().DataVolumes(dv_instance.Namespace).Create(context.Background(), dv, metav1.CreateOptions{}); err != nil {
+		klog.Infof("Cannot create DataVolume: %v\n", err)
+		return err
+	}
+
+	klog.Infof("DataVolume %s/%s created", dv.Namespace, dv.Name)
+
+	return nil
+}
+
+func (r *Reconciler) createDV(virtClient kubecli.KubevirtClient, dv_instance *virtzv1alpha1.DiskVolume) error {
+	klog.Infof("Creating dataVolume %s/%s", dv_instance.Namespace, dv_instance.Spec.PVCName)
+
+	blockOwnerDeletion := true
+	controller := true
+
+	dv := &cdiv1.DataVolume{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "DataVolume",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        dv_instance.Spec.PVCName,
+			Namespace:   dv_instance.Namespace,
+			Annotations: dv_instance.Annotations,
+			Labels:      dv_instance.Labels,
+		},
+		Spec: cdiv1.DataVolumeSpec{
+			Source: &cdiv1.DataVolumeSource{
+				Blank: &cdiv1.DataVolumeBlankImage{},
+			},
+			PVC: &corev1.PersistentVolumeClaimSpec{
+				AccessModes: []corev1.PersistentVolumeAccessMode{
+					corev1.ReadWriteOnce,
+				},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceStorage: dv_instance.Spec.Resources.Requests[corev1.ResourceStorage],
+					},
 				},
 			},
 		},
