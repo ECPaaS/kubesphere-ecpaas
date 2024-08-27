@@ -59,6 +59,7 @@ type VirtualMachineResponse struct {
 	Image       *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disks       []DiskResponse     `json:"disks" description:"Virtual machine disks"`
 	Status      VMStatus           `json:"status" description:"Virtual machine status"`
+	NodeName    string             `json:"node_name" description:"Virtual machine node"`
 }
 
 type VirtualMachineIDResponse struct {
