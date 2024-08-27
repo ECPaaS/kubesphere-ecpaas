@@ -2657,7 +2657,8 @@
         "memory",
         "image",
         "disks",
-        "status"
+        "status",
+        "node_name"
       ],
       "properties": {
         "cpu_cores": {
@@ -2695,6 +2696,10 @@
         },
         "namespace": {
           "description": "Virtual machine namespace",
+          "type": "string"
+        },
+        "node_name": {
+          "description": "Virtual machine node",
           "type": "string"
         },
         "status": {

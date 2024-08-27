@@ -43,6 +43,7 @@ import (
 	notificationv2beta1 "kubesphere.io/api/notification/v2beta1"
 	tenantv1alpha1 "kubesphere.io/api/tenant/v1alpha1"
 	typesv1beta1 "kubesphere.io/api/types/v1beta1"
+	"kubevirt.io/client-go/kubecli"
 	runtimecache "sigs.k8s.io/controller-runtime/pkg/cache"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -173,6 +174,8 @@ type APIServer struct {
 	OpenpitrixClient openpitrix.Interface
 
 	MinioClient *minio.Client
+
+	KubevirtClient kubecli.KubevirtClient
 }
 
 func (s *APIServer) PrepareRun(stopCh <-chan struct{}) error {
@@ -280,7 +283,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 	// accton extension
 	urlruntime.Must(vpcv1.AddToContainer(s.container, s.InformerFactory, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
 	urlruntime.Must(volumev1alpha1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
-	urlruntime.Must(virtualizationv1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.InformerFactory))
+	urlruntime.Must(virtualizationv1.AddToContainer(s.container, s.MinioClient, s.KubevirtClient, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.InformerFactory))
 }
 
 // installCRDAPIs Install CRDs to the KAPIs with List and Get options

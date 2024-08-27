@@ -13,11 +13,13 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/minio/minio-go/v7"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/informers"
 	"kubesphere.io/kubesphere/pkg/models/quotas"
+	"kubevirt.io/client-go/kubecli"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 
@@ -29,17 +31,19 @@ type virtzhandler struct {
 	virtz               ui_virtz.Interface
 	resourceQuotaGetter quotas.ResourceQuotaGetter
 	minioClient         *minio.Client
+	kubevirtClient      kubecli.KubevirtClient
 }
 
 type BadRequestError struct {
 	Reason string `json:"reason"`
 }
 
-func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory, minioClient *minio.Client) virtzhandler {
+func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory, minioClient *minio.Client, virtClient kubecli.KubevirtClient) virtzhandler {
 	return virtzhandler{
 		virtz:               ui_virtz.New(ksclient, k8sclient),
 		resourceQuotaGetter: quotas.NewResourceQuotaGetter(factory.KubernetesSharedInformerFactory(), factory.KubeSphereSharedInformerFactory()),
 		minioClient:         minioClient,
+		kubevirtClient:      virtClient,
 	}
 }
 
@@ -190,7 +194,19 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Image:       &ui_image_spec,
 		Disks:       h.getUIDisksResponse(vm),
 		Status:      ui_vm_status,
+		NodeName:    h.getVirtualMachineNode(vm.Namespace, vm.Name),
 	}
+}
+
+func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
+	if h.kubevirtClient == nil {
+		return "Not Established"
+	}
+	vmi, err := h.kubevirtClient.VirtualMachineInstance(namespace).Get(name, &metav1.GetOptions{})
+	if err != nil || vmi.Status.NodeName == "" {
+		return "Not Established"
+	}
+	return vmi.Status.NodeName
 }
 
 func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {

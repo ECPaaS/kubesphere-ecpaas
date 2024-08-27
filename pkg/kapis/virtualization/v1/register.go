@@ -13,6 +13,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	"kubevirt.io/client-go/kubecli"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 
@@ -37,9 +38,9 @@ var imagePostCloneNotes = `Source image's namespace shall be different from new 
 
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
-func AddToContainer(container *restful.Container, minioClient *minio.Client, ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory) error {
+func AddToContainer(container *restful.Container, minioClient *minio.Client, kubevirtClient kubecli.KubevirtClient, ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory) error {
 	webservice := runtime.NewWebService(GroupVersion)
-	handler := newHandler(ksclient, k8sclient, factory, minioClient)
+	handler := newHandler(ksclient, k8sclient, factory, minioClient, kubevirtClient)
 
 	vmPutNotes = strings.ReplaceAll(vmPutNotes, "\n", " ")
 	diskPutNotes = strings.ReplaceAll(diskPutNotes, "\n", " ")
