@@ -78,10 +78,11 @@ func generateSwaggerJson() []byte {
 
 	container := runtime.Container
 	informerFactory := informers.NewNullInformerFactory()
+	minioClient := volumev1alpha1.MinioClient{}
 
 	urlruntime.Must(vpcv1.AddToContainer(container, informerFactory, nil, nil))
 	urlruntime.Must(volumev1alpha1.AddToContainer(container, nil, nil, nil))
-	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, nil, nil, nil, informerFactory))
+	urlruntime.Must(virtualizationv1.AddToContainer(container, &minioClient, nil, nil, nil, informerFactory))
 
 	config := restfulspec.Config{
 		WebServices:                   container.RegisteredWebServices(),
