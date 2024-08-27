@@ -42,7 +42,6 @@ import (
 	"kubesphere.io/kubesphere/pkg/simple/client/gpu"
 	"kubesphere.io/kubesphere/pkg/simple/client/k8s"
 	"kubesphere.io/kubesphere/pkg/simple/client/kubeedge"
-	"kubesphere.io/kubesphere/pkg/simple/client/kubevirt"
 	"kubesphere.io/kubesphere/pkg/simple/client/ldap"
 	"kubesphere.io/kubesphere/pkg/simple/client/logging"
 	"kubesphere.io/kubesphere/pkg/simple/client/metering"
@@ -203,11 +202,7 @@ func newTestConfig() (*Config, error) {
 			Endpoint:        "minio.kubesphere-system.svc:9000",
 			AccessKeyID:     "openpitrixminioaccesskey",
 			SecretAccessKey: "openpitrixminiosecretkey",
-			Bucket:          "ecpaas-images",
-		},
-		KubevirtOptions: &kubevirt.Options{
-			Enable: false,
-		},
+			Bucket:          "ecpaas-images"},
 	}
 	return conf, nil
 }

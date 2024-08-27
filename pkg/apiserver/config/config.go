@@ -44,7 +44,6 @@ import (
 	"kubesphere.io/kubesphere/pkg/simple/client/gpu"
 	"kubesphere.io/kubesphere/pkg/simple/client/k8s"
 	"kubesphere.io/kubesphere/pkg/simple/client/kubeedge"
-	"kubesphere.io/kubesphere/pkg/simple/client/kubevirt"
 	"kubesphere.io/kubesphere/pkg/simple/client/ldap"
 	"kubesphere.io/kubesphere/pkg/simple/client/logging"
 	"kubesphere.io/kubesphere/pkg/simple/client/metering"
@@ -181,7 +180,6 @@ type Config struct {
 	GPUOptions            *gpu.Options            `json:"gpu,omitempty" yaml:"gpu,omitempty" mapstructure:"gpu"`
 	TerminalOptions       *terminal.Options       `json:"terminal,omitempty" yaml:"terminal,omitempty" mapstructure:"terminal"`
 	MinioOptions          *minio.Options          `json:"minio,omitempty" yaml:"minio,omitempty" mapstructure:"minio"`
-	KubevirtOptions       *kubevirt.Options       `json:"kubevirt,omitempty" yaml:"kubevirt,omitempty" mapstructure:"kubevirt"`
 }
 
 // newConfig creates a default non-empty Config
@@ -212,7 +210,6 @@ func New() *Config {
 		GPUOptions:            gpu.NewGPUOptions(),
 		TerminalOptions:       terminal.NewTerminalOptions(),
 		MinioOptions:          minio.NewMinioOptions(),
-		KubevirtOptions:       kubevirt.NewKubevirtOptions(),
 	}
 }
 

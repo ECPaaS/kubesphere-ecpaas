@@ -9,11 +9,7 @@ import (
 	"kubevirt.io/client-go/kubecli"
 )
 
-func NewKubevirtClient(options *Options) (kubecli.KubevirtClient, error) {
-	if options.Enable {
-		clientConfig := kubecli.DefaultClientConfig(&pflag.FlagSet{})
-		return  kubecli.GetKubevirtClientFromClientConfig(clientConfig)
-	} else {
-		return nil, nil
-	}
+func NewKubevirtClient() (kubecli.KubevirtClient, error) {
+	clientConfig := kubecli.DefaultClientConfig(&pflag.FlagSet{})
+	return  kubecli.GetKubevirtClientFromClientConfig(clientConfig)
 }

@@ -271,7 +271,7 @@ func (s *ServerRunOptions) NewAPIServer(stopCh <-chan struct{}) (*apiserver.APIS
 		klog.Fatalf("unable to create MinioClient: %v", err)
 	}
 
-	apiServer.KubevirtClient, err = kubevirt.NewKubevirtClient(s.KubevirtOptions)
+	apiServer.KubevirtClient, err = kubevirt.NewKubevirtClient()
 	
 	if err != nil {
 		klog.Fatalf("unable to create KubevirtClient: %v", err)
