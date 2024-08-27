@@ -24,6 +24,7 @@ import (
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
+	volume "kubesphere.io/kubesphere/pkg/kapis/volume/v1alpha1"
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
@@ -38,11 +39,11 @@ type BadRequestError struct {
 	Reason string `json:"reason"`
 }
 
-func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory, minioClient *minio.Client, virtClient kubecli.KubevirtClient) virtzhandler {
+func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory, minioClient *volume.MinioClient, virtClient kubecli.KubevirtClient) virtzhandler {
 	return virtzhandler{
 		virtz:               ui_virtz.New(ksclient, k8sclient),
 		resourceQuotaGetter: quotas.NewResourceQuotaGetter(factory.KubernetesSharedInformerFactory(), factory.KubeSphereSharedInformerFactory()),
-		minioClient:         minioClient,
+		minioClient:         minioClient.MinioClient,
 		kubevirtClient:      virtClient,
 	}
 }

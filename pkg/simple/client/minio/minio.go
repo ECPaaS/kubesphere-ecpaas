@@ -8,9 +8,10 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"k8s.io/klog"
+	volume "kubesphere.io/kubesphere/pkg/kapis/volume/v1alpha1"
 )
 
-func NewMinioClient(options *Options) (*minio.Client, error) {
+func NewMinioClient(options *Options) (*volume.MinioClient, error) {
 
 	useSSL := false
 
@@ -21,6 +22,12 @@ func NewMinioClient(options *Options) (*minio.Client, error) {
 	if err != nil {
 		klog.Fatalf("unable to create MinioClient: %v", err)
 	}
+	client := volume.MinioClient{
+		MinioClient: minioClient,
+		EndpointURL: options.Endpoint,
+		Username:    options.AccessKeyID,
+		Password:    options.SecretAccessKey,
+	}
 
-	return minioClient, err
+	return &client, err
 }

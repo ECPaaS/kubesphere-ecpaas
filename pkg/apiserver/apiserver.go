@@ -47,7 +47,6 @@ import (
 	runtimecache "sigs.k8s.io/controller-runtime/pkg/cache"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/minio/minio-go/v7"
 	audit "kubesphere.io/kubesphere/pkg/apiserver/auditing"
 	"kubesphere.io/kubesphere/pkg/apiserver/authentication/authenticators/basic"
 	"kubesphere.io/kubesphere/pkg/apiserver/authentication/authenticators/jwt"
@@ -173,7 +172,7 @@ type APIServer struct {
 
 	OpenpitrixClient openpitrix.Interface
 
-	MinioClient *minio.Client
+	MinioClient *volumev1alpha1.MinioClient
 
 	KubevirtClient kubecli.KubevirtClient
 }

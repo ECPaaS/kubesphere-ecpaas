@@ -5,7 +5,9 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com.tw
 package v1
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -27,12 +29,12 @@ import (
 var bucketName = "ecpaas-images"
 
 type handler struct {
-	minioClient *minio.Client
+	minioClient *MinioClient
 	k8sclient   kubernetes.Interface
 	ksclient    kubesphere.Interface
 }
 
-func newHandler(minioClient *minio.Client, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) *handler {
+func newHandler(minioClient *MinioClient, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) *handler {
 	return &handler{
 		minioClient: minioClient,
 		k8sclient:   k8sclient,
@@ -55,6 +57,119 @@ type ObjectStatusData struct {
 
 type ImagesList struct {
 	Image []ObjectStatusData `json:"items"`
+}
+
+type LoginParams struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type PolicyParams struct {
+	BucketName string `json:"bucketName"`
+	Prefix     string `json:"prefix"`
+	Policy     string `json:"policy"`
+}
+
+type LoginRequest struct {
+	ID      int         `json:"id"`
+	JsonRPC string      `json:"jsonrpc"`
+	Params  LoginParams `json:"params"`
+	Method  string      `json:"method"`
+}
+
+type PolicyRequest struct {
+	ID      int          `json:"id"`
+	JsonRPC string       `json:"jsonrpc"`
+	Params  PolicyParams `json:"params"`
+	Method  string       `json:"method"`
+}
+
+type Result struct {
+	Token string `json:"token"`
+}
+
+type Response struct {
+	Result Result `json:"result"`
+}
+
+func (h *handler) retrieveMinioToken() (string, error) {
+	minioClient := h.minioClient
+	loginData := LoginRequest{
+		ID:      1,
+		JsonRPC: "2.0",
+		Params: LoginParams{
+			Username: minioClient.Username,
+			Password: minioClient.Password,
+		},
+		Method: "Web.Login",
+	}
+
+	jsonData, err := json.Marshal(loginData)
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequest(http.MethodPost, "http://"+minioClient.EndpointURL+"/minio/webrpc", bytes.NewBuffer(jsonData))
+	req.Header.Add("Content-Type", "application/json")
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var respData Response
+	err = json.Unmarshal(content, &respData)
+	if err != nil {
+		return "", err
+	}
+
+	token := respData.Result.Token
+	return token, nil
+}
+
+func (h *handler) updateBucketPolicy(token string, policy string) error {
+	minioClient := h.minioClient
+	policyData := PolicyRequest{
+		ID:      1,
+		JsonRPC: "2.0",
+		Params: PolicyParams{
+			BucketName: bucketName,
+			Prefix:     "",
+			Policy:     policy,
+		},
+		Method: "Web.SetBucketPolicy",
+	}
+
+	jsonData, err := json.Marshal(policyData)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPost, "http://"+minioClient.EndpointURL+"/minio/webrpc", bytes.NewBuffer(jsonData))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+token)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (h *handler) ListMinioObjects(request *restful.Request, response *restful.Response) {
@@ -86,28 +201,38 @@ func (h *handler) ListMinioObjects(request *restful.Request, response *restful.R
 	port := minioService.Spec.Ports[0].Port
 
 	// Check minio bucket "ecpaas-images" if not exist then create it.
-	found, err := h.minioClient.BucketExists(context.Background(), bucketName)
+	found, err := h.minioClient.MinioClient.BucketExists(context.Background(), bucketName)
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return
 	}
 
 	if !found {
-		err = h.minioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
+		err = h.minioClient.MinioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
 		if err != nil {
 			api.HandleInternalError(response, request, err)
 			return
 		}
+
+		// Set the bucket policy as ReadWrite
+		token, err := h.retrieveMinioToken()
+		if err != nil {
+			klog.Warning(err)
+		}
+		err = h.updateBucketPolicy(token, "readwrite")
+		if err != nil {
+			klog.Warning(err)
+		}
 	}
 
-	objectCh := h.minioClient.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
+	objectCh := h.minioClient.MinioClient.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
 	for object := range objectCh {
 		if object.Err != nil {
 			api.HandleInternalError(response, request, object.Err)
 			return
 		}
 
-		objInfo, err := h.minioClient.StatObject(context.Background(), bucketName, object.Key, minio.StatObjectOptions{})
+		objInfo, err := h.minioClient.MinioClient.StatObject(context.Background(), bucketName, object.Key, minio.StatObjectOptions{})
 		if err != nil {
 			klog.Warning(err)
 			continue
@@ -135,7 +260,7 @@ func (h *handler) GetMinioObjectStatus(request *restful.Request, response *restf
 	imageName := request.PathParameter("imageName")
 	status := ObjectStatus{}
 
-	_, err := h.minioClient.StatObject(context.Background(), bucketName, imageName, minio.StatObjectOptions{})
+	_, err := h.minioClient.MinioClient.StatObject(context.Background(), bucketName, imageName, minio.StatObjectOptions{})
 	if err != nil {
 		status.FileHas = false
 	} else {
@@ -153,17 +278,27 @@ func (h *handler) GetMinioObjectStatusWithNs(request *restful.Request, response 
 func (h *handler) UploadMinioObject(request *restful.Request, response *restful.Response) {
 
 	// Check minio bucket "ecpaas-images" if not exist then create it.
-	found, err := h.minioClient.BucketExists(context.Background(), bucketName)
+	found, err := h.minioClient.MinioClient.BucketExists(context.Background(), bucketName)
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return
 	}
 
 	if !found {
-		err = h.minioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
+		err = h.minioClient.MinioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
 		if err != nil {
 			api.HandleInternalError(response, request, err)
 			return
+		}
+
+		// Set the bucket policy as ReadWrite
+		token, err := h.retrieveMinioToken()
+		if err != nil {
+			klog.Warning(err)
+		}
+		err = h.updateBucketPolicy(token, "readwrite")
+		if err != nil {
+			klog.Warning(err)
 		}
 	}
 
@@ -191,7 +326,7 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 		log.Fatal(err)
 	}
 
-	uploadInfo, err := h.minioClient.PutObject(context.Background(), bucketName, header.Filename,
+	uploadInfo, err := h.minioClient.MinioClient.PutObject(context.Background(), bucketName, header.Filename,
 		out, 0, minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
 		klog.Warning(err)
@@ -203,7 +338,7 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 
 	go func() {
 		// use FPutObject API because can not find the tmep file ("multipart-" file)
-		_, err := h.minioClient.FPutObject(context.Background(), bucketName, header.Filename, "/tmp/"+header.Filename,
+		_, err := h.minioClient.MinioClient.FPutObject(context.Background(), bucketName, header.Filename, "/tmp/"+header.Filename,
 			minio.PutObjectOptions{ContentType: "application/octet-stream"})
 		if err != nil {
 			klog.Warning(err)
@@ -227,7 +362,7 @@ func (h *handler) DeleteMinioObject(request *restful.Request, response *restful.
 
 	imageName := request.PathParameter("imageName")
 
-	err := h.minioClient.RemoveObject(context.Background(), bucketName, imageName, minio.RemoveObjectOptions{})
+	err := h.minioClient.MinioClient.RemoveObject(context.Background(), bucketName, imageName, minio.RemoveObjectOptions{})
 	if err != nil {
 		api.HandleInternalError(response, request, err)
 		return

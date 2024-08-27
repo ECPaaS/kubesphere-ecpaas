@@ -10,7 +10,6 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	"github.com/minio/minio-go/v7"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"kubevirt.io/client-go/kubecli"
@@ -21,6 +20,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/constants"
 	"kubesphere.io/kubesphere/pkg/informers"
+	volume "kubesphere.io/kubesphere/pkg/kapis/volume/v1alpha1"
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
@@ -38,7 +38,7 @@ var imagePostCloneNotes = `Source image's namespace shall be different from new 
 
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
-func AddToContainer(container *restful.Container, minioClient *minio.Client, kubevirtClient kubecli.KubevirtClient, ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory) error {
+func AddToContainer(container *restful.Container, minioClient *volume.MinioClient, kubevirtClient kubecli.KubevirtClient, ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory) error {
 	webservice := runtime.NewWebService(GroupVersion)
 	handler := newHandler(ksclient, k8sclient, factory, minioClient, kubevirtClient)
 

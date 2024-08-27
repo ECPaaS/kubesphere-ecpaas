@@ -9,7 +9,6 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	"github.com/minio/minio-go/v7"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"kubesphere.io/kubesphere/pkg/api"
@@ -29,7 +28,7 @@ func Resource(resource string) schema.GroupResource {
 	return GroupVersion.WithResource(resource).GroupResource()
 }
 
-func AddToContainer(container *restful.Container, minioClient *minio.Client, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) error {
+func AddToContainer(container *restful.Container, minioClient *MinioClient, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) error {
 	webservice := runtime.NewWebService(GroupVersion)
 	handler := newHandler(minioClient, k8sclient, ksclient)
 
