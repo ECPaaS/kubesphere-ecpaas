@@ -60,6 +60,7 @@ type VirtualMachineResponse struct {
 	Disks       []DiskResponse     `json:"disks" description:"Virtual machine disks"`
 	Status      VMStatus           `json:"status" description:"Virtual machine status"`
 	NodeName    string             `json:"node_name" description:"Virtual machine node"`
+	Pod         string             `json:"pod" description:"Virtual machine pod"`
 }
 
 type VirtualMachineIDResponse struct {

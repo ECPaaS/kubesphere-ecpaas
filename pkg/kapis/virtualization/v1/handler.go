@@ -5,6 +5,7 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
 package virtualization
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -31,6 +32,7 @@ type virtzhandler struct {
 	virtz               ui_virtz.Interface
 	resourceQuotaGetter quotas.ResourceQuotaGetter
 	minioClient         *minio.Client
+	k8sClient           kubernetes.Interface
 	kubevirtClient      kubecli.KubevirtClient
 }
 
@@ -43,6 +45,7 @@ func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, f
 		virtz:               ui_virtz.New(ksclient, k8sclient),
 		resourceQuotaGetter: quotas.NewResourceQuotaGetter(factory.KubernetesSharedInformerFactory(), factory.KubeSphereSharedInformerFactory()),
 		minioClient:         minioClient,
+		k8sClient:           k8sclient,
 		kubevirtClient:      virtClient,
 	}
 }
@@ -195,7 +198,21 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Disks:       h.getUIDisksResponse(vm),
 		Status:      ui_vm_status,
 		NodeName:    h.getVirtualMachineNode(vm.Namespace, vm.Name),
+		Pod:         h.getVirtualMachinePod(vm.Namespace, vm.Name),
 	}
+}
+
+func (h *virtzhandler) getVirtualMachinePod(namespace, name string) string {
+	podList, err := h.k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return "Not Established"
+	}
+	for _, pod := range podList.Items {
+		if strings.Contains(pod.Name, name) {
+			return pod.Name
+		}
+	}
+	return "Not Established"
 }
 
 func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
@@ -207,7 +224,18 @@ func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
 		return "Not Established"
 	}
 	return vmi.Status.NodeName
+
 }
+
+//func podNameFormatCheck(vmName, podName string) bool {
+	// Check whether the pod name is in this format: "virt-launcher-<vmName>-<hash>"
+//	pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]", vmName)
+//	r, err := regexp.Compile(pattern)
+//	if err != nil {
+//		return false
+//	}
+//	return r.MatchString(podName)
+//}
 
 func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {
 	jsonImageInfo := vm.Annotations[virtzv1alpha1.VirtualizationImageInfo]
