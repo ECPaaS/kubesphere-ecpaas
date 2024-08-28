@@ -225,6 +225,7 @@ func (h *virtzhandler) getVirtualMachinePod(namespace, vmName string) string {
 	pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]{5}", vmName)
 	matchExp, err := regexp.Compile(pattern)
 	if err != nil {
+		klog.Error(err)
 		return "Not Established"
 	}
 	for _, pod := range podList.Items {
