@@ -7,7 +7,9 @@ package virtualization
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -198,21 +200,8 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Disks:       h.getUIDisksResponse(vm),
 		Status:      ui_vm_status,
 		NodeName:    h.getVirtualMachineNode(vm.Namespace, vm.Name),
-		Pod:         h.getVirtualMachinePod(vm.Namespace, vm.Name),
+		PodName:     h.getVirtualMachinePod(vm.Namespace, vm.Name),
 	}
-}
-
-func (h *virtzhandler) getVirtualMachinePod(namespace, name string) string {
-	podList, err := h.k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return "Not Established"
-	}
-	for _, pod := range podList.Items {
-		if strings.Contains(pod.Name, name) {
-			return pod.Name
-		}
-	}
-	return "Not Established"
 }
 
 func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
@@ -227,15 +216,24 @@ func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
 
 }
 
-//func podNameFormatCheck(vmName, podName string) bool {
-	// Check whether the pod name is in this format: "virt-launcher-<vmName>-<hash>"
-//	pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]", vmName)
-//	r, err := regexp.Compile(pattern)
-//	if err != nil {
-//		return false
-//	}
-//	return r.MatchString(podName)
-//}
+func (h *virtzhandler) getVirtualMachinePod(namespace, vmName string) string {
+	podList, err := h.k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		klog.Error(err)
+		return "Not Established"
+	}
+	pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]{5}", vmName)
+	matchExp, err := regexp.Compile(pattern)
+	if err != nil {
+		return "Not Established"
+	}
+	for _, pod := range podList.Items {
+		if matchExp.MatchString(pod.Name) {
+			return pod.Name
+		}
+	}
+	return "Not Established"
+}
 
 func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {
 	jsonImageInfo := vm.Annotations[virtzv1alpha1.VirtualizationImageInfo]

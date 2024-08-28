@@ -2658,7 +2658,8 @@
         "image",
         "disks",
         "status",
-        "node_name"
+        "node_name",
+        "pod_name"
       ],
       "properties": {
         "cpu_cores": {
@@ -2700,6 +2701,10 @@
         },
         "node_name": {
           "description": "Virtual machine node",
+          "type": "string"
+        },
+        "pod_name": {
+          "description": "Virtual machine pod",
           "type": "string"
         },
         "status": {
