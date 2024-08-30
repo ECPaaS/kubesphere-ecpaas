@@ -5,6 +5,7 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
 package virtualization
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -578,13 +579,20 @@ func (h *virtzhandler) GetImage(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(getUIImageResponse(image))
+	resp.WriteEntity(getUIImageResponse(image, h.kubevirtClient))
 }
 
-func getUIImageResponse(image *virtzv1alpha1.ImageTemplate) ui_virtz.ImageResponse {
+func getUIImageResponse(image *virtzv1alpha1.ImageTemplate, kubevirtClient kubecli.KubevirtClient) ui_virtz.ImageResponse {
 
 	status := ui_virtz.ImageStatus{}
 	status.Ready = image.Status.Ready
+	dataVolume, err := kubevirtClient.CdiClient().CdiV1beta1().DataVolumes(image.Namespace).Get(context.Background(), image.Name, metav1.GetOptions{})
+	if err != nil {
+		klog.Error(err)
+		status.State = ""
+	} else {
+		status.State = string(dataVolume.Status.Phase) // DataVolumePhase is a custom type of string
+	}
 
 	cpuCores, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationCpuCores], 10, 32)
 	memory, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationImageMemory], 10, 32)
@@ -637,7 +645,7 @@ func (h *virtzhandler) listImage(namespace string, resp *restful.Response) (*ui_
 
 	ui_image_resp := make([]ui_virtz.ImageResponse, 0)
 	for _, image := range images.Items {
-		ui_image_resp = append(ui_image_resp, getUIImageResponse(&image))
+		ui_image_resp = append(ui_image_resp, getUIImageResponse(&image, h.kubevirtClient))
 	}
 
 	ui_list_image_resp := ui_virtz.ListImageResponse{
