@@ -4,14 +4,13 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 package v1alpha3
 
 import (
@@ -41,6 +40,16 @@ func (h handler) HandleClusterMeterQuery(req *restful.Request, resp *restful.Res
 }
 
 func getMetricPosMap(metrics []monitoring.Metric) map[string]int {
+	var metricMap = make(map[string]int)
+
+	for i, m := range metrics {
+		metricMap[m.MetricName] = i
+	}
+
+	return metricMap
+}
+
+func getMetricPosMapGPU(metrics []monitoring.GPUMetric) map[string]int {
 	var metricMap = make(map[string]int)
 
 	for i, m := range metrics {
@@ -106,6 +115,64 @@ func (h handler) handleApplicationMetersQuery(meters []string, resp *restful.Res
 
 	if q.Operation == OperationExport {
 		ExportMetrics(resp, res, q.start, q.end)
+		return
+	}
+
+	resp.WriteAsJson(res)
+}
+
+func (h handler) handleApplicationMetersQueryGPU(meters []string, resp *restful.Response, q queryOptions) {
+	var metricMap = make(map[string]int)
+	var res model.GPUMetrics
+	var current_res model.GPUMetrics
+	var err error
+
+	aso, ok := q.option.(monitoring.ApplicationsOption)
+	if !ok {
+		klog.Error("invalid application option")
+		return
+	}
+	appWorkloads := h.getAppWorkloads(aso.NamespaceName, aso.Applications)
+
+	for k := range appWorkloads {
+		opt := monitoring.ApplicationOption{
+			NamespaceName:         aso.NamespaceName,
+			Application:           k,
+			ApplicationComponents: appWorkloads[k],
+			StorageClassName:      aso.StorageClassName,
+		}
+
+		if q.isRangeQuery() {
+			current_res, err = h.mo.GetNamedMetersOverTimeGPU(meters, q.start, q.end, q.step, opt, h.meteringOptions.Billing.PriceInfo)
+		} else {
+			current_res, err = h.mo.GetNamedMetersGPU(meters, q.time, opt, h.meteringOptions.Billing.PriceInfo)
+		}
+		if err != nil {
+			api.HandleBadRequest(resp, nil, err)
+			return
+		}
+
+		if res.Results == nil {
+			res = current_res
+			metricMap = getMetricPosMapGPU(res.Results)
+		} else {
+			for _, cur_res := range current_res.Results {
+				pos, ok := metricMap[cur_res.MetricName]
+				if ok {
+					res.Results[pos].GPUMetricValues = append(res.Results[pos].GPUMetricValues, cur_res.GPUMetricValues...)
+				} else {
+					res.Results = append(res.Results, cur_res)
+				}
+			}
+		}
+	}
+
+	if !q.isRangeQuery() && q.shouldSort() {
+		res = *res.SortGPU(q.target, q.order, q.identifier).PageGPU(q.page, q.limit)
+	}
+
+	if q.Operation == OperationExport {
+		ExportMetricsGPU(resp, res, q.start, q.end)
 		return
 	}
 
@@ -236,6 +303,73 @@ func (h handler) handleNamedMetersQuery(resp *restful.Response, q queryOptions) 
 	resp.WriteAsJson(res)
 }
 
+func (h handler) handleNamedMetersQueryGPU(resp *restful.Response, q queryOptions) {
+	var res model.GPUMetrics
+	var err error
+
+	var meters []string
+	for _, meter := range q.namedMetrics {
+		if !strings.HasPrefix(meter, model.MetricMeterPrefix) {
+			// skip non-meter metric
+			continue
+		}
+
+		ok, _ := regexp.MatchString(q.metricFilter, meter)
+		if ok {
+			meters = append(meters, meter)
+		}
+	}
+
+	if len(meters) == 0 {
+		klog.Info("no meters found")
+		resp.WriteAsJson(res)
+		return
+	}
+
+	_, ok := q.option.(monitoring.ApplicationsOption)
+	if ok {
+		h.handleApplicationMetersQuery(meters, resp, q)
+		return
+	}
+
+	_, ok = q.option.(monitoring.OpenpitrixsOption)
+	if ok {
+		h.handleOpenpitrixMetersQuery(meters, resp, q)
+		return
+	}
+
+	_, ok = q.option.(monitoring.ServicesOption)
+	if ok {
+		h.handleServiceMetersQuery(meters, resp, q)
+		return
+	}
+
+	if q.isRangeQuery() {
+		res, err = h.mo.GetNamedMetersOverTimeGPU(meters, q.start, q.end, q.step, q.option, h.meteringOptions.Billing.PriceInfo)
+		if err != nil {
+			api.HandleBadRequest(resp, nil, err)
+			return
+		}
+	} else {
+		res, err = h.mo.GetNamedMetersGPU(meters, q.time, q.option, h.meteringOptions.Billing.PriceInfo)
+		if err != nil {
+			api.HandleBadRequest(resp, nil, err)
+			return
+		}
+
+		if q.shouldSort() {
+			res = *res.SortGPU(q.target, q.order, q.identifier).PageGPU(q.page, q.limit)
+		}
+	}
+
+	if q.Operation == OperationExport {
+		ExportMetricsGPU(resp, res, q.start, q.end)
+		return
+	}
+
+	resp.WriteAsJson(res)
+}
+
 func (h handler) HandleNodeMeterQuery(req *restful.Request, resp *restful.Response) {
 	params := parseMeteringRequestParams(req)
 	params.metering = true
@@ -257,6 +391,18 @@ func (h handler) HandleWorkspaceMeterQuery(req *restful.Request, resp *restful.R
 	}
 
 	h.handleNamedMetersQuery(resp, opt)
+}
+
+func (h handler) HandleWorkspaceMeterQueryGPU(req *restful.Request, resp *restful.Response) {
+	params := parseMeteringRequestParams(req)
+	params.metering = true
+	opt, err := h.makeQueryOptions(params, monitoring.LevelWorkspace)
+	if err != nil {
+		api.HandleBadRequest(resp, nil, err)
+		return
+	}
+
+	h.handleNamedMetersQueryGPU(resp, opt)
 }
 
 func (h handler) HandleNamespaceMeterQuery(req *restful.Request, resp *restful.Response) {

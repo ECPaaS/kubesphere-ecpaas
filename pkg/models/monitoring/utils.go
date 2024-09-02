@@ -4,14 +4,13 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 package monitoring
 
 import (
@@ -30,6 +29,7 @@ const (
 	METER_RESOURCE_TYPE_NET_INGRESS
 	METER_RESOURCE_TYPE_NET_EGRESS
 	METER_RESOURCE_TYPE_PVC
+	METER_RESOURCE_TYPE_GPU
 
 	meteringConfigDir  = "/etc/kubesphere/metering/"
 	meteringConfigName = "ks-metering.yaml"
@@ -44,6 +44,7 @@ var meterResourceUnitMap = map[int]string{
 	METER_RESOURCE_TYPE_NET_INGRESS: "bytes",
 	METER_RESOURCE_TYPE_NET_EGRESS:  "bytes",
 	METER_RESOURCE_TYPE_PVC:         "bytes",
+	METER_RESOURCE_TYPE_GPU:         "percentages",
 }
 
 var MeterResourceMap = map[string]int{
@@ -62,11 +63,13 @@ var MeterResourceMap = map[string]int{
 	"meter_workspace_net_bytes_transmitted":      METER_RESOURCE_TYPE_NET_EGRESS,
 	"meter_workspace_net_bytes_received":         METER_RESOURCE_TYPE_NET_INGRESS,
 	"meter_workspace_pvc_bytes_total":            METER_RESOURCE_TYPE_PVC,
+	"meter_workspace_gpu_usage":                  METER_RESOURCE_TYPE_GPU,
 	"meter_namespace_cpu_usage":                  METER_RESOURCE_TYPE_CPU,
 	"meter_namespace_memory_usage_wo_cache":      METER_RESOURCE_TYPE_MEM,
 	"meter_namespace_net_bytes_transmitted":      METER_RESOURCE_TYPE_NET_EGRESS,
 	"meter_namespace_net_bytes_received":         METER_RESOURCE_TYPE_NET_INGRESS,
 	"meter_namespace_pvc_bytes_total":            METER_RESOURCE_TYPE_PVC,
+	"meter_namespace_gpu_usage":                  METER_RESOURCE_TYPE_GPU,
 	"meter_application_cpu_usage":                METER_RESOURCE_TYPE_CPU,
 	"meter_application_memory_usage_wo_cache":    METER_RESOURCE_TYPE_MEM,
 	"meter_application_net_bytes_transmitted":    METER_RESOURCE_TYPE_NET_EGRESS,
@@ -109,6 +112,22 @@ func getMaxPointValue(points []monitoring.Point) string {
 	return fmt.Sprintf(generateFloatFormat(meteringDefaultPrecision), max)
 }
 
+func getMaxPointValueGPU(points []monitoring.GPUPoint) string {
+	var max *big.Float
+	for i, p := range points {
+		if i == 0 {
+			max = new(big.Float).SetFloat64(p.Value)
+		}
+
+		pf := new(big.Float).SetFloat64(p.Value)
+		if pf.Cmp(max) == 1 {
+			max = pf
+		}
+	}
+
+	return fmt.Sprintf(generateFloatFormat(meteringDefaultPrecision), max)
+}
+
 func getMinPointValue(points []monitoring.Point) string {
 	var min *big.Float
 	for i, p := range points {
@@ -117,6 +136,22 @@ func getMinPointValue(points []monitoring.Point) string {
 		}
 
 		pf := new(big.Float).SetFloat64(p.Value())
+		if min.Cmp(pf) == 1 {
+			min = pf
+		}
+	}
+
+	return fmt.Sprintf(generateFloatFormat(meteringDefaultPrecision), min)
+}
+
+func getMinPointValueGPU(points []monitoring.GPUPoint) string {
+	var min *big.Float
+	for i, p := range points {
+		if i == 0 {
+			min = new(big.Float).SetFloat64(p.Value)
+		}
+
+		pf := new(big.Float).SetFloat64(p.Value)
 		if min.Cmp(pf) == 1 {
 			min = pf
 		}
@@ -136,8 +171,31 @@ func getSumPointValue(points []monitoring.Point) string {
 	return fmt.Sprintf(generateFloatFormat(meteringDefaultPrecision), sum)
 }
 
+func getSumPointValueGPU(points []monitoring.GPUPoint) string {
+	sum := new(big.Float).SetFloat64(0)
+
+	for _, p := range points {
+		pf := new(big.Float).SetFloat64(p.Value)
+		sum.Add(sum, pf)
+	}
+
+	return fmt.Sprintf(generateFloatFormat(meteringDefaultPrecision), sum)
+}
+
 func getAvgPointValue(points []monitoring.Point) string {
 	sum, ok := new(big.Float).SetString(getSumPointValue(points))
+	if !ok {
+		klog.Error("failed to parse big.Float")
+		return ""
+	}
+
+	length := new(big.Float).SetFloat64(float64(len(points)))
+
+	return fmt.Sprintf(generateFloatFormat(meteringDefaultPrecision), sum.Quo(sum, length))
+}
+
+func getAvgPointValueGPU(points []monitoring.GPUPoint) string {
+	sum, ok := new(big.Float).SetString(getSumPointValueGPU(points))
 	if !ok {
 		klog.Error("failed to parse big.Float")
 		return ""
@@ -211,6 +269,11 @@ func getFeeWithMeterName(meterName string, sum string, priceInfo meteringclient.
 			s.Quo(s, oneGiga)
 
 			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), s.Mul(s, PvcPerGigabytesPerHour))
+		case METER_RESOURCE_TYPE_GPU:
+			GpuPerPercentagePerHour := new(big.Float).SetFloat64(priceInfo.GpuPerPercentagePerHour)
+			tmp := s.Mul(s, GpuPerPercentagePerHour)
+
+			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
 		}
 
 		return ""
@@ -257,6 +320,46 @@ func updateMetricStatData(metric monitoring.Metric, scalingMap map[string]float6
 	return metricData
 }
 
+func updateMetricStatDataGPU(metric monitoring.GPUMetric, scalingMap map[string]float64, priceInfo meteringclient.PriceInfo) monitoring.GPUMetricData {
+	gpuMetricName := metric.MetricName
+	gpuMetricData := metric.GPUMetricData
+	for index, gpuMetricValue := range gpuMetricData.GPUMetricValues {
+
+		// calculate min, max, avg value first, then squash points with factor
+		if gpuMetricData.MetricType == monitoring.MetricTypeMatrix {
+			gpuMetricData.GPUMetricValues[index].MinValue = getMinPointValueGPU(gpuMetricValue.Series)
+			gpuMetricData.GPUMetricValues[index].MaxValue = getMaxPointValueGPU(gpuMetricValue.Series)
+			gpuMetricData.GPUMetricValues[index].AvgValue = getAvgPointValueGPU(gpuMetricValue.Series)
+		} else {
+			gpuMetricData.GPUMetricValues[index].MinValue = getMinPointValueGPU([]monitoring.GPUPoint{*gpuMetricValue.Sample})
+			gpuMetricData.GPUMetricValues[index].MaxValue = getMaxPointValueGPU([]monitoring.GPUPoint{*gpuMetricValue.Sample})
+			gpuMetricData.GPUMetricValues[index].AvgValue = getAvgPointValueGPU([]monitoring.GPUPoint{*gpuMetricValue.Sample})
+		}
+
+		// squash points if step is more than one hour and calculate sum and fee
+		var factor float64 = 1
+		if scalingMap != nil {
+			factor = scalingMap[gpuMetricName]
+		}
+		gpuMetricData.GPUMetricValues[index].Series = squashPointsGPU(gpuMetricData.GPUMetricValues[index].Series, int(factor))
+
+		if gpuMetricData.MetricType == monitoring.MetricTypeMatrix {
+			sum := getSumPointValueGPU(gpuMetricData.GPUMetricValues[index].Series)
+			gpuMetricData.GPUMetricValues[index].SumValue = sum
+			gpuMetricData.GPUMetricValues[index].Fee = getFeeWithMeterName(gpuMetricName, sum, priceInfo)
+		} else {
+			sum := getSumPointValueGPU([]monitoring.GPUPoint{*gpuMetricValue.Sample})
+			gpuMetricData.GPUMetricValues[index].SumValue = sum
+			gpuMetricData.GPUMetricValues[index].Fee = getFeeWithMeterName(gpuMetricName, sum, priceInfo)
+		}
+
+		gpuMetricData.GPUMetricValues[index].CurrencyUnit = priceInfo.CurrencyUnit
+		gpuMetricData.GPUMetricValues[index].ResourceUnit = getResourceUnit(gpuMetricName)
+
+	}
+	return gpuMetricData
+}
+
 func squashPoints(input []monitoring.Point, factor int) (output []monitoring.Point) {
 
 	if factor <= 0 {
@@ -268,6 +371,25 @@ func squashPoints(input []monitoring.Point, factor int) (output []monitoring.Poi
 
 		if i%factor == 0 {
 			output = append([]monitoring.Point{input[len(input)-1-i]}, output...)
+		} else {
+			output[0] = output[0].Add(input[len(input)-1-i])
+		}
+	}
+
+	return output
+}
+
+func squashPointsGPU(input []monitoring.GPUPoint, factor int) (output []monitoring.GPUPoint) {
+
+	if factor <= 0 {
+		klog.Errorln("factor should be positive")
+		return nil
+	}
+
+	for i := 0; i < len(input); i++ {
+
+		if i%factor == 0 {
+			output = append([]monitoring.GPUPoint{input[len(input)-1-i]}, output...)
 		} else {
 			output[0] = output[0].Add(input[len(input)-1-i])
 		}

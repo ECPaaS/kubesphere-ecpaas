@@ -102,6 +102,7 @@ type Interface interface {
 	PatchNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error)
 	ListClusters(info user.Info, queryParam *query.Query) (*api.ListResult, error)
 	Metering(user user.Info, queryParam *meteringv1alpha1.Query, priceInfo meteringclient.PriceInfo) (monitoring.Metrics, error)
+	MeteringGPU(user user.Info, queryParam *meteringv1alpha1.Query, priceInfo meteringclient.PriceInfo) (monitoring.GPUMetrics, error)
 	MeteringHierarchy(user user.Info, queryParam *meteringv1alpha1.Query, priceInfo meteringclient.PriceInfo) (metering.ResourceStatistic, error)
 	CreateWorkspaceResourceQuota(workspace string, resourceQuota *quotav1alpha2.ResourceQuota) (*quotav1alpha2.ResourceQuota, error)
 	DeleteWorkspaceResourceQuota(workspace string, resourceQuotaName string) error
@@ -1160,6 +1161,19 @@ func (t *tenantOperator) Metering(user user.Info, query *meteringv1alpha1.Query,
 		return
 	}
 	metrics, err = t.ProcessNamedMetersQuery(opt, priceInfo)
+
+	return
+}
+
+func (t *tenantOperator) MeteringGPU(user user.Info, query *meteringv1alpha1.Query, priceInfo meteringclient.PriceInfo) (metrics monitoring.GPUMetrics, err error) {
+
+	var opt QueryOptions
+
+	opt, err = t.makeQueryOptions(user, *query, query.Level)
+	if err != nil {
+		return
+	}
+	metrics, err = t.ProcessNamedMetersQueryGPU(opt, priceInfo)
 
 	return
 }

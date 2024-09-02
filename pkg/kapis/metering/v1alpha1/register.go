@@ -1,19 +1,17 @@
 /*
+Copyright 2019 The KubeSphere Authors.
 
- Copyright 2019 The KubeSphere Authors.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
 
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 package v1alpha1
 
@@ -482,6 +480,33 @@ func AddToContainer(c *restful.Container, k8sClient kubernetes.Interface, meteri
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ServiceMetricsTag}).
 		Writes(model.Metrics{}).
 		Returns(http.StatusOK, respOK, model.Metrics{})).
+		Produces(restful.MIME_JSON)
+
+	c.Add(ws)
+	return nil
+}
+
+func AddToContainerGPU(c *restful.Container, k8sClient kubernetes.Interface, meteringClient monitoring.Interface, factory informers.InformerFactory, cache cache.Cache, meteringOptions *meteringclient.Options, opClient openpitrix.Interface, rtClient runtimeclient.Client) error {
+	ws := runtime.NewWebServiceGPU(GroupVersion)
+
+	h := newHandler(k8sClient, meteringClient, factory, resourcev1alpha3.NewResourceGetter(factory, cache), meteringOptions, opClient, rtClient)
+
+	ws.Route(ws.GET("/workspaces/{workspace}").
+		To(h.HandleWorkspaceMeterQueryGPU).
+		Doc("Get workspace-level meter data of a specific workspace.").
+		Param(ws.QueryParameter("operation", "Metering operation.").DataType("string").Required(false).DefaultValue(monitoringv1alpha3.OperationQuery)).
+		Param(ws.PathParameter("workspace", "Workspace name.").DataType("string").Required(true)).
+		Param(ws.QueryParameter("metrics_filter", "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_cpu_usage|meter_workspace_memory_usage`.").DataType("string").Required(false)).
+		Param(ws.PathParameter("storageclass", "The name of the storageclass.").DataType("string").Required(false)).
+		Param(ws.QueryParameter("pvc_filter", "The PVC filter consists of a regexp pattern. It specifies which PVC data to return.").DataType("string").Required(false)).
+		Param(ws.QueryParameter("start", "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ").DataType("string").Required(false)).
+		Param(ws.QueryParameter("end", "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ").DataType("string").Required(false)).
+		Param(ws.QueryParameter("step", "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).").DataType("string").DefaultValue("10m").Required(false)).
+		Param(ws.QueryParameter("time", "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.").DataType("string").Required(false)).
+		Param(ws.QueryParameter("type", "Additional operations. Currently available types is statistics. It retrieves the total number of namespaces, devops projects, members and roles in this workspace at the moment.").DataType("string").Required(false)).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.WorkspaceMetersTag}).
+		Writes(model.GPUMetrics{}).
+		Returns(http.StatusOK, respOK, model.GPUMetrics{})).
 		Produces(restful.MIME_JSON)
 
 	c.Add(ws)

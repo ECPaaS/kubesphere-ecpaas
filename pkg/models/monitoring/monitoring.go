@@ -60,7 +60,9 @@ type MonitoringOperator interface {
 
 	// meter
 	GetNamedMetersOverTime(metrics []string, start, end time.Time, step time.Duration, opt monitoring.QueryOption, priceInfo meteringclient.PriceInfo) (Metrics, error)
+	GetNamedMetersOverTimeGPU(metrics []string, start, end time.Time, step time.Duration, opt monitoring.QueryOption, priceInfo meteringclient.PriceInfo) (GPUMetrics, error)
 	GetNamedMeters(metrics []string, time time.Time, opt monitoring.QueryOption, priceInfo meteringclient.PriceInfo) (Metrics, error)
+	GetNamedMetersGPU(metrics []string, time time.Time, opt monitoring.QueryOption, priceInfo meteringclient.PriceInfo) (GPUMetrics, error)
 	GetAppWorkloads(ns string, apps []string) map[string][]string
 	GetSerivePodsMap(ns string, services []string) map[string][]string
 }
@@ -415,6 +417,20 @@ func (mo monitoringOperator) getNamedMetersWithHourInterval(meters []string, t t
 	return Metrics{Results: ress}
 }
 
+func (mo monitoringOperator) getNamedMetersWithHourIntervalGPU(meters []string, t time.Time, opt monitoring.QueryOption) GPUMetrics {
+
+	var opts []monitoring.QueryOption
+
+	opts = append(opts, opt)
+	opts = append(opts, monitoring.MeterOption{
+		Step: 1 * time.Hour,
+	})
+
+	ress := mo.prometheus.GetNamedMetersGPU(meters, t, opts)
+
+	return GPUMetrics{Results: ress}
+}
+
 func generateScalingFactorMap(step time.Duration) map[string]float64 {
 	scalingMap := make(map[string]float64)
 
@@ -467,6 +483,49 @@ func (mo monitoringOperator) GetNamedMetersOverTime(meters []string, start, end 
 	return Metrics{Results: ress}, nil
 }
 
+func (mo monitoringOperator) GetNamedMetersOverTimeGPU(meters []string, start, end time.Time, step time.Duration, opt monitoring.QueryOption, priceInfo meteringclient.PriceInfo) (metrics GPUMetrics, err error) {
+
+	if step.Hours() < 1 {
+		klog.Warning("step should be longer than one hour")
+		step = 1 * time.Hour
+	}
+	if end.Sub(start).Hours() > 30*24 {
+		if step.Hours() < 24 {
+			err = errors.New("step should be larger than 24 hours")
+			return
+		}
+	}
+	if math.Mod(step.Hours(), 1.0) > 0 {
+		err = errors.New("step should be integer hours")
+		return
+	}
+
+	// query time range: (start, end], so here we need to exclude start itself.
+	if start.Add(time.Hour).After(end) {
+		start = end
+	} else {
+		start = start.Add(time.Hour)
+	}
+
+	var opts []monitoring.QueryOption
+
+	opts = append(opts, opt)
+	opts = append(opts, monitoring.MeterOption{
+		Start: start,
+		End:   end,
+		Step:  time.Hour,
+	})
+
+	ress := mo.prometheus.GetNamedMetersOverTimeGPU(meters, start, end, time.Hour, opts)
+	sMap := generateScalingFactorMap(step)
+
+	for i := range ress {
+		ress[i].GPUMetricData = updateMetricStatDataGPU(ress[i], sMap, priceInfo)
+	}
+
+	return GPUMetrics{Results: ress}, nil
+}
+
 func (mo monitoringOperator) GetNamedMeters(meters []string, time time.Time, opt monitoring.QueryOption, priceInfo meteringclient.PriceInfo) (Metrics, error) {
 
 	metersPerHour := mo.getNamedMetersWithHourInterval(meters, time, opt)
@@ -476,6 +535,20 @@ func (mo monitoringOperator) GetNamedMeters(meters []string, time time.Time, opt
 		res := metersPerHour.Results[metricIndex]
 
 		metersPerHour.Results[metricIndex].MetricData = updateMetricStatData(res, nil, priceInfo)
+	}
+
+	return metersPerHour, nil
+}
+
+func (mo monitoringOperator) GetNamedMetersGPU(meters []string, time time.Time, opt monitoring.QueryOption, priceInfo meteringclient.PriceInfo) (GPUMetrics, error) {
+
+	metersPerHour := mo.getNamedMetersWithHourIntervalGPU(meters, time, opt)
+
+	for metricIndex := range metersPerHour.Results {
+
+		res := metersPerHour.Results[metricIndex]
+
+		metersPerHour.Results[metricIndex].GPUMetricData = updateMetricStatDataGPU(res, nil, priceInfo)
 	}
 
 	return metersPerHour, nil

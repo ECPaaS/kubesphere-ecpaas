@@ -549,11 +549,95 @@ func exportMetrics(metrics model.Metrics, startTime, endTime time.Time) (*bytes.
 	return output, nil
 }
 
+func exportMetricsGPU(metrics model.GPUMetrics, startTime, endTime time.Time) (*bytes.Buffer, error) {
+	var resBytes []byte
+
+	for i := range metrics.Results {
+		ret := metrics.Results[i]
+		for j := range ret.GPUMetricValues {
+			ret.GPUMetricValues[j].TransferToExportedMetricValue()
+		}
+	}
+
+	for _, metric := range metrics.Results {
+
+		metricName := metric.MetricName
+
+		var csvpoints []monitoring.GPUCSVPoint
+		for _, metricVal := range metric.GPUMetricValues {
+
+			var targetList []string
+			for k, v := range metricVal.Metadata {
+				targetList = append(targetList, fmt.Sprintf("%s=%s", k, v))
+			}
+			selector := strings.Join(targetList, "|")
+
+			statsTab := "\nmetric_name,selector,start_time,end_time,min,max,avg,sum,fee, currency_unit\n" +
+				fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n\n",
+					metricName,
+					selector,
+					startTime.String(),
+					endTime.String(),
+					metricVal.MinValue,
+					metricVal.MaxValue,
+					metricVal.AvgValue,
+					metricVal.SumValue,
+					metricVal.Fee,
+					metricVal.CurrencyUnit)
+
+			csvpoints = nil
+			resourceUnit := metricVal.ResourceUnit
+			for _, p := range metricVal.ExportedSeries {
+				csvpoints = append(csvpoints, p.TransformToCSVPoint(metricName, selector, resourceUnit))
+			}
+
+			dataTab, err := csvutil.Marshal(csvpoints)
+			if err != nil {
+				return nil, err
+			}
+
+			resBytes = append(resBytes, statsTab...)
+			resBytes = append(resBytes, dataTab...)
+		}
+	}
+
+	if len(resBytes) == 0 {
+		resBytes = []byte("no data")
+	}
+
+	output := new(bytes.Buffer)
+	_, err := output.Write(resBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
+
 func ExportMetrics(resp *restful.Response, metrics model.Metrics, startTime, endTime time.Time) {
 	resp.Header().Set(restful.HEADER_ContentType, "text/plain")
 	resp.Header().Set("Content-Disposition", "attachment")
 
 	output, err := exportMetrics(metrics, startTime, endTime)
+	if err != nil {
+		api.HandleBadRequest(resp, nil, err)
+		return
+	}
+
+	_, err = io.Copy(resp, output)
+	if err != nil {
+		api.HandleBadRequest(resp, nil, err)
+		return
+	}
+
+	return
+}
+
+func ExportMetricsGPU(resp *restful.Response, metrics model.GPUMetrics, startTime, endTime time.Time) {
+	resp.Header().Set(restful.HEADER_ContentType, "text/plain")
+	resp.Header().Set("Content-Disposition", "attachment")
+
+	output, err := exportMetricsGPU(metrics, startTime, endTime)
 	if err != nil {
 		api.HandleBadRequest(resp, nil, err)
 		return

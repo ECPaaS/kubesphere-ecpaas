@@ -60,6 +60,19 @@ func (p prometheus) GetMetric(expr string, ts time.Time) monitoring.Metric {
 	return parsedResp
 }
 
+func (p prometheus) GetMetricGPU(expr string, ts time.Time) monitoring.GPUMetric {
+	var parsedResp monitoring.GPUMetric
+
+	value, _, err := p.client.Query(context.Background(), expr, ts)
+	if err != nil {
+		parsedResp.Error = err.Error()
+	} else {
+		parsedResp.GPUMetricData = parseQueryRespGPU(value, nil)
+	}
+
+	return parsedResp
+}
+
 func (p prometheus) GetMetricOverTime(expr string, start, end time.Time, step time.Duration) monitoring.Metric {
 	timeRange := apiv1.Range{
 		Start: start,
@@ -74,6 +87,24 @@ func (p prometheus) GetMetricOverTime(expr string, start, end time.Time, step ti
 		parsedResp.Error = err.Error()
 	} else {
 		parsedResp.MetricData = parseQueryRangeResp(value, nil)
+	}
+	return parsedResp
+}
+
+func (p prometheus) GetMetricOverTimeGPU(expr string, start, end time.Time, step time.Duration) monitoring.GPUMetric {
+	timeRange := apiv1.Range{
+		Start: start,
+		End:   end,
+		Step:  step,
+	}
+
+	value, _, err := p.client.QueryRange(context.Background(), expr, timeRange)
+
+	var parsedResp monitoring.GPUMetric
+	if err != nil {
+		parsedResp.Error = err.Error()
+	} else {
+		parsedResp.GPUMetricData = parseQueryRangeRespGPU(value, nil)
 	}
 	return parsedResp
 }
@@ -96,6 +127,39 @@ func (p prometheus) GetNamedMetrics(metrics []string, ts time.Time, o monitoring
 				parsedResp.Error = err.Error()
 			} else {
 				parsedResp.MetricData = parseQueryResp(value, genMetricFilter(o))
+			}
+
+			mtx.Lock()
+			res = append(res, parsedResp)
+			mtx.Unlock()
+
+			wg.Done()
+		}(metric)
+	}
+
+	wg.Wait()
+
+	return res
+}
+
+func (p prometheus) GetNamedMetricsGPU(metrics []string, ts time.Time, o monitoring.QueryOption) []monitoring.GPUMetric {
+	var res []monitoring.GPUMetric
+	var mtx sync.Mutex
+	var wg sync.WaitGroup
+
+	opts := monitoring.NewQueryOptions()
+	o.Apply(opts)
+
+	for _, metric := range metrics {
+		wg.Add(1)
+		go func(metric string) {
+			parsedResp := monitoring.GPUMetric{MetricName: metric}
+
+			value, _, err := p.client.Query(context.Background(), makeExpr(metric, *opts), ts)
+			if err != nil {
+				parsedResp.Error = err.Error()
+			} else {
+				parsedResp.GPUMetricData = parseQueryRespGPU(value, genMetricFilter(o))
 			}
 
 			mtx.Lock()
@@ -135,6 +199,45 @@ func (p prometheus) GetNamedMetricsOverTime(metrics []string, start, end time.Ti
 				parsedResp.Error = err.Error()
 			} else {
 				parsedResp.MetricData = parseQueryRangeResp(value, genMetricFilter(o))
+			}
+
+			mtx.Lock()
+			res = append(res, parsedResp)
+			mtx.Unlock()
+
+			wg.Done()
+		}(metric)
+	}
+
+	wg.Wait()
+
+	return res
+}
+
+func (p prometheus) GetNamedMetricsOverTimeGPU(metrics []string, start, end time.Time, step time.Duration, o monitoring.QueryOption) []monitoring.GPUMetric {
+	var res []monitoring.GPUMetric
+	var mtx sync.Mutex
+	var wg sync.WaitGroup
+
+	opts := monitoring.NewQueryOptions()
+	o.Apply(opts)
+
+	timeRange := apiv1.Range{
+		Start: start,
+		End:   end,
+		Step:  step,
+	}
+
+	for _, metric := range metrics {
+		wg.Add(1)
+		go func(metric string) {
+			parsedResp := monitoring.GPUMetric{MetricName: metric}
+
+			value, _, err := p.client.QueryRange(context.Background(), makeExpr(metric, *opts), timeRange)
+			if err != nil {
+				parsedResp.Error = err.Error()
+			} else {
+				parsedResp.GPUMetricData = parseQueryRangeRespGPU(value, genMetricFilter(o))
 			}
 
 			mtx.Lock()
@@ -199,6 +302,55 @@ func (p prometheus) GetNamedMeters(meters []string, ts time.Time, opts []monitor
 	return res
 }
 
+func (p prometheus) GetNamedMetersGPU(meters []string, ts time.Time, opts []monitoring.QueryOption) []monitoring.GPUMetric {
+	var res []monitoring.GPUMetric
+	var wg sync.WaitGroup
+	var mtx sync.Mutex
+
+	queryOptions := monitoring.NewQueryOptions()
+
+	for _, opt := range opts {
+		opt.Apply(queryOptions)
+	}
+
+	prometheusCtx, cancel := context.WithTimeout(context.Background(), MeteringDefaultTimeout)
+	defer cancel()
+
+	for _, meter := range meters {
+
+		wg.Add(1)
+
+		go func(metric string) {
+			parsedResp := monitoring.GPUMetric{MetricName: metric}
+
+			begin := time.Now()
+			value, _, err := p.client.Query(prometheusCtx, makeMeterExpr(metric, *queryOptions), ts)
+			end := time.Now()
+			timeElapsed := end.Unix() - begin.Unix()
+			if timeElapsed > int64(MeteringDefaultTimeout.Seconds())/2 {
+				klog.Warningf("long time query[cost %v seconds], expr: %v", timeElapsed, makeMeterExpr(metric, *queryOptions))
+			}
+
+			if err != nil {
+				parsedResp.Error = err.Error()
+			} else {
+				parsedResp.GPUMetricData = parseQueryRespGPU(value, nil)
+			}
+
+			mtx.Lock()
+			res = append(res, parsedResp)
+			mtx.Unlock()
+
+			wg.Done()
+		}(meter)
+
+	}
+
+	wg.Wait()
+
+	return res
+}
+
 func (p prometheus) GetNamedMetersOverTime(meters []string, start, end time.Time, step time.Duration, opts []monitoring.QueryOption) []monitoring.Metric {
 	var res []monitoring.Metric
 	var wg sync.WaitGroup
@@ -238,6 +390,60 @@ func (p prometheus) GetNamedMetersOverTime(meters []string, start, end time.Time
 				parsedResp.Error = err.Error()
 			} else {
 				parsedResp.MetricData = parseQueryRangeResp(value, nil)
+			}
+
+			mtx.Lock()
+			res = append(res, parsedResp)
+			mtx.Unlock()
+
+			wg.Done()
+		}(meter)
+	}
+
+	wg.Wait()
+
+	return res
+}
+
+func (p prometheus) GetNamedMetersOverTimeGPU(meters []string, start, end time.Time, step time.Duration, opts []monitoring.QueryOption) []monitoring.GPUMetric {
+	var res []monitoring.GPUMetric
+	var wg sync.WaitGroup
+	var mtx sync.Mutex
+
+	queryOptions := monitoring.NewQueryOptions()
+
+	for _, opt := range opts {
+		opt.Apply(queryOptions)
+	}
+
+	timeRange := apiv1.Range{
+		Start: start,
+		End:   end,
+		Step:  step,
+	}
+
+	prometheusCtx, cancel := context.WithTimeout(context.Background(), MeteringDefaultTimeout)
+	defer cancel()
+
+	for _, meter := range meters {
+
+		wg.Add(1)
+
+		go func(metric string) {
+			parsedResp := monitoring.GPUMetric{MetricName: metric}
+			begin := time.Now()
+
+			value, _, err := p.client.QueryRange(prometheusCtx, makeMeterExpr(metric, *queryOptions), timeRange)
+			end := time.Now()
+			timeElapsed := end.Unix() - begin.Unix()
+			if timeElapsed > int64(MeteringDefaultTimeout.Seconds())/2 {
+				klog.Warningf("long time query[cost %v seconds], expr: %v", timeElapsed, makeMeterExpr(metric, *queryOptions))
+			}
+
+			if err != nil {
+				parsedResp.Error = err.Error()
+			} else {
+				parsedResp.GPUMetricData = parseQueryRangeRespGPU(value, nil)
 			}
 
 			mtx.Lock()
@@ -335,6 +541,33 @@ func parseQueryRangeResp(value model.Value, metricFilter func(metric model.Metri
 	return res
 }
 
+func parseQueryRangeRespGPU(value model.Value, metricFilter func(metric model.Metric) bool) monitoring.GPUMetricData {
+	res := monitoring.GPUMetricData{MetricType: monitoring.MetricTypeMatrix}
+
+	data, _ := value.(model.Matrix)
+
+	for _, v := range data {
+		if metricFilter != nil && !metricFilter(v.Metric) {
+			continue
+		}
+		mv := monitoring.GPUMetricValue{
+			Metadata: make(map[string]string),
+		}
+
+		for k, v := range v.Metric {
+			mv.Metadata[string(k)] = string(v)
+		}
+
+		for _, k := range v.Values {
+			mv.Series = append(mv.Series, monitoring.GPUPoint{float64(k.Timestamp) / 1000, float64(k.Value)})
+		}
+
+		res.GPUMetricValues = append(res.GPUMetricValues, mv)
+	}
+
+	return res
+}
+
 func parseQueryResp(value model.Value, metricFilter func(metric model.Metric) bool) monitoring.MetricData {
 	res := monitoring.MetricData{MetricType: monitoring.MetricTypeVector}
 
@@ -355,6 +588,31 @@ func parseQueryResp(value model.Value, metricFilter func(metric model.Metric) bo
 		mv.Sample = &monitoring.Point{float64(v.Timestamp) / 1000, float64(v.Value)}
 
 		res.MetricValues = append(res.MetricValues, mv)
+	}
+
+	return res
+}
+
+func parseQueryRespGPU(value model.Value, metricFilter func(metric model.Metric) bool) monitoring.GPUMetricData {
+	res := monitoring.GPUMetricData{MetricType: monitoring.MetricTypeVector}
+
+	data, _ := value.(model.Vector)
+
+	for _, v := range data {
+		if metricFilter != nil && !metricFilter(v.Metric) {
+			continue
+		}
+		mv := monitoring.GPUMetricValue{
+			Metadata: make(map[string]string),
+		}
+
+		for k, v := range v.Metric {
+			mv.Metadata[string(k)] = string(v)
+		}
+
+		mv.Sample = &monitoring.GPUPoint{float64(v.Timestamp) / 1000, float64(v.Value)}
+
+		res.GPUMetricValues = append(res.GPUMetricValues, mv)
 	}
 
 	return res

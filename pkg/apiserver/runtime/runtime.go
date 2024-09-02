@@ -47,6 +47,14 @@ func NewWebService(gv schema.GroupVersion) *restful.WebService {
 	return &webservice
 }
 
+func NewWebServiceGPU(gv schema.GroupVersion) *restful.WebService {
+	webservice := restful.WebService{}
+	webservice.Path(ApiRootPath + "/" + gv.String() + "/gpu").
+		Produces(restful.MIME_JSON)
+
+	return &webservice
+}
+
 func (cb *ContainerBuilder) AddToContainer(c *restful.Container) error {
 	for _, f := range *cb {
 		if err := f(c); err != nil {
@@ -62,7 +70,6 @@ func (cb *ContainerBuilder) Register(funcs ...func(*restful.Container) error) {
 	}
 }
 
-//
 func NewContainerBuilder(funcs ...func(*restful.Container) error) ContainerBuilder {
 	var cb ContainerBuilder
 	cb.Register(funcs...)

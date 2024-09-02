@@ -480,3 +480,20 @@ func TestGetMetricPosMap(t *testing.T) {
 		t.Fatal("getMetricPosMap failed")
 	}
 }
+
+func TestGetMetricPosMapGPU(t *testing.T) {
+	metrics := []monitoring.GPUMetric{
+		{
+			MetricName: "a",
+		},
+		{
+			MetricName: "b",
+		},
+	}
+
+	metricMap := getMetricPosMapGPU(metrics)
+	if metricMap["a"] != 0 ||
+		metricMap["b"] != 1 {
+		t.Fatal("getMetricPosMapGPU failed")
+	}
+}

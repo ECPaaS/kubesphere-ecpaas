@@ -45,8 +45,17 @@ type wrapper struct {
 	identifier, order string
 }
 
+type wrapperGPU struct {
+	monitoring.GPUMetricData
+	identifier, order string
+}
+
 func (w wrapper) Len() int {
 	return len(w.MetricValues)
+}
+
+func (w wrapperGPU) Len() int {
+	return len(w.GPUMetricValues)
 }
 
 func (w wrapper) Less(i, j int) bool {
@@ -78,8 +87,41 @@ func (w wrapper) Less(i, j int) bool {
 	}
 }
 
+func (w wrapperGPU) Less(i, j int) bool {
+	p := w.GPUMetricValues[i]
+	q := w.GPUMetricValues[j]
+
+	// Place Nil to the tail.
+	if p.Sample == nil && q.Sample != nil {
+		return false
+	}
+	if p.Sample != nil && q.Sample == nil {
+		return true
+	}
+
+	// If both Samples are Nil or have the same metric value, sort by resource name
+	if p.Sample == q.Sample || p.Sample.Value == q.Sample.Value {
+		return p.Metadata[w.identifier] < q.Metadata[w.identifier]
+	}
+	// Place NaN to the tail (NaN takes precedence over Nil).
+	if math.IsNaN(p.Sample.Value) != math.IsNaN(q.Sample.Value) {
+		return !math.IsNaN(p.Sample.Value)
+	}
+
+	switch w.order {
+	case OrderAscending:
+		return p.Sample.Value < q.Sample.Value
+	default:
+		return p.Sample.Value > q.Sample.Value
+	}
+}
+
 func (id wrapper) Swap(i, j int) {
 	id.MetricValues[i], id.MetricValues[j] = id.MetricValues[j], id.MetricValues[i]
+}
+
+func (id wrapperGPU) Swap(i, j int) {
+	id.GPUMetricValues[i], id.GPUMetricValues[j] = id.GPUMetricValues[j], id.GPUMetricValues[i]
 }
 
 // SortMetrics sorts a group of resources by a given metric. Range query doesn't support ranking.
@@ -175,6 +217,85 @@ func (raw *Metrics) Sort(target, order, identifier string) *Metrics {
 	return raw
 }
 
+func (raw *GPUMetrics) SortGPU(target, order, identifier string) *GPUMetrics {
+	if target == "" || identifier == "" || len(raw.Results) == 0 {
+		return raw
+	}
+
+	resourceSet := make(map[string]bool)    // resource set records possible values of the identifier
+	resourceOrdinal := make(map[string]int) // resource-ordinal map
+
+	ordinal := 0
+	for _, item := range raw.Results {
+		if item.MetricType != monitoring.MetricTypeVector || item.Error != "" {
+			continue
+		}
+
+		if item.MetricName == target {
+			sort.Sort(wrapperGPU{
+				GPUMetricData: item.GPUMetricData,
+				identifier: identifier,
+				order:      order,
+			})
+
+			for _, mv := range item.GPUMetricValues {
+				// Record ordinals in the final result
+				v, ok := mv.Metadata[identifier]
+				if ok && v != "" {
+					if _, ok := resourceOrdinal[v]; !ok {
+						resourceOrdinal[v] = ordinal
+						ordinal++
+					}
+				}
+			}
+		}
+
+		// Add every unique identifier value to the set
+		for _, mv := range item.GPUMetricValues {
+			v, ok := mv.Metadata[identifier]
+			if ok && v != "" {
+				resourceSet[v] = true
+			}
+		}
+	}
+
+	var resourceList []string
+	for k := range resourceSet {
+		resourceList = append(resourceList, k)
+	}
+	sort.Strings(resourceList)
+
+	// Fill resource-ordinal map with resources never present in the target, and give them ordinals.
+	for _, r := range resourceList {
+		if _, ok := resourceOrdinal[r]; !ok {
+			resourceOrdinal[r] = ordinal
+			ordinal++
+		}
+	}
+
+	// Sort metrics
+	for i, item := range raw.Results {
+		if item.MetricType != monitoring.MetricTypeVector || item.Error != "" {
+			continue
+		}
+
+		sorted := make([]monitoring.GPUMetricValue, len(resourceList))
+		for _, mv := range item.GPUMetricValues {
+			v, ok := mv.Metadata[identifier]
+			if ok && v != "" {
+				ordinal, _ := resourceOrdinal[v]
+				sorted[ordinal] = mv
+			}
+		}
+		raw.Results[i].GPUMetricValues = sorted
+	}
+
+	raw.CurrentPage = 1
+	raw.TotalPages = 1
+	raw.TotalItems = len(resourceList)
+	return raw
+}
+
 func (raw *Metrics) Page(page, limit int) *Metrics {
 	if page < 1 || limit < 1 || len(raw.Results) == 0 {
 		return raw
@@ -198,6 +319,36 @@ func (raw *Metrics) Page(page, limit int) *Metrics {
 		}
 
 		raw.Results[i].MetricValues = item.MetricValues[start:end]
+	}
+
+	raw.CurrentPage = page
+	raw.TotalPages = int(math.Ceil(float64(raw.TotalItems) / float64(limit)))
+	return raw
+}
+
+func (raw *GPUMetrics) PageGPU(page, limit int) *GPUMetrics {
+	if page < 1 || limit < 1 || len(raw.Results) == 0 {
+		return raw
+	}
+
+	start := (page - 1) * limit
+	end := page * limit
+
+	for i, item := range raw.Results {
+		if item.MetricType != monitoring.MetricTypeVector || item.Error != "" {
+			continue
+		}
+
+		total := len(item.GPUMetricValues)
+		if start >= total {
+			raw.Results[i].GPUMetricValues = nil
+			continue
+		}
+		if end >= total {
+			end = total
+		}
+
+		raw.Results[i].GPUMetricValues = item.GPUMetricValues[start:end]
 	}
 
 	raw.CurrentPage = page

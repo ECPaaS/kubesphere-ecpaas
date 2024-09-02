@@ -30,5 +30,7 @@ type Interface interface {
 
 	// meter
 	GetNamedMeters(meters []string, time time.Time, opts []QueryOption) []Metric
+	GetNamedMetersGPU(meters []string, time time.Time, opts []QueryOption) []GPUMetric
 	GetNamedMetersOverTime(metrics []string, start, end time.Time, step time.Duration, opts []QueryOption) []Metric
+	GetNamedMetersOverTimeGPU(metrics []string, start, end time.Time, step time.Duration, opts []QueryOption) []GPUMetric
 }

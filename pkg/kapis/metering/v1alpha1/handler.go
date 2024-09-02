@@ -36,6 +36,7 @@ type meterHandler interface {
 	HandleClusterMeterQuery(req *restful.Request, resp *restful.Response)
 	HandleNodeMeterQuery(req *restful.Request, resp *restful.Response)
 	HandleWorkspaceMeterQuery(req *restful.Request, resp *restful.Response)
+	HandleWorkspaceMeterQueryGPU(req *restful.Request, resp *restful.Response)
 	HandleNamespaceMeterQuery(re *restful.Request, resp *restful.Response)
 	HandleOpenpitrixMeterQuery(req *restful.Request, resp *restful.Response)
 	HandleWorkloadMeterQuery(req *restful.Request, resp *restful.Response)
