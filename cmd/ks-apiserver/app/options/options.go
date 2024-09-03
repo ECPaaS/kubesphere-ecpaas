@@ -47,6 +47,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/simple/client/devops/jenkins"
 	eventsclient "kubesphere.io/kubesphere/pkg/simple/client/events/elasticsearch"
 	"kubesphere.io/kubesphere/pkg/simple/client/k8s"
+	"kubesphere.io/kubesphere/pkg/simple/client/kubevirt"
 	esclient "kubesphere.io/kubesphere/pkg/simple/client/logging/elasticsearch"
 	"kubesphere.io/kubesphere/pkg/simple/client/minio"
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring/metricsserver"
@@ -268,6 +269,12 @@ func (s *ServerRunOptions) NewAPIServer(stopCh <-chan struct{}) (*apiserver.APIS
 
 	if err != nil {
 		klog.Fatalf("unable to create MinioClient: %v", err)
+	}
+
+	apiServer.KubevirtClient, err = kubevirt.NewKubevirtClient()
+	
+	if err != nil {
+		klog.Fatalf("unable to create KubevirtClient: %v", err)
 	}
 
 	apiServer.Server = server
