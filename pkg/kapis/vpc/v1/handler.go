@@ -56,7 +56,7 @@ func (h *handler) ListVpcNetwork(request *restful.Request, response *restful.Res
 
 func (h *handler) GetVpcNetwork(request *restful.Request, response *restful.Response) {
 
-	vpcnetwork := request.PathParameter("vpcnetwork")
+	vpcnetwork := request.PathParameter("name")
 	vpc, err := h.vpc.GetVpcNetwork(vpcnetwork)
 
 	if err != nil {
@@ -114,87 +114,8 @@ func (h *handler) CreateVpcNetwork(request *restful.Request, response *restful.R
 	response.WriteEntity(created)
 }
 
-func validationVPCNetwork(vpcnetwork vpc.VPCNetwork, resp *restful.Response) bool {
-
-	// name
-	if !validation.IsValidString(vpcnetwork.Name, resp) {
-		return false
-	}
-
-	if !validationVPCNetworkBase(vpcnetwork.VPCNetworkBase, resp) {
-		return false
-	}
-
-	return true
-}
-
-func validationVPCNetworkBase(vpcnetwork vpc.VPCNetworkBase, resp *restful.Response) bool {
-
-	// CIDR
-	_, _, err := net.ParseCIDR(vpcnetwork.CIDR)
-	if err != nil {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
-			Reason: "invalid CIDR: " + err.Error(),
-		})
-		return false
-	}
-
-	//subenetLength
-	reflectType := reflect.TypeOf(vpcnetwork)
-	if !validation.IsValidWithinRange(reflectType, vpcnetwork.SubnetLength, "SubnetLength", resp) {
-		return false
-	}
-	// gatewayChassis
-	for _, gatewayChassises := range vpcnetwork.GatewayChassis {
-		ip := net.ParseIP(gatewayChassises.IP)
-		if ip == nil {
-			resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
-				Reason: "invalid IP Address",
-			})
-			return false
-		}
-	}
-	// L3Gateways
-	for _, gateway := range vpcnetwork.L3Gateways {
-		// Destination
-		if gateway.Destination != "" {
-			_, _, err := net.ParseCIDR(gateway.Destination)
-			if err != nil {
-				resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
-					Reason: "invalid destination address: " + err.Error(),
-				})
-				return false
-			}
-		}
-		// Network
-		_, _, err = net.ParseCIDR(gateway.Network)
-		if err != nil {
-			resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
-				Reason: "invalid network address: " + err.Error(),
-			})
-			return false
-		}
-		// Nexthop
-		ip := net.ParseIP(gateway.NextHop)
-		if ip == nil {
-			resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
-				Reason: "invalid Nexthop IP Address",
-			})
-			return false
-		}
-		// VLAN
-		if gateway.VLANId != 0 {
-			if !validation.IsValidWithinRange(reflectType, int(gateway.VLANId), "VLANId", resp) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func (h *handler) UpdateVpcNetwork(request *restful.Request, response *restful.Response) {
-	workspaceName := request.PathParameter("workspace")
-	vpcnetworkName := request.PathParameter("vpcnetwork")
+	vpcnetworkName := request.PathParameter("name")
 	var vpcnetwork vpc.VPCNetworkBase
 
 	err := request.ReadEntity(&vpcnetwork)
@@ -208,7 +129,7 @@ func (h *handler) UpdateVpcNetwork(request *restful.Request, response *restful.R
 		return
 	}
 
-	updated, err := h.vpc.UpdateVpcNetwork(workspaceName, &vpcnetwork, vpcnetworkName)
+	updated, err := h.vpc.UpdateVpcNetwork(&vpcnetwork, vpcnetworkName)
 
 	if err != nil {
 		klog.Error(err)
@@ -224,9 +145,9 @@ func (h *handler) UpdateVpcNetwork(request *restful.Request, response *restful.R
 }
 
 func (h *handler) PatchVpcNetwork(request *restful.Request, response *restful.Response) {
-	vpcnetworkName := request.PathParameter("vpcnetwork")
+	vpcnetworkName := request.PathParameter("name")
 
-	var vpcnetwork vpc.VPCNetworkBase
+	var vpcnetwork vpc.VPCNetworkPatch
 	err := request.ReadEntity(&vpcnetwork)
 	if err != nil {
 		klog.Error(err)
@@ -234,7 +155,7 @@ func (h *handler) PatchVpcNetwork(request *restful.Request, response *restful.Re
 		return
 	}
 
-	if !validationVPCNetworkBase(vpcnetwork, response) {
+	if !validationVPCNetworkPatch(vpcnetwork, response) {
 		return
 	}
 
@@ -246,10 +167,6 @@ func (h *handler) PatchVpcNetwork(request *restful.Request, response *restful.Re
 			api.HandleNotFound(response, request, err)
 			return
 		}
-		if errors.IsForbidden(err) {
-			api.HandleForbidden(response, request, err)
-			return
-		}
 		api.HandleBadRequest(response, request, err)
 		return
 	}
@@ -258,7 +175,7 @@ func (h *handler) PatchVpcNetwork(request *restful.Request, response *restful.Re
 }
 
 func (h *handler) DeleteVpcNetwork(request *restful.Request, response *restful.Response) {
-	vpcnetwork := request.PathParameter("vpcnetwork")
+	vpcnetwork := request.PathParameter("name")
 
 	err := h.vpc.DeleteVpcNetwork(vpcnetwork)
 
@@ -295,7 +212,7 @@ func (h *handler) ListVpcSubnet(request *restful.Request, response *restful.Resp
 
 func (h *handler) ListVpcSubnetWithinVpcNetwork(request *restful.Request, response *restful.Response) {
 
-	vpcnetwork := request.PathParameter("vpcnetwork")
+	vpcnetwork := request.PathParameter("name")
 	queryParam := query.ParseQueryParameter(request)
 	vpcsubnets, err := h.vpc.ListVpcSubnetWithinVpcNetwork(vpcnetwork, queryParam)
 
@@ -312,11 +229,30 @@ func (h *handler) ListVpcSubnetWithinVpcNetwork(request *restful.Request, respon
 	response.WriteAsJson(vpcsubnets)
 }
 
+func (h *handler) ListVpcSubnetWithinNamespace(request *restful.Request, response *restful.Response) {
+
+	namespace := request.PathParameter("namespace")
+	queryParam := query.ParseQueryParameter(request)
+	vpcsubnets, err := h.vpc.ListVpcSubnetWithinNamespace(namespace, queryParam)
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			api.HandleNotFound(response, request, err)
+			return
+		} else {
+			api.HandleInternalError(response, request, err)
+			return
+		}
+	}
+
+	response.WriteAsJson(vpcsubnets)
+}
+
 func (h *handler) GetVpcSubnet(request *restful.Request, response *restful.Response) {
 
-	vpcsubnet := request.PathParameter("vpcsubnet")
+	vpcsubnetName := request.PathParameter("name")
 	namespace := request.PathParameter("namespace")
-	vpc, err := h.vpc.GetVpcSubnet(namespace, vpcsubnet)
+	vpc, err := h.vpc.GetVpcSubnet(namespace, vpcsubnetName)
 
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -368,7 +304,7 @@ func (h *handler) CreateVpcSubnet(request *restful.Request, response *restful.Re
 
 func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Response) {
 
-	vpcsubnetName := request.PathParameter("vpcsubnet")
+	vpcsubnetName := request.PathParameter("name")
 	namespace := request.PathParameter("namespace")
 	var vpcsubnet vpc.VPCSubnetBase
 
@@ -381,12 +317,6 @@ func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Re
 	}
 
 	if !validation.IsValidCIDR(vpcsubnet.CIDR, response) {
-		return
-	}
-
-	if err != nil {
-		klog.Error(err)
-		api.HandleBadRequest(response, request, err)
 		return
 	}
 
@@ -405,11 +335,43 @@ func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Re
 	response.WriteEntity(updated)
 }
 
+func (h *handler) PatchVpcSubnet(request *restful.Request, response *restful.Response) {
+	vpcsubnetName := request.PathParameter("name")
+	namespace := request.PathParameter("namespace")
+	var vpcsubnet vpc.VPCSubnetPatch
+	err := request.ReadEntity(&vpcsubnet)
+	if err != nil {
+		klog.Error(err)
+		api.HandleBadRequest(response, request, err)
+		return
+	}
+
+	if vpcsubnet.CIDR != "" {
+		if !validateCIDR(vpcsubnet.CIDR, response) {
+			return
+		}
+	}
+
+	patched, err := h.vpc.PatchVpcSubnet(&vpcsubnet, namespace, vpcsubnetName)
+
+	if err != nil {
+		klog.Error(err)
+		if errors.IsNotFound(err) {
+			api.HandleNotFound(response, request, err)
+			return
+		}
+		api.HandleBadRequest(response, request, err)
+		return
+	}
+
+	response.WriteEntity(patched)
+}
+
 func (h *handler) DeleteVpcSubnet(request *restful.Request, response *restful.Response) {
 	namespace := request.PathParameter("namespace")
-	vpcsubnet := request.PathParameter("vpcsubnet")
+	name := request.PathParameter("name")
 
-	err := h.vpc.DeleteVpcSubnet(namespace, vpcsubnet)
+	err := h.vpc.DeleteVpcSubnet(namespace, name)
 
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -421,4 +383,125 @@ func (h *handler) DeleteVpcSubnet(request *restful.Request, response *restful.Re
 	}
 
 	response.WriteEntity(servererr.None)
+}
+
+func validationVPCNetwork(vpcnetwork vpc.VPCNetwork, resp *restful.Response) bool {
+
+	// name
+	if !validation.IsValidString(vpcnetwork.Name, resp) {
+		return false
+	}
+
+	if !validationVPCNetworkBase(vpcnetwork.VPCNetworkBase, resp) {
+		return false
+	}
+
+	return true
+}
+
+func validationVPCNetworkPatch(vpcnetwork vpc.VPCNetworkPatch, resp *restful.Response) bool {
+	reflectType := reflect.TypeOf(vpcnetwork)
+
+	if vpcnetwork.CIDR != "" {
+		if !validateCIDR(vpcnetwork.CIDR, resp) {
+			return false
+		}
+	}
+
+	if len(vpcnetwork.GatewayChassis) > 0 {
+		if !validateGatewayChassis(vpcnetwork.GatewayChassis, resp) {
+			return false
+		}
+	}
+
+	if len(vpcnetwork.L3Gateways) > 0 {
+		if !validateL3Gateway(vpcnetwork.L3Gateways, reflectType, resp) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func validationVPCNetworkBase(vpcnetwork vpc.VPCNetworkBase, resp *restful.Response) bool {
+	reflectType := reflect.TypeOf(vpcnetwork)
+
+	if !validateCIDR(vpcnetwork.CIDR, resp) {
+		return false
+	}
+
+	if !validateGatewayChassis(vpcnetwork.GatewayChassis, resp) {
+		return false
+	}
+
+	if !validateL3Gateway(vpcnetwork.L3Gateways, reflectType, resp) {
+		return false
+	}
+
+	return true
+}
+
+func validateCIDR(cidr string, resp *restful.Response) bool {
+	// CIDR
+	_, _, err := net.ParseCIDR(cidr)
+	if err != nil {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
+			Reason: "invalid CIDR: " + err.Error(),
+		})
+		return false
+	}
+	return true
+}
+
+func validateGatewayChassis(gatewayChassises []vpc.GatewayChassis, resp *restful.Response) bool {
+	// gatewayChassis
+	for _, gatewayChassis := range gatewayChassises {
+		ip := net.ParseIP(gatewayChassis.IP)
+		if ip == nil {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
+				Reason: "invalid IP Address",
+			})
+			return false
+		}
+	}
+	return true
+}
+
+func validateL3Gateway(l3gateways []vpc.L3Gateway, reflectType reflect.Type, resp *restful.Response) bool {
+	// L3Gateways
+	for _, gateway := range l3gateways {
+		// Destination
+		if gateway.Destination != "" {
+			_, _, err := net.ParseCIDR(gateway.Destination)
+			if err != nil {
+				resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
+					Reason: "invalid destination address: " + err.Error(),
+				})
+				return false
+			}
+		}
+		// Network
+		_, _, err := net.ParseCIDR(gateway.Network)
+		if err != nil {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
+				Reason: "invalid network address: " + err.Error(),
+			})
+			return false
+		}
+		// Nexthop
+		ip := net.ParseIP(gateway.NextHop)
+		if ip == nil {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, validation.BadRequestError{
+				Reason: "invalid Nexthop IP Address",
+			})
+			return false
+		}
+		// VLAN
+		if gateway.VLANId != 0 {
+			if !validation.IsValidWithinRange(reflectType, int(gateway.VLANId), "VLANId", resp) {
+				return false
+			}
+		}
+	}
+	return true
 }

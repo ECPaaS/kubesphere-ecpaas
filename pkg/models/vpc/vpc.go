@@ -7,6 +7,8 @@ package vpc
 import (
 	"context"
 	"encoding/json"
+	"strconv"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
@@ -14,7 +16,6 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	tenantv1alpha1 "kubesphere.io/api/tenant/v1alpha1"
@@ -28,18 +29,20 @@ import (
 )
 
 type Interface interface {
-	GetVpcNetwork(vpcnetwork string) (*VPCNetworkBase, error)
-	ListVpcNetwork(query *query.Query) (*[]VPCNetwork, error)
+	GetVpcNetwork(vpcnetwork string) (*VPCNetworkResponse, error)
+	ListVpcNetwork(query *query.Query) (*[]VPCNetworkResponse, error)
 	GetGatewayChassisNode() ([]GatewayChassisNode, error)
 	CreateVpcNetwork(workspace string, vpcnetwork *VPCNetwork) (*VPCNetwork, error)
-	UpdateVpcNetwork(workspace string, vpcnetwork *VPCNetworkBase, vpcnetworkName string) (*VPCNetworkBase, error)
-	PatchVpcNetwork(vpcnetworkName string, vpcnetwork *VPCNetworkBase) (*VPCNetworkBase, error)
+	UpdateVpcNetwork(vpcnetwork *VPCNetworkBase, name string) (*VPCNetwork, error)
+	PatchVpcNetwork(vpcnetworkName string, vpcnetwork *VPCNetworkPatch) (*VPCNetworkPatch, error)
 	DeleteVpcNetwork(vpcnetwork string) error
-	GetVpcSubnet(namespace, vpcsubnet string) (*VPCSubnetBase, error)
-	ListVpcSubnet(query *query.Query) (*[]VPCSubnet, error)
-	ListVpcSubnetWithinVpcNetwork(vpcnetwork string, queryParam *query.Query) (*[]VPCSubnet, error)
+	GetVpcSubnet(namespace, vpcsubnet string) (*VPCSubnetResponse, error)
+	ListVpcSubnet(query *query.Query) (*[]VPCSubnetResponse, error)
+	ListVpcSubnetWithinVpcNetwork(vpcnetwork string, queryParam *query.Query) (*[]VPCSubnetResponse, error)
+	ListVpcSubnetWithinNamespace(namespace string, queryParam *query.Query) (*[]VPCSubnetResponse, error)
 	CreateVpcSubnet(vpcsubnet *VPCSubnet) (*VPCSubnet, error)
-	UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnetBase, error)
+	UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnet, error)
+	PatchVpcSubnet(vpcsubnet *VPCSubnetPatch, namespace string, vpcsubnetName string) (*VPCSubnetPatch, error)
 	DeleteVpcSubnet(namespace, vpcsubnet string) error
 }
 
@@ -57,7 +60,7 @@ func New(informers informers.InformerFactory, k8sclient kubernetes.Interface, ks
 	}
 }
 
-func (t *vpcOperator) ListVpcNetwork(queryParam *query.Query) (*[]VPCNetwork, error) {
+func (t *vpcOperator) ListVpcNetwork(queryParam *query.Query) (*[]VPCNetworkResponse, error) {
 
 	result, err := t.resourceGetter.List(v1.ResourcePluralVpcNetworks, "", queryParam)
 	if err != nil {
@@ -65,7 +68,7 @@ func (t *vpcOperator) ListVpcNetwork(queryParam *query.Query) (*[]VPCNetwork, er
 		return nil, err
 	}
 
-	vpcnetworks := []VPCNetwork{}
+	vpcnetworks := []VPCNetworkResponse{}
 	for _, item := range result.Items {
 		v1Vpcnetwork, ok := item.(*v1.VPCNetwork)
 		if ok {
@@ -76,7 +79,7 @@ func (t *vpcOperator) ListVpcNetwork(queryParam *query.Query) (*[]VPCNetwork, er
 	return &vpcnetworks, nil
 }
 
-func (t *vpcOperator) GetVpcNetwork(vpcnetwork string) (*VPCNetworkBase, error) {
+func (t *vpcOperator) GetVpcNetwork(vpcnetwork string) (*VPCNetworkResponse, error) {
 	vpcResource, err := t.DescribeVpcNetwork(vpcnetwork)
 	if err != nil {
 		return nil, err
@@ -130,27 +133,22 @@ func (t *vpcOperator) CreateVpcNetwork(workspaceName string, vpcnetwork *VPCNetw
 	return vpcnetwork, err
 }
 
-func (t *vpcOperator) UpdateVpcNetwork(workspaceName string, vpcnetwork *VPCNetworkBase, vpcnetworkName string) (*VPCNetworkBase, error) {
+func (t *vpcOperator) UpdateVpcNetwork(vpcnetwork *VPCNetworkBase, name string) (*VPCNetwork, error) {
 
-	_, err := addVpcNetworkNameIntoWorkspace(t, workspaceName, vpcnetworkName)
+	vpc, err := t.DescribeVpcNetwork(name)
 	if err != nil {
 		return nil, err
 	}
 
-	vpc, err := t.DescribeVpcNetwork(vpcnetworkName)
-	if err != nil {
-		return nil, err
-	}
-
-	if vpc.Labels[tenantv1alpha1.WorkspaceLabel] != workspaceName {
-		return nil, errors.NewBadRequest("Invalid workspace name")
-	}
-
-	rawVPCNetwork := convertToRawVPCNetwork(vpcnetwork, workspaceName, vpc.ResourceVersion, vpcnetworkName)
+	rawVPCNetwork := convertToRawVPCNetwork(vpcnetwork, vpc.Labels[tenantv1alpha1.WorkspaceLabel], vpc.ResourceVersion, name)
 
 	_, err = t.ksclient.K8sV1().VPCNetworks().Update(context.Background(), &rawVPCNetwork, metav1.UpdateOptions{})
 
-	return vpcnetwork, err
+	vpcnetworkResponse := VPCNetwork{
+		VPCNetworkBase: *vpcnetwork,
+		Name:           name,
+	}
+	return &vpcnetworkResponse, err
 }
 
 func addVpcNetworkNameIntoWorkspace(t *vpcOperator, workspaceName string, vpcnetworkName string) (*v1.VPCNetwork, error) {
@@ -218,7 +216,7 @@ func labelNamespaceWithVpcSubnetName(vpcsubnetName string, namespace *corev1.Nam
 	return namespace
 }
 
-func (t *vpcOperator) PatchVpcNetwork(vpcnetworkName string, vpcnetwork *VPCNetworkBase) (*VPCNetworkBase, error) {
+func (t *vpcOperator) PatchVpcNetwork(vpcnetworkName string, vpcnetwork *VPCNetworkPatch) (*VPCNetworkPatch, error) {
 	_, err := t.DescribeVpcNetwork(vpcnetworkName)
 	if err != nil {
 		return nil, err
@@ -226,7 +224,11 @@ func (t *vpcOperator) PatchVpcNetwork(vpcnetworkName string, vpcnetwork *VPCNetw
 
 	rawVPCNetwork := convertToRawVPCNetworkPatch(vpcnetwork)
 
-	data, err := json.Marshal(rawVPCNetwork)
+	rawVPCNetworkSpec := map[string]interface{}{
+		"spec": rawVPCNetwork,
+	}
+	data, err := json.Marshal(rawVPCNetworkSpec)
+
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +271,7 @@ func (t *vpcOperator) DescribeWorkspaceTemplate(workspaceName string) (*v1alpha2
 	return workspace, nil
 }
 
-func (t *vpcOperator) ListVpcSubnet(queryParam *query.Query) (*[]VPCSubnet, error) {
+func (t *vpcOperator) ListVpcSubnet(queryParam *query.Query) (*[]VPCSubnetResponse, error) {
 
 	result, err := t.resourceGetter.List(v1.ResourcePluralVpcSubnets, "", queryParam)
 	if err != nil {
@@ -277,18 +279,18 @@ func (t *vpcOperator) ListVpcSubnet(queryParam *query.Query) (*[]VPCSubnet, erro
 		return nil, err
 	}
 
-	vpcsubnets := []VPCSubnet{}
+	vpcsubnets := []VPCSubnetResponse{}
 	for _, item := range result.Items {
 		rawVpcsubnet, ok := item.(*v1.VPCSubnet)
 		if ok {
-			vpcsubnets = append(vpcsubnets, convertToVPCSubnet(rawVpcsubnet))
+			vpcsubnets = append(vpcsubnets, convertToVPCSubnetResponse(rawVpcsubnet))
 		}
 	}
 
 	return &vpcsubnets, nil
 }
 
-func (t *vpcOperator) ListVpcSubnetWithinVpcNetwork(vpcnetwork string, queryParam *query.Query) (*[]VPCSubnet, error) {
+func (t *vpcOperator) ListVpcSubnetWithinVpcNetwork(vpcnetwork string, queryParam *query.Query) (*[]VPCSubnetResponse, error) {
 
 	result, err := t.ksclient.K8sV1().VPCSubnets("").List(context.Background(), metav1.ListOptions{})
 
@@ -297,10 +299,10 @@ func (t *vpcOperator) ListVpcSubnetWithinVpcNetwork(vpcnetwork string, queryPara
 		return nil, err
 	}
 
-	vpcsubnets := []VPCSubnet{}
+	vpcsubnets := []VPCSubnetResponse{}
 	for _, rawVpcsubnet := range result.Items {
 		if rawVpcsubnet.Spec.Vpc == vpcnetwork {
-			vpcsubnet := convertToVPCSubnet(&rawVpcsubnet)
+			vpcsubnet := convertToVPCSubnetResponse(&rawVpcsubnet)
 			vpcsubnets = append(vpcsubnets, vpcsubnet)
 		}
 	}
@@ -308,7 +310,25 @@ func (t *vpcOperator) ListVpcSubnetWithinVpcNetwork(vpcnetwork string, queryPara
 	return &vpcsubnets, nil
 }
 
-func (t *vpcOperator) GetVpcSubnet(namespace, vpcsubnet string) (*VPCSubnetBase, error) {
+func (t *vpcOperator) ListVpcSubnetWithinNamespace(namespace string, queryParam *query.Query) (*[]VPCSubnetResponse, error) {
+
+	result, err := t.ksclient.K8sV1().VPCSubnets(namespace).List(context.Background(), metav1.ListOptions{})
+
+	if err != nil {
+		klog.Error(err)
+		return nil, err
+	}
+
+	vpcsubnets := []VPCSubnetResponse{}
+	for _, rawVpcsubnet := range result.Items {
+		vpcsubnet := convertToVPCSubnetResponse(&rawVpcsubnet)
+		vpcsubnets = append(vpcsubnets, vpcsubnet)
+	}
+
+	return &vpcsubnets, nil
+}
+
+func (t *vpcOperator) GetVpcSubnet(namespace, vpcsubnet string) (*VPCSubnetResponse, error) {
 	obj, err := t.resourceGetter.Get(v1.ResourcePluralVpcSubnets, namespace, vpcsubnet)
 	if err != nil {
 		return nil, err
@@ -359,7 +379,7 @@ func addVpcSubnetNameIntoNamespace(t *vpcOperator, vpcsubnet *VPCSubnet) (*VPCSu
 	return nil, nil
 }
 
-func (t *vpcOperator) UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnetBase, error) {
+func (t *vpcOperator) UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnet, error) {
 
 	obj, err := t.resourceGetter.Get(v1.ResourcePluralVpcSubnets, namespace, vpcsubnetName)
 	if err != nil {
@@ -377,6 +397,29 @@ func (t *vpcOperator) UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string
 
 	rawVPCSubnet := convertToRawVPCSubnet(vpcsubnet, namespace, vpcsubnetName, vpc.ResourceVersion)
 	_, err = t.ksclient.K8sV1().VPCSubnets(namespace).Update(context.Background(), rawVPCSubnet, metav1.UpdateOptions{})
+
+	vpcSubnetResponse := VPCSubnet{
+		VPCSubnetBase: *vpcsubnet,
+		Name:          vpcsubnetName,
+		Namespace:     namespace,
+	}
+	return &vpcSubnetResponse, err
+}
+
+func (t *vpcOperator) PatchVpcSubnet(vpcsubnet *VPCSubnetPatch, namespace string, vpcsubnetName string) (*VPCSubnetPatch, error) {
+
+	rawVPCSubnet := convertToRawVPCSubnetPatch(vpcsubnet)
+
+	rawVPCSubnetSpec := map[string]interface{}{
+		"spec": rawVPCSubnet,
+	}
+	data, err := json.Marshal(rawVPCSubnetSpec)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = t.ksclient.K8sV1().VPCSubnets(namespace).Patch(context.Background(), vpcsubnetName, types.MergePatchType, data, metav1.PatchOptions{})
 
 	return vpcsubnet, err
 }
@@ -461,15 +504,15 @@ func (t *vpcOperator) updateVPCNetworkIntoVPCSubnet(newVpcsubnet *VPCSubnetBase,
 	return nil
 }
 
-func convertToVPCNetworkBase(vpcResource *v1.VPCNetwork) VPCNetworkBase {
-	vpc := VPCNetworkBase{}
+func convertToVPCNetworkBase(vpcResource *v1.VPCNetwork) VPCNetworkResponse {
+	vpc := VPCNetworkResponse{}
+	vpc.Name = vpcResource.Name
 	vpc.CIDR = vpcResource.Spec.CIDR
-	vpc.SubnetLength = vpcResource.Spec.SubnetLength
 
 	// Gateway Chassis
-	gatewayChassises := []GatewayChassis{}
+	gatewayChassises := []GatewayChassisResponse{}
 	for _, gateway := range vpcResource.Spec.GatewayChassis {
-		gatewayChassis := GatewayChassis{
+		gatewayChassis := GatewayChassisResponse{
 			Node: gateway.Node,
 			IP:   gateway.IP,
 		}
@@ -478,10 +521,10 @@ func convertToVPCNetworkBase(vpcResource *v1.VPCNetwork) VPCNetworkBase {
 	vpc.GatewayChassis = gatewayChassises
 
 	// L3 Gateway
-	gatewayes := []L3Gateway{}
+	gatewayes := []L3GatewayResponse{}
 	for _, gateway := range vpcResource.Spec.L3Gateways {
 
-		l3Gateway := L3Gateway{
+		l3Gateway := L3GatewayResponse{
 			Network:     gateway.Network,
 			Destination: gateway.Destination,
 			NextHop:     gateway.NextHop,
@@ -493,16 +536,15 @@ func convertToVPCNetworkBase(vpcResource *v1.VPCNetwork) VPCNetworkBase {
 	return vpc
 }
 
-func convertToVPCNetwork(vpcResource *v1.VPCNetwork) VPCNetwork {
-	vpc := VPCNetwork{}
+func convertToVPCNetwork(vpcResource *v1.VPCNetwork) VPCNetworkResponse {
+	vpc := VPCNetworkResponse{}
 	vpc.Name = vpcResource.Name
 	vpc.CIDR = vpcResource.Spec.CIDR
-	vpc.SubnetLength = vpcResource.Spec.SubnetLength
 
 	// Gateway Chassis
-	gatewayChassises := []GatewayChassis{}
+	gatewayChassises := []GatewayChassisResponse{}
 	for _, gateway := range vpcResource.Spec.GatewayChassis {
-		gatewayChassis := GatewayChassis{
+		gatewayChassis := GatewayChassisResponse{
 			Node: gateway.Node,
 			IP:   gateway.IP,
 		}
@@ -511,10 +553,10 @@ func convertToVPCNetwork(vpcResource *v1.VPCNetwork) VPCNetwork {
 	vpc.GatewayChassis = gatewayChassises
 
 	// L3 Gateway
-	gatewayes := []L3Gateway{}
+	gatewayes := []L3GatewayResponse{}
 	for _, gateway := range vpcResource.Spec.L3Gateways {
 
-		l3Gateway := L3Gateway{
+		l3Gateway := L3GatewayResponse{
 			Network:     gateway.Network,
 			Destination: gateway.Destination,
 			NextHop:     gateway.NextHop,
@@ -552,6 +594,8 @@ func convertToRawVPCNetwork(vpcnetwork *VPCNetworkBase, workspaceName string, re
 	// indicates namespace is under the workspace
 	workspaceNameLabel := make(map[string]string, 0)
 	workspaceNameLabel[tenantv1alpha1.WorkspaceLabel] = workspaceName
+	length := getCIDRPrefix(vpcnetwork)
+
 	rawVPCNetwork := v1.VPCNetwork{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            vpcnetworkName,
@@ -560,7 +604,7 @@ func convertToRawVPCNetwork(vpcnetwork *VPCNetworkBase, workspaceName string, re
 		},
 		Spec: v1.VPCNetworkSpec{
 			CIDR:           vpcnetwork.CIDR,
-			SubnetLength:   vpcnetwork.SubnetLength,
+			SubnetLength:   length,
 			GatewayChassis: gatewayChassises,
 			L3Gateways:     gatewayes,
 		},
@@ -568,7 +612,13 @@ func convertToRawVPCNetwork(vpcnetwork *VPCNetworkBase, workspaceName string, re
 	return rawVPCNetwork
 }
 
-func convertToRawVPCNetworkPatch(vpcnetwork *VPCNetworkBase) v1.VPCNetwork {
+func getCIDRPrefix(vpcnetwork *VPCNetworkBase) int {
+	prefixLength := strings.Split(vpcnetwork.CIDR, "/")
+	length, _ := strconv.Atoi(prefixLength[1])
+	return length
+}
+
+func convertToRawVPCNetworkPatch(vpcnetwork *VPCNetworkPatch) map[string]interface{} {
 	// Gateway Chassis
 	gatewayChassises := []v1.GatewayChassis{}
 	for _, gateway := range vpcnetwork.GatewayChassis {
@@ -591,15 +641,36 @@ func convertToRawVPCNetworkPatch(vpcnetwork *VPCNetworkBase) v1.VPCNetwork {
 		gatewayes = append(gatewayes, l3Gateway)
 	}
 
-	rawVPCNetwork := v1.VPCNetwork{
-		Spec: v1.VPCNetworkSpec{
-			CIDR:           vpcnetwork.CIDR,
-			SubnetLength:   vpcnetwork.SubnetLength,
-			GatewayChassis: gatewayChassises,
-			L3Gateways:     gatewayes,
-		},
+	patchData := make(map[string]interface{})
+
+	if vpcnetwork.CIDR != "" {
+		patchData["cidr"] = vpcnetwork.CIDR
 	}
-	return rawVPCNetwork
+
+	if len(gatewayChassises) > 0 {
+		patchData["gatewayChassises"] = gatewayChassises
+	}
+
+	if len(gatewayes) > 0 {
+		patchData["l3gateways"] = gatewayes
+	}
+
+	return patchData
+}
+
+func convertToRawVPCSubnetPatch(vpcsubnet *VPCSubnetPatch) map[string]interface{} {
+
+	patchData := make(map[string]interface{})
+
+	if vpcsubnet.CIDR != "" {
+		patchData["cidr"] = vpcsubnet.CIDR
+	}
+
+	if vpcsubnet.Vpc != "" {
+		patchData["vpc"] = vpcsubnet.Vpc
+	}
+
+	return patchData
 }
 
 func convertToVPCSubnet(vpcResource *v1.VPCSubnet) VPCSubnet {
@@ -613,9 +684,11 @@ func convertToVPCSubnet(vpcResource *v1.VPCSubnet) VPCSubnet {
 	return vpcSubnet
 }
 
-func convertToVPCSubnetResponse(vpcResource *v1.VPCSubnet) VPCSubnetBase {
-	vpcSubnet := VPCSubnetBase{}
+func convertToVPCSubnetResponse(vpcResource *v1.VPCSubnet) VPCSubnetResponse {
+	vpcSubnet := VPCSubnetResponse{}
 
+	vpcSubnet.Name = vpcResource.Name
+	vpcSubnet.Namespace = vpcResource.Namespace
 	vpcSubnet.CIDR = vpcResource.Spec.CIDR
 	vpcSubnet.Vpc = vpcResource.Spec.Vpc
 

@@ -38,7 +38,7 @@
         }
       }
     },
-    "/kapis/k8s.ovn.org/v1/vpcnetwork/{vpcnetwork}": {
+    "/kapis/k8s.ovn.org/v1/vpcnetwork/{name}": {
       "get": {
         "produces": [
           "application/json"
@@ -52,7 +52,7 @@
           {
             "type": "string",
             "description": "vpcnetwork name",
-            "name": "vpcnetwork",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -61,7 +61,51 @@
           "200": {
             "description": "ok",
             "schema": {
+              "$ref": "#/definitions/vpc.VPCNetworkResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Network"
+        ],
+        "summary": "Update vpcnetwork",
+        "operationId": "UpdateVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "vpcnetwork name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
               "$ref": "#/definitions/vpc.VPCNetworkBase"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/vpc.VPCNetwork"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/v1.BadRequestError"
             }
           },
           "404": {
@@ -82,7 +126,7 @@
           {
             "type": "string",
             "description": "vpcnetwork name",
-            "name": "vpcnetwork",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -109,7 +153,7 @@
           {
             "type": "string",
             "description": "vpcnetwork name",
-            "name": "vpcnetwork",
+            "name": "name",
             "in": "path",
             "required": true
           },
@@ -118,7 +162,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/vpc.VPCNetworkBase"
+              "$ref": "#/definitions/vpc.VPCNetworkPatch"
             }
           }
         ],
@@ -126,42 +170,13 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/vpc.VPCNetworkBase"
+              "$ref": "#/definitions/vpc.VPCNetworkPatch"
             }
           },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
-    },
-    "/kapis/k8s.ovn.org/v1/vpcnetwork/{vpcnetwork}/vpcsubnets": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "VPC Subnet"
-        ],
-        "summary": "List all vpcsubnet resource within vpcnetwork",
-        "operationId": "ListVpcSubnetWithinVpcNetwork",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "vpcnetwork name",
-            "name": "vpcnetwork",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ok",
+          "400": {
+            "description": "Bad Request",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/vpc.VPCSubnet"
-              }
+              "$ref": "#/definitions/v1.BadRequestError"
             }
           },
           "404": {
@@ -205,63 +220,13 @@
             }
           },
           "400": {
-            "description": "Invalid format",
+            "description": "Bad Request",
             "schema": {
               "$ref": "#/definitions/v1.BadRequestError"
             }
           },
           "404": {
             "description": "Not Found"
-          }
-        }
-      }
-    },
-    "/kapis/k8s.ovn.org/v1/vpcnetwork/{workspace}/{vpcnetwork}": {
-      "put": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "VPC Network"
-        ],
-        "summary": "Update vpcnetwork",
-        "operationId": "UpdateVpcNetwork",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "workspace name",
-            "name": "workspace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "vpcnetwork name",
-            "name": "vpcnetwork",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/vpc.VPCNetworkBase"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/vpc.VPCNetworkBase"
-            }
-          },
-          "400": {
-            "description": "Invalid format",
-            "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
-            }
           }
         }
       }
@@ -282,7 +247,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/vpc.VPCNetwork"
+                "$ref": "#/definitions/vpc.VPCNetworkResponse"
               }
             }
           }
@@ -317,7 +282,7 @@
             }
           },
           "400": {
-            "description": "Invalid format",
+            "description": "Bad Request",
             "schema": {
               "$ref": "#/definitions/v1.BadRequestError"
             }
@@ -325,7 +290,7 @@
         }
       }
     },
-    "/kapis/k8s.ovn.org/v1/vpcsubnet/{namespace}/{vpcsubnet}": {
+    "/kapis/k8s.ovn.org/v1/vpcsubnet/{namespace}/{name}": {
       "get": {
         "produces": [
           "application/json"
@@ -346,7 +311,7 @@
           {
             "type": "string",
             "description": "vpcsubnet name",
-            "name": "vpcsubnet",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -355,7 +320,7 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/vpc.VPCSubnetBase"
+              "$ref": "#/definitions/vpc.VPCSubnetResponse"
             }
           },
           "404": {
@@ -383,7 +348,7 @@
           {
             "type": "string",
             "description": "vpcsubnet name",
-            "name": "vpcsubnet",
+            "name": "name",
             "in": "path",
             "required": true
           },
@@ -400,11 +365,11 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/vpc.VPCSubnetBase"
+              "$ref": "#/definitions/vpc.VPCSubnet"
             }
           },
           "400": {
-            "description": "Invalid format",
+            "description": "Bad Request",
             "schema": {
               "$ref": "#/definitions/v1.BadRequestError"
             }
@@ -434,7 +399,7 @@
           {
             "type": "string",
             "description": "vpcsubnet name",
-            "name": "vpcsubnet",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -442,6 +407,57 @@
         "responses": {
           "200": {
             "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "Patch vpcsubnet",
+        "operationId": "PatchVpcSubnet",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpcsubnet name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/vpc.VPCSubnetPatch"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/vpc.VPCSubnetPatch"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/v1.BadRequestError"
+            }
           },
           "404": {
             "description": "Not Found"
@@ -465,9 +481,79 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/vpc.VPCSubnet"
+                "$ref": "#/definitions/vpc.VPCSubnetResponse"
               }
             }
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcsubnets/vpcnetwork/{name}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "List all vpcsubnet resource within vpcnetwork",
+        "operationId": "ListVpcSubnetWithinVpcNetwork",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "vpcnetwork name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/vpc.VPCSubnetResponse"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/kapis/k8s.ovn.org/v1/vpcsubnets/{namespace}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "VPC Subnet"
+        ],
+        "summary": "List all vpcsubnet within the same namespace.",
+        "operationId": "ListVpcSubnetWithinNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/vpc.VPCSubnetResponse"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -2406,14 +2492,12 @@
       ],
       "properties": {
         "ip": {
-          "description": "Gateway IP address",
-          "type": "string",
-          "default": "192.168.41.75"
+          "description": "Gateway IP address, e.g., 192.168.41.75 [unique key]",
+          "type": "string"
         },
         "node": {
           "description": "Name of the k8s node where the gateway is located",
-          "type": "string",
-          "default": "node1"
+          "type": "string"
         }
       }
     },
@@ -2428,6 +2512,22 @@
         }
       }
     },
+    "vpc.GatewayChassisResponse": {
+      "required": [
+        "node",
+        "ip"
+      ],
+      "properties": {
+        "ip": {
+          "description": "Gateway IP address, e.g., 192.168.41.75 [unique key]",
+          "type": "string"
+        },
+        "node": {
+          "description": "Name of the k8s node where the gateway is located",
+          "type": "string"
+        }
+      }
+    },
     "vpc.L3Gateway": {
       "required": [
         "network",
@@ -2435,25 +2535,50 @@
       ],
       "properties": {
         "destination": {
-          "description": "route DST",
-          "type": "string",
-          "default": "0.0.0.0/0"
+          "description": "route destination e.g., 0.0.0.0/0",
+          "type": "string"
         },
         "network": {
-          "description": "L3 gateway address",
-          "type": "string",
-          "default": "192.168.41.75/22"
+          "description": "L3 gateway address, e.g., 192.168.41.75/22 [unique key]",
+          "type": "string"
         },
         "nexthop": {
-          "description": "Next hop address",
-          "type": "string",
-          "default": "192.168.40.254"
+          "description": "Next hop address e.g., 192.168.40.254",
+          "type": "string"
         },
         "vlanid": {
           "description": "VLAN id for external network",
           "type": "integer",
           "format": "int32",
-          "default": 0,
+          "maximum": 4094,
+          "minimum": 0
+        }
+      }
+    },
+    "vpc.L3GatewayResponse": {
+      "required": [
+        "network",
+        "destination",
+        "nexthop",
+        "vlanid"
+      ],
+      "properties": {
+        "destination": {
+          "description": "route destination e.g., 0.0.0.0/0",
+          "type": "string"
+        },
+        "network": {
+          "description": "L3 gateway address, e.g., 192.168.41.75/22 [unique key]",
+          "type": "string"
+        },
+        "nexthop": {
+          "description": "Next hop address e.g., 192.168.40.254",
+          "type": "string"
+        },
+        "vlanid": {
+          "description": "VLAN id for external network",
+          "type": "integer",
+          "format": "int32",
           "maximum": 4094,
           "minimum": 0
         }
@@ -2462,14 +2587,12 @@
     "vpc.VPCNetwork": {
       "required": [
         "name",
-        "cidr",
-        "subnetLength"
+        "cidr"
       ],
       "properties": {
         "cidr": {
-          "description": "vpc network private segment address space",
-          "type": "string",
-          "default": "10.0.0.0/16"
+          "description": "vpc network private segment address space with cidr format, e.g., 10.0.0.0/16",
+          "type": "string"
         },
         "gatewayChassises": {
           "description": "Gateway chassis information of vpc network",
@@ -2489,27 +2612,17 @@
           "description": "must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character. Allowed characters: lowercase letters (a-z), numbers (0-9), and hyphens (-)",
           "type": "string",
           "maximum": 253
-        },
-        "subnetLength": {
-          "description": "Length of vpc subnet managed by vpc network",
-          "type": "integer",
-          "format": "int32",
-          "default": 24,
-          "maximum": 32,
-          "minimum": 0
         }
       }
     },
     "vpc.VPCNetworkBase": {
       "required": [
-        "cidr",
-        "subnetLength"
+        "cidr"
       ],
       "properties": {
         "cidr": {
-          "description": "vpc network private segment address space",
-          "type": "string",
-          "default": "10.0.0.0/16"
+          "description": "vpc network private segment address space with cidr format, e.g., 10.0.0.0/16",
+          "type": "string"
         },
         "gatewayChassises": {
           "description": "Gateway chassis information of vpc network",
@@ -2524,14 +2637,60 @@
           "items": {
             "$ref": "#/definitions/vpc.L3Gateway"
           }
+        }
+      }
+    },
+    "vpc.VPCNetworkPatch": {
+      "properties": {
+        "cidr": {
+          "description": "vpc network private segment address space with cidr format, e.g., 10.0.0.0/16",
+          "type": "string"
         },
-        "subnetLength": {
-          "description": "Length of vpc subnet managed by vpc network",
-          "type": "integer",
-          "format": "int32",
-          "default": 24,
-          "maximum": 32,
-          "minimum": 0
+        "gatewayChassises": {
+          "description": "Gateway chassis information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.GatewayChassis"
+          }
+        },
+        "l3gateways": {
+          "description": "L3Gateway information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.L3Gateway"
+          }
+        }
+      }
+    },
+    "vpc.VPCNetworkResponse": {
+      "required": [
+        "name",
+        "cidr",
+        "gatewayChassises",
+        "l3gateways"
+      ],
+      "properties": {
+        "cidr": {
+          "description": "vpc network private segment address space with cidr format, e.g., 10.0.0.0/16",
+          "type": "string"
+        },
+        "gatewayChassises": {
+          "description": "Gateway chassis information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.GatewayChassisResponse"
+          }
+        },
+        "l3gateways": {
+          "description": "L3Gateway information of vpc network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.L3GatewayResponse"
+          }
+        },
+        "name": {
+          "description": "VPC network name [unique key]",
+          "type": "string"
         }
       }
     },
@@ -2543,9 +2702,8 @@
       ],
       "properties": {
         "cidr": {
-          "description": "vpc subnet private segment address space",
-          "type": "string",
-          "default": "10.0.2.0/24"
+          "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
+          "type": "string"
         },
         "name": {
           "description": "must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character. Allowed characters: lowercase letters (a-z), numbers (0-9), and hyphens (-)",
@@ -2557,8 +2715,7 @@
         },
         "vpc": {
           "description": "vpc network name",
-          "type": "string",
-          "default": "nocsys"
+          "type": "string"
         }
       }
     },
@@ -2568,14 +2725,49 @@
       ],
       "properties": {
         "cidr": {
-          "description": "vpc subnet private segment address space",
-          "type": "string",
-          "default": "10.0.2.0/24"
+          "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
+          "type": "string"
         },
         "vpc": {
           "description": "vpc network name",
-          "type": "string",
-          "default": "nocsys"
+          "type": "string"
+        }
+      }
+    },
+    "vpc.VPCSubnetPatch": {
+      "properties": {
+        "cidr": {
+          "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
+          "type": "string"
+        },
+        "vpc": {
+          "description": "vpc network name",
+          "type": "string"
+        }
+      }
+    },
+    "vpc.VPCSubnetResponse": {
+      "required": [
+        "name",
+        "namespace",
+        "cidr",
+        "vpc"
+      ],
+      "properties": {
+        "cidr": {
+          "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
+          "type": "string"
+        },
+        "name": {
+          "description": "vpc subnet name [unique key]",
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "vpc": {
+          "description": "vpc network name",
+          "type": "string"
         }
       }
     }
