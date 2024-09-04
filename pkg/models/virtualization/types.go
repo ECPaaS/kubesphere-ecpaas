@@ -60,6 +60,7 @@ type VirtualMachineResponse struct {
 	Disks       []DiskResponse     `json:"disks" description:"Virtual machine disks"`
 	Status      VMStatus           `json:"status" description:"Virtual machine status"`
 	NodeName    string             `json:"node_name" description:"Virtual machine node"`
+	PodName     string             `json:"pod_name" description:"Virtual machine pod"`
 }
 
 type VirtualMachineIDResponse struct {
@@ -182,7 +183,8 @@ type ImageResponse struct {
 }
 
 type ImageStatus struct {
-	Ready bool `json:"ready" description:"Image is ready or not"`
+	Ready bool   `json:"ready" description:"Image is ready or not"`
+	State string `json:"state" description:"Image operation state"`
 }
 
 type ListImageResponse struct {
