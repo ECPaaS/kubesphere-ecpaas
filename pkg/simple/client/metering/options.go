@@ -13,6 +13,8 @@ type PriceInfo struct {
 	PvcPerGigabytesPerHour float64 `json:"pvcPerGigabytesPerHour" yaml:"pvcPerGigabytesPerHour"`
 	// pvc cost with above currency unit for per GB per hour
 	CurrencyUnit string `json:"currencyUnit" yaml:"currencyUnit"`
+	// gpu cost with above currency unit for per percentage per hour
+	GpuPerPercentagePerHour float64 `json:"gpuPerPercentagePerHour" yaml:"gpuPerPercentagePerHour"`
 }
 
 type Billing struct {
@@ -34,6 +36,7 @@ var DefaultMeteringOption = Options{
 			EgressNetworkTrafficPerMegabytesPerHour:  0,
 			PvcPerGigabytesPerHour:                   0,
 			CurrencyUnit:                             "",
+			GpuPerPercentagePerHour:                  0,
 		},
 	},
 }

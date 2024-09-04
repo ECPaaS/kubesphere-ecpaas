@@ -27,6 +27,8 @@ type PriceInfo struct {
 	EgressNetworkTrafficPerMegabytesPerHour float64 `json:"egress_network_traffic_per_megabytes_per_hour,omitempty" description:"egress price"`
 	// pvc cost with above currency unit for per GB per hour
 	PvcPerGigabytesPerHour float64 `json:"pvc_per_gigabytes_per_hour,omitempty" description:"pvc price"`
+	// gpu cost with above currency unit for per percentage per hour
+	GpuPerPercentagePerHour float64 `json:"gpu_per_percentage_per_hour,omitempty" description:"gpu price"`
 }
 
 type PriceResponse struct {

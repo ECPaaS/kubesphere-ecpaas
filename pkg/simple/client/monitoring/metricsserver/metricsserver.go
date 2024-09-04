@@ -401,27 +401,27 @@ func (m metricsServer) GetNodeLevelNamedMetrics(metrics []string, ts time.Time, 
 			switch k {
 			case metricsNodeCPUUsage:
 				if v {
-					metricValues[metricsNodeCPUUsage].Sample = &monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Cpu().MilliValue()) / 1000}
+					metricValues[metricsNodeCPUUsage].Sample = &monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Cpu().MilliValue()) / 1000}
 				}
 			case metricsNodeCPUTotal:
 				if v {
-					metricValues[metricsNodeCPUTotal].Sample = &monitoring.Point{float64(m.Timestamp.Unix()), float64(cap.Cpu().MilliValue()) / 1000}
+					metricValues[metricsNodeCPUTotal].Sample = &monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(cap.Cpu().MilliValue()) / 1000}
 				}
 			case metricsNodeCPUUltilisation:
 				if v {
-					metricValues[metricsNodeCPUUltilisation].Sample = &monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Cpu().MilliValue()) / float64(cap.Cpu().MilliValue())}
+					metricValues[metricsNodeCPUUltilisation].Sample = &monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Cpu().MilliValue()) / float64(cap.Cpu().MilliValue())}
 				}
 			case metricsNodeMemoryUsageWoCache:
 				if v {
-					metricValues[metricsNodeMemoryUsageWoCache].Sample = &monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Memory().Value())}
+					metricValues[metricsNodeMemoryUsageWoCache].Sample = &monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Memory().Value())}
 				}
 			case metricsNodeMemoryTotal:
 				if v {
-					metricValues[metricsNodeMemoryTotal].Sample = &monitoring.Point{float64(m.Timestamp.Unix()), float64(cap.Memory().Value())}
+					metricValues[metricsNodeMemoryTotal].Sample = &monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(cap.Memory().Value())}
 				}
 			case metricsNodeMemoryUltilisation:
 				if v {
-					metricValues[metricsNodeMemoryUltilisation].Sample = &monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Memory().Value()) / float64(cap.Memory().Value())}
+					metricValues[metricsNodeMemoryUltilisation].Sample = &monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Memory().Value()) / float64(cap.Memory().Value())}
 				}
 			}
 		}
@@ -503,12 +503,12 @@ func (m metricsServer) GetPodLevelNamedMetrics(metrics []string, ts time.Time, o
 			case metricsPodCPUUsage:
 				if v {
 					cpuQuantity := podMetricsUsge[v1.ResourceCPU]
-					metricValues[metricsPodCPUUsage].Sample = &monitoring.Point{float64(p.Timestamp.Unix()), float64(cpuQuantity.MilliValue()) / 1000}
+					metricValues[metricsPodCPUUsage].Sample = &monitoring.Point{Timestamp: float64(p.Timestamp.Unix()), Value: float64(cpuQuantity.MilliValue()) / 1000}
 				}
 			case metricsPodMemoryUsage:
 				if v {
 					memoryQuantity := podMetricsUsge[v1.ResourceMemory]
-					metricValues[metricsPodMemoryUsage].Sample = &monitoring.Point{float64(p.Timestamp.Unix()), float64(memoryQuantity.Value()) / (1024 * 1024)}
+					metricValues[metricsPodMemoryUsage].Sample = &monitoring.Point{Timestamp: float64(p.Timestamp.Unix()), Value: float64(memoryQuantity.Value()) / (1024 * 1024)}
 				}
 			}
 
@@ -624,27 +624,27 @@ func (m metricsServer) GetNodeLevelNamedMetricsOverTime(metrics []string, start,
 			switch k {
 			case metricsNodeCPUUsage:
 				if v {
-					metricValues[metricsNodeCPUUsage].Series = append(metricValues[metricsNodeCPUUsage].Series, monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Cpu().MilliValue()) / 1000})
+					metricValues[metricsNodeCPUUsage].Series = append(metricValues[metricsNodeCPUUsage].Series, monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Cpu().MilliValue()) / 1000})
 				}
 			case metricsNodeCPUTotal:
 				if v {
-					metricValues[metricsNodeCPUTotal].Series = append(metricValues[metricsNodeCPUTotal].Series, monitoring.Point{float64(m.Timestamp.Unix()), float64(cap.Cpu().MilliValue()) / 1000})
+					metricValues[metricsNodeCPUTotal].Series = append(metricValues[metricsNodeCPUTotal].Series, monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(cap.Cpu().MilliValue()) / 1000})
 				}
 			case metricsNodeCPUUltilisation:
 				if v {
-					metricValues[metricsNodeCPUUltilisation].Series = append(metricValues[metricsNodeCPUUltilisation].Series, monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Cpu().MilliValue()) / float64(cap.Cpu().MilliValue())})
+					metricValues[metricsNodeCPUUltilisation].Series = append(metricValues[metricsNodeCPUUltilisation].Series, monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Cpu().MilliValue()) / float64(cap.Cpu().MilliValue())})
 				}
 			case metricsNodeMemoryUsageWoCache:
 				if v {
-					metricValues[metricsNodeMemoryUsageWoCache].Series = append(metricValues[metricsNodeMemoryUsageWoCache].Series, monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Memory().Value())})
+					metricValues[metricsNodeMemoryUsageWoCache].Series = append(metricValues[metricsNodeMemoryUsageWoCache].Series, monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Memory().Value())})
 				}
 			case metricsNodeMemoryTotal:
 				if v {
-					metricValues[metricsNodeMemoryTotal].Series = append(metricValues[metricsNodeMemoryTotal].Series, monitoring.Point{float64(m.Timestamp.Unix()), float64(cap.Memory().Value())})
+					metricValues[metricsNodeMemoryTotal].Series = append(metricValues[metricsNodeMemoryTotal].Series, monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(cap.Memory().Value())})
 				}
 			case metricsNodeMemoryUltilisation:
 				if v {
-					metricValues[metricsNodeMemoryUltilisation].Series = append(metricValues[metricsNodeMemoryUltilisation].Series, monitoring.Point{float64(m.Timestamp.Unix()), float64(usage.Memory().Value()) / float64(cap.Memory().Value())})
+					metricValues[metricsNodeMemoryUltilisation].Series = append(metricValues[metricsNodeMemoryUltilisation].Series, monitoring.Point{Timestamp: float64(m.Timestamp.Unix()), Value: float64(usage.Memory().Value()) / float64(cap.Memory().Value())})
 				}
 			}
 		}
@@ -726,12 +726,12 @@ func (m metricsServer) GetPodLevelNamedMetricsOverTime(metrics []string, start, 
 			case metricsPodCPUUsage:
 				if v {
 					cpuQuantity := podMetricsUsge[v1.ResourceCPU]
-					metricValues[metricsPodCPUUsage].Series = append(metricValues[metricsPodCPUUsage].Series, monitoring.Point{float64(p.Timestamp.Unix()), float64(cpuQuantity.MilliValue()) / 1000})
+					metricValues[metricsPodCPUUsage].Series = append(metricValues[metricsPodCPUUsage].Series, monitoring.Point{Timestamp: float64(p.Timestamp.Unix()), Value: float64(cpuQuantity.MilliValue()) / 1000})
 				}
 			case metricsPodMemoryUsage:
 				if v {
 					memoryQuantity := podMetricsUsge[v1.ResourceMemory]
-					metricValues[metricsPodMemoryUsage].Series = append(metricValues[metricsPodMemoryUsage].Series, monitoring.Point{float64(p.Timestamp.Unix()), float64(memoryQuantity.Value()) / (1024 * 1024)})
+					metricValues[metricsPodMemoryUsage].Series = append(metricValues[metricsPodMemoryUsage].Series, monitoring.Point{Timestamp: float64(p.Timestamp.Unix()), Value: float64(memoryQuantity.Value()) / (1024 * 1024)})
 				}
 			}
 		}
