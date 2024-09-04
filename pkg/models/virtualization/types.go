@@ -183,7 +183,8 @@ type ImageResponse struct {
 }
 
 type ImageStatus struct {
-	Ready bool `json:"ready" description:"Image is ready or not"`
+	Ready bool   `json:"ready" description:"Image is ready or not"`
+	State string `json:"state" description:"Image operation state"`
 }
 
 type ListImageResponse struct {
