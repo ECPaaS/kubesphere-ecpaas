@@ -5,8 +5,11 @@ Copyright(c) 2023-present Accton. All rights reserved. www.accton.com
 package virtualization
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -31,6 +34,7 @@ type virtzhandler struct {
 	virtz               ui_virtz.Interface
 	resourceQuotaGetter quotas.ResourceQuotaGetter
 	minioClient         *minio.Client
+	k8sClient           kubernetes.Interface
 	kubevirtClient      kubecli.KubevirtClient
 }
 
@@ -43,6 +47,7 @@ func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, f
 		virtz:               ui_virtz.New(ksclient, k8sclient),
 		resourceQuotaGetter: quotas.NewResourceQuotaGetter(factory.KubernetesSharedInformerFactory(), factory.KubeSphereSharedInformerFactory()),
 		minioClient:         minioClient,
+		k8sClient:           k8sclient,
 		kubevirtClient:      virtClient,
 	}
 }
@@ -195,6 +200,7 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Disks:       h.getUIDisksResponse(vm),
 		Status:      ui_vm_status,
 		NodeName:    h.getVirtualMachineNode(vm.Namespace, vm.Name),
+		PodName:     h.getVirtualMachinePod(vm.Namespace, vm.Name),
 	}
 }
 
@@ -207,6 +213,27 @@ func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
 		return "Not Established"
 	}
 	return vmi.Status.NodeName
+
+}
+
+func (h *virtzhandler) getVirtualMachinePod(namespace, vmName string) string {
+	podList, err := h.k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		klog.Error(err)
+		return "Not Established"
+	}
+	pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]{5}", vmName)
+	matchExp, err := regexp.Compile(pattern)
+	if err != nil {
+		klog.Error(err)
+		return "Not Established"
+	}
+	for _, pod := range podList.Items {
+		if matchExp.MatchString(pod.Name) {
+			return pod.Name
+		}
+	}
+	return "Not Established"
 }
 
 func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {
