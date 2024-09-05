@@ -80,9 +80,9 @@ func AddToContainer(c *restful.Container, factory informers.InformerFactory, k8s
 
 	ws.Route(ws.GET("/metering/price").
 		To(handler.HandlePriceInfoQuery).
-		Doc("Get resoure price.").
-		Writes(metering.PriceInfo{}).
-		Returns(http.StatusOK, api.StatusOK, metering.PriceInfo{}))
+		Doc("Get resource price.").
+		Writes(metering.PriceResponse{}).
+		Returns(http.StatusOK, api.StatusOK, metering.PriceResponse{}))
 
 	c.Add(ws)
 	return nil

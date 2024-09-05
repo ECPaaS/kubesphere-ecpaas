@@ -677,13 +677,13 @@
         "produces": [
           "application/json"
         ],
-        "summary": "Get resoure price.",
+        "summary": "Get resource price.",
         "operationId": "HandlePriceInfoQuery",
         "responses": {
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/metering.PriceInfo"
+              "$ref": "#/definitions/metering.PriceResponse"
             }
           }
         }
@@ -1827,8 +1827,9 @@
         }
       }
     },
-    "metering.PriceInfo": {
+    "metering.PriceResponse": {
       "required": [
+        "retention_day",
         "currency"
       ],
       "properties": {
@@ -1865,6 +1866,9 @@
           "description": "pvc price",
           "type": "number",
           "format": "double"
+        },
+        "retention_day": {
+          "type": "string"
         }
       }
     },
