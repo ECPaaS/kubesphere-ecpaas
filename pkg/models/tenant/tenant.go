@@ -50,6 +50,7 @@ import (
 	eventsv1alpha1 "kubesphere.io/kubesphere/pkg/api/events/v1alpha1"
 	loggingv1alpha2 "kubesphere.io/kubesphere/pkg/api/logging/v1alpha2"
 	meteringv1alpha1 "kubesphere.io/kubesphere/pkg/api/metering/v1alpha1"
+	meteringv1alpha2 "kubesphere.io/kubesphere/pkg/api/metering/v1alpha2"
 	"kubesphere.io/kubesphere/pkg/apiserver/authorization/authorizer"
 	"kubesphere.io/kubesphere/pkg/apiserver/query"
 	"kubesphere.io/kubesphere/pkg/apiserver/request"
@@ -102,6 +103,7 @@ type Interface interface {
 	PatchNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error)
 	ListClusters(info user.Info, queryParam *query.Query) (*api.ListResult, error)
 	Metering(user user.Info, queryParam *meteringv1alpha1.Query, priceInfo meteringclient.PriceInfo) (monitoring.Metrics, error)
+	MeteringV1alpha2(user user.Info, queryParam *meteringv1alpha2.Query, priceInfo meteringclient.PriceInfo) (monitoring.Metrics, error)
 	MeteringHierarchy(user user.Info, queryParam *meteringv1alpha1.Query, priceInfo meteringclient.PriceInfo) (metering.ResourceStatistic, error)
 	CreateWorkspaceResourceQuota(workspace string, resourceQuota *quotav1alpha2.ResourceQuota) (*quotav1alpha2.ResourceQuota, error)
 	DeleteWorkspaceResourceQuota(workspace string, resourceQuotaName string) error
@@ -1156,6 +1158,19 @@ func (t *tenantOperator) Metering(user user.Info, query *meteringv1alpha1.Query,
 	var opt QueryOptions
 
 	opt, err = t.makeQueryOptions(user, *query, query.Level)
+	if err != nil {
+		return
+	}
+	metrics, err = t.ProcessNamedMetersQuery(opt, priceInfo)
+
+	return
+}
+
+func (t *tenantOperator) MeteringV1alpha2(user user.Info, query *meteringv1alpha2.Query, priceInfo meteringclient.PriceInfo) (metrics monitoring.Metrics, err error) {
+
+	var opt QueryOptions
+
+	opt, err = t.makeQueryOptionsV1alpha2(user, *query, query.Level)
 	if err != nil {
 		return
 	}

@@ -326,7 +326,7 @@ func parseQueryRangeResp(value model.Value, metricFilter func(metric model.Metri
 		}
 
 		for _, k := range v.Values {
-			mv.Series = append(mv.Series, monitoring.Point{float64(k.Timestamp) / 1000, float64(k.Value)})
+			mv.Series = append(mv.Series, monitoring.Point{Timestamp: float64(k.Timestamp) / 1000, Value: float64(k.Value)})
 		}
 
 		res.MetricValues = append(res.MetricValues, mv)
@@ -352,7 +352,7 @@ func parseQueryResp(value model.Value, metricFilter func(metric model.Metric) bo
 			mv.Metadata[string(k)] = string(v)
 		}
 
-		mv.Sample = &monitoring.Point{float64(v.Timestamp) / 1000, float64(v.Value)}
+		mv.Sample = &monitoring.Point{Timestamp: float64(v.Timestamp) / 1000, Value: float64(v.Value)}
 
 		res.MetricValues = append(res.MetricValues, mv)
 	}
