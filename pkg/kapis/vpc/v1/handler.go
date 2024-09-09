@@ -19,15 +19,12 @@ import (
 	"kubesphere.io/kubesphere/pkg/informers"
 	"kubesphere.io/kubesphere/pkg/kapis/validation"
 	"kubesphere.io/kubesphere/pkg/models/vpc"
-	servererr "kubesphere.io/kubesphere/pkg/server/errors"
 
-	// vpclister "kubesphere.io/kubesphere/pkg/client/listers/vpc/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 type handler struct {
 	vpc vpc.Interface
-	// vpcLister vpclister.VPCNetworkLister
 }
 
 func newHandler(factory informers.InformerFactory, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) *handler {
@@ -42,13 +39,8 @@ func (h *handler) ListVpcNetwork(request *restful.Request, response *restful.Res
 	vpcnetworks, err := h.vpc.ListVpcNetwork(queryParam)
 
 	if err != nil {
-		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
-			return
-		} else {
-			api.HandleInternalError(response, request, err)
-			return
-		}
+		klog.Error(err)
+		return
 	}
 
 	response.WriteAsJson(vpcnetworks)
@@ -61,11 +53,11 @@ func (h *handler) GetVpcNetwork(request *restful.Request, response *restful.Resp
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		} else {
-			api.HandleInternalError(response, request, err)
-			return
+			klog.Error(err)
 		}
 	}
 
@@ -77,13 +69,8 @@ func (h *handler) GetGatewayChassisNode(request *restful.Request, response *rest
 	chassisNode, err := h.vpc.GetGatewayChassisNode()
 
 	if err != nil {
-		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
-			return
-		} else {
-			api.HandleInternalError(response, request, err)
-			return
-		}
+		klog.Error(err)
+		return
 	}
 
 	response.WriteAsJson(chassisNode)
@@ -134,7 +121,8 @@ func (h *handler) UpdateVpcNetwork(request *restful.Request, response *restful.R
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		}
 		api.HandleBadRequest(response, request, err)
@@ -164,7 +152,8 @@ func (h *handler) PatchVpcNetwork(request *restful.Request, response *restful.Re
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		}
 		api.HandleBadRequest(response, request, err)
@@ -181,14 +170,15 @@ func (h *handler) DeleteVpcNetwork(request *restful.Request, response *restful.R
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		}
-		api.HandleInternalError(response, request, err)
+		klog.Error(err)
 		return
 	}
 
-	response.WriteEntity(servererr.None)
+	response.WriteHeader(http.StatusOK)
 }
 
 // VPC Subnet
@@ -199,10 +189,11 @@ func (h *handler) ListVpcSubnet(request *restful.Request, response *restful.Resp
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		} else {
-			api.HandleInternalError(response, request, err)
+			klog.Error(err)
 			return
 		}
 	}
@@ -218,10 +209,11 @@ func (h *handler) ListVpcSubnetWithinVpcNetwork(request *restful.Request, respon
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		} else {
-			api.HandleInternalError(response, request, err)
+			klog.Error(err)
 			return
 		}
 	}
@@ -237,10 +229,11 @@ func (h *handler) ListVpcSubnetWithinNamespace(request *restful.Request, respons
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		} else {
-			api.HandleInternalError(response, request, err)
+			klog.Error(err)
 			return
 		}
 	}
@@ -256,11 +249,11 @@ func (h *handler) GetVpcSubnet(request *restful.Request, response *restful.Respo
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		} else {
-			api.HandleInternalError(response, request, err)
-			return
+			klog.Error(err)
 		}
 	}
 
@@ -288,11 +281,8 @@ func (h *handler) CreateVpcSubnet(request *restful.Request, response *restful.Re
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
-			return
-		}
-		if errors.IsForbidden(err) {
-			api.HandleForbidden(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		}
 		api.HandleBadRequest(response, request, err)
@@ -325,7 +315,8 @@ func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Re
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		}
 		api.HandleBadRequest(response, request, err)
@@ -357,7 +348,8 @@ func (h *handler) PatchVpcSubnet(request *restful.Request, response *restful.Res
 	if err != nil {
 		klog.Error(err)
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		}
 		api.HandleBadRequest(response, request, err)
@@ -375,14 +367,13 @@ func (h *handler) DeleteVpcSubnet(request *restful.Request, response *restful.Re
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			api.HandleNotFound(response, request, err)
+			klog.Error(err)
+			response.WriteHeader(http.StatusNotFound)
 			return
 		}
-		api.HandleInternalError(response, request, err)
-		return
 	}
 
-	response.WriteEntity(servererr.None)
+	response.WriteHeader(http.StatusOK)
 }
 
 func validationVPCNetwork(vpcnetwork vpc.VPCNetwork, resp *restful.Response) bool {
