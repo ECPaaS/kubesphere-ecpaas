@@ -41,7 +41,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 	webservice.Route(webservice.GET("/vpcnetworks").
 		To(handler.ListVpcNetwork).
 		Doc("List all vpcnetwork resources").
-		Returns(http.StatusOK, api.StatusOK, []vpc.VPCNetworkResponse{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCNetworkResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
 	webservice.Route(webservice.GET("/vpcnetwork/{name}").
@@ -55,7 +55,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 	webservice.Route(webservice.GET("/vpcnetwork/gatewayChassisNode").
 		To(handler.GetGatewayChassisNode).
 		Doc("List available gateway chassis nodes").
-		Returns(http.StatusOK, api.StatusOK, []vpc.GatewayChassisNode{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.ListGatewayChassisNodeResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
 	webservice.Route(webservice.POST("/vpcnetwork/{workspace}").
@@ -100,14 +100,14 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 	webservice.Route(webservice.GET("/vpcsubnets").
 		To(handler.ListVpcSubnet).
 		Doc("List all vpcsubnet resources").
-		Returns(http.StatusOK, api.StatusOK, []vpc.VPCSubnetResponse{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCSubnetResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
 	webservice.Route(webservice.GET("/vpcsubnets/vpcnetwork/{name}").
 		To(handler.ListVpcSubnetWithinVpcNetwork).
 		Param(webservice.PathParameter("name", "vpcnetwork name")).
 		Doc("List all vpcsubnet resource within vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, []vpc.VPCSubnetResponse{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCSubnetResponse{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
@@ -115,7 +115,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		To(handler.ListVpcSubnetWithinNamespace).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Doc("List all vpcsubnet within the same namespace.").
-		Returns(http.StatusOK, api.StatusOK, []vpc.VPCSubnetResponse{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCSubnetResponse{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 

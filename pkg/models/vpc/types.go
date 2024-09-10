@@ -39,6 +39,11 @@ type VPCNetworkResponse struct {
 	L3Gateways []L3GatewayResponse `json:"l3gateways" description:"L3Gateway information of vpc network"`
 }
 
+type ListVPCNetworkResponse struct {
+	TotalCount int                  `json:"total_count" description:"Total number of VPC Network"`
+	Items      []VPCNetworkResponse `json:"items" description:"List of VPC Network"`
+}
+
 type L3Gateway struct {
 	// +kubebuilder:validation:Required
 	Network string `json:"network" description:"L3 gateway address, e.g., 192.168.41.75/22 [unique key]"`
@@ -115,7 +120,17 @@ type VPCSubnetResponse struct {
 	Vpc string `json:"vpc" description:"vpc network name"`
 }
 
+type ListVPCSubnetResponse struct {
+	TotalCount int                 `json:"total_count" description:"Total number of VPC Subnet"`
+	Items      []VPCSubnetResponse `json:"items" description:"List of VPC Subnet"`
+}
+
 type GatewayChassisNode struct {
 	// +kubebuilder:validation:Required
 	Node string `json:"node" description:"Name of the k8s node where the gateway is located"`
+}
+
+type ListGatewayChassisNodeResponse struct {
+	TotalCount int                  `json:"total_count" description:"Total number of gateway chassis node"`
+	Items      []GatewayChassisNode `json:"items" description:"List of gateway chassis node"`
 }

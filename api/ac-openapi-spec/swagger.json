@@ -29,10 +29,7 @@
           "200": {
             "description": "ok",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/vpc.GatewayChassisNode"
-              }
+              "$ref": "#/definitions/vpc.ListGatewayChassisNodeResponse"
             }
           }
         }
@@ -245,10 +242,7 @@
           "200": {
             "description": "ok",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/vpc.VPCNetworkResponse"
-              }
+              "$ref": "#/definitions/vpc.ListVPCNetworkResponse"
             }
           }
         }
@@ -479,10 +473,7 @@
           "200": {
             "description": "ok",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/vpc.VPCSubnetResponse"
-              }
+              "$ref": "#/definitions/vpc.ListVPCSubnetResponse"
             }
           }
         }
@@ -511,10 +502,7 @@
           "200": {
             "description": "ok",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/vpc.VPCSubnetResponse"
-              }
+              "$ref": "#/definitions/vpc.ListVPCSubnetResponse"
             }
           },
           "404": {
@@ -546,10 +534,7 @@
           "200": {
             "description": "ok",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/vpc.VPCSubnetResponse"
-              }
+              "$ref": "#/definitions/vpc.ListVPCSubnetResponse"
             }
           },
           "404": {
@@ -2581,6 +2566,66 @@
           "format": "int32",
           "maximum": 4094,
           "minimum": 0
+        }
+      }
+    },
+    "vpc.ListGatewayChassisNodeResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of gateway chassis node",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.GatewayChassisNode"
+          }
+        },
+        "total_count": {
+          "description": "Total number of gateway chassis node",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "vpc.ListVPCNetworkResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of VPC Network",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.VPCNetworkResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of VPC Network",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "vpc.ListVPCSubnetResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of VPC Subnet",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/vpc.VPCSubnetResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of VPC Subnet",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

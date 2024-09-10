@@ -43,7 +43,12 @@ func (h *handler) ListVpcNetwork(request *restful.Request, response *restful.Res
 		return
 	}
 
-	response.WriteAsJson(vpcnetworks)
+	vpcNetworkResponse := vpc.ListVPCNetworkResponse{
+		TotalCount: len(*vpcnetworks),
+		Items:      *vpcnetworks,
+	}
+
+	response.WriteAsJson(vpcNetworkResponse)
 }
 
 func (h *handler) GetVpcNetwork(request *restful.Request, response *restful.Response) {
@@ -73,7 +78,12 @@ func (h *handler) GetGatewayChassisNode(request *restful.Request, response *rest
 		return
 	}
 
-	response.WriteAsJson(chassisNode)
+	chassisNodeResponse := vpc.ListGatewayChassisNodeResponse{
+		TotalCount: len(chassisNode),
+		Items:      chassisNode,
+	}
+
+	response.WriteAsJson(chassisNodeResponse)
 }
 
 func (h *handler) CreateVpcNetwork(request *restful.Request, response *restful.Response) {
@@ -198,7 +208,12 @@ func (h *handler) ListVpcSubnet(request *restful.Request, response *restful.Resp
 		}
 	}
 
-	response.WriteAsJson(vpcsubnets)
+	vpcSubnetResponse := vpc.ListVPCSubnetResponse{
+		TotalCount: len(*vpcsubnets),
+		Items:      *vpcsubnets,
+	}
+
+	response.WriteAsJson(vpcSubnetResponse)
 }
 
 func (h *handler) ListVpcSubnetWithinVpcNetwork(request *restful.Request, response *restful.Response) {
@@ -218,7 +233,12 @@ func (h *handler) ListVpcSubnetWithinVpcNetwork(request *restful.Request, respon
 		}
 	}
 
-	response.WriteAsJson(vpcsubnets)
+	vpcSubnetResponse := vpc.ListVPCSubnetResponse{
+		TotalCount: len(*vpcsubnets),
+		Items:      *vpcsubnets,
+	}
+
+	response.WriteAsJson(vpcSubnetResponse)
 }
 
 func (h *handler) ListVpcSubnetWithinNamespace(request *restful.Request, response *restful.Response) {
@@ -238,7 +258,12 @@ func (h *handler) ListVpcSubnetWithinNamespace(request *restful.Request, respons
 		}
 	}
 
-	response.WriteAsJson(vpcsubnets)
+	vpcSubnetResponse := vpc.ListVPCSubnetResponse{
+		TotalCount: len(*vpcsubnets),
+		Items:      *vpcsubnets,
+	}
+
+	response.WriteAsJson(vpcSubnetResponse)
 }
 
 func (h *handler) GetVpcSubnet(request *restful.Request, response *restful.Response) {
