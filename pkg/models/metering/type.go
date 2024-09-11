@@ -23,11 +23,11 @@ type PriceInfo struct {
 	// ingress network traffic cost with above currency unit for per MB per hour
 	IngressNetworkTrafficPerMegabytesPerHour float64 `json:"ingress_network_traffic_per_megabytes_per_hour" description:"Ingress traffic count price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// egress network traffice cost with above currency unit for per MB per hour
-	EgressNetworkTrafficPerMegabytesPerHour float64 `json:"egress_network_traffic_per_megabytes_per_hour" description: "Egress traffic count price. If manager define or omitted and shall Multiples of 3" default:"0"`
+	EgressNetworkTrafficPerMegabytesPerHour float64 `json:"egress_network_traffic_per_megabytes_per_hour" description:"Egress traffic count price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// pvc cost with above currency unit for per GB per hour
 	PvcPerGigabytesPerHour float64 `json:"pvc_per_gigabytes_per_hour" description:"PVC usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// gpu cost with above currency unit for per percentage per hour
-	GpuPerPercentagePerHour float64 `json:"gpu_per_percentage_per_hour" description:"CPU usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
+	GpuPerPercentagePerHour float64 `json:"gpu_per_percentage_per_hour" description:"GPU usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
 }
 
 type PriceResponse struct {

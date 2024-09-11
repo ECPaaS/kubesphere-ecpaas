@@ -463,7 +463,7 @@
           },
           {
             "type": "string",
-            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_gpu_usage`.",
+            "description": "The metric name filter consists of a regexp pattern. eg. `meter_namespace_gpu_usage`.",
             "name": "metrics_filter",
             "in": "query",
             "required": true
@@ -1725,12 +1725,13 @@
           "type": "string"
         },
         "egress_network_traffic_per_megabytes_per_hour": {
+          "description": "Egress traffic count price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
         },
         "gpu_per_percentage_per_hour": {
-          "description": "CPU usage price. If manager define or omitted and shall Multiples of 3",
+          "description": "GPU usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
@@ -1826,11 +1827,11 @@
           "type": "string"
         },
         "exported_value": {
-          "description": "when query field operation is export. exported time series. If resultType=vector, value is vector type",
+          "description": "when query field operation is export. exported time series. If resultType=vector and query field opertation is export, value is vector type",
           "$ref": "#/definitions/monitoring.ExportPoint"
         },
         "exported_values": {
-          "description": "when query field operation is export. exported time series, If resultType=matrix, values is matrix type",
+          "description": "when query field operation is export. exported time series, If resultType=matrix and query field opertation is export, values is matrix type",
           "type": "array",
           "items": {
             "$ref": "#/definitions/monitoring.ExportPoint"
@@ -1856,6 +1857,7 @@
           "type": "string"
         },
         "resource_unit": {
+          "description": "resource unit eg. percentages, cores or bytes",
           "type": "string"
         },
         "sum_value": {
@@ -1863,11 +1865,11 @@
           "type": "string"
         },
         "value": {
-          "description": "If resultType=vector. time series, values is vector type",
+          "description": "If resultType=vector. time series, If resultType=vector and query field opertation is qeury, values is vector type",
           "type": "string"
         },
         "values": {
-          "description": "If resultType=matrix. time series. values is matrix type",
+          "description": "If resultType=matrix. time series. If resultType=vector and query field opertation is query, values is matrix type",
           "type": "array",
           "items": {
             "$ref": "#/definitions/monitoring.Point"
