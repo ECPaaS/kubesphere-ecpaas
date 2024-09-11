@@ -3032,6 +3032,13 @@
             "$ref": "#/definitions/virtualization.ModifyDiskSpec"
           }
         },
+        "labels": {
+          "description": "Virtual machine labels. Can be empty map.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "memory": {
           "description": "Virtual machine memory size, unit is GB.",
           "type": "integer",
@@ -3044,6 +3051,13 @@
           "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
           "type": "string",
           "maximum": 16
+        },
+        "node_selector": {
+          "description": "Virtual machine node selector.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -3111,6 +3125,13 @@
           "description": "Virtual machine image source",
           "$ref": "#/definitions/virtualization.ImageInfoResponse"
         },
+        "labels": {
+          "description": "Virtual machine labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "memory": {
           "description": "Virtual machine memory size, unit is GB",
           "type": "integer",
@@ -3123,6 +3144,13 @@
           "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
           "type": "string",
           "maximum": 16
+        },
+        "node_selector": {
+          "description": "Virtual machine node selector",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -3138,7 +3166,9 @@
         "disks",
         "status",
         "node_name",
-        "pod_name"
+        "pod_name",
+        "labels",
+        "node_selector"
       ],
       "properties": {
         "cpu_cores": {
@@ -3165,6 +3195,13 @@
           "description": "Virtual machine image source",
           "$ref": "#/definitions/virtualization.ImageInfoResponse"
         },
+        "labels": {
+          "description": "Virtual machine labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "memory": {
           "description": "Virtual machine memory size",
           "type": "integer",
@@ -3181,6 +3218,13 @@
         "node_name": {
           "description": "Virtual machine node",
           "type": "string"
+        },
+        "node_selector": {
+          "description": "Virtual machine node selector",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "pod_name": {
           "description": "Virtual machine pod",

@@ -79,8 +79,8 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 		vm.Labels = ui_vm.Labels // copy labels to ksvm
 	}
 
-	if ui_vm.NodeSelector != "" {
-		vm.Annotations[v1alpha1.VirtualizationNodeSelector] = ui_vm.NodeSelector // copy node selector to ksvm annotation
+	if ui_vm.NodeSelector != nil && len(ui_vm.NodeSelector) > 0 {
+		vm.Spec.NodeSelector = ui_vm.NodeSelector // copy node selector to ksvm
 	}
 
 	if ui_vm.Image != nil {
@@ -692,10 +692,12 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	}
 
 	if ui_vm.NodeSelector != nil {
-		if *ui_vm.NodeSelector == "" {
-			delete(vm.Annotations, v1alpha1.VirtualizationNodeSelector)
+		if len(ui_vm.NodeSelector) == 0 {
+			// if ui_vm.NodeSelector is empty map, clear ksvm.spec.nodeSelector
+			vm.Spec.NodeSelector = nil
 		} else {
-			vm.Annotations[v1alpha1.VirtualizationNodeSelector] = *ui_vm.NodeSelector
+			// if ui_vm.NodeSelector is NOT empty map, copy nodeSelector to ksvm.spec.nodeSelector
+			vm.Spec.NodeSelector = ui_vm.NodeSelector
 		}
 	}
 
@@ -707,6 +709,8 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	return updated_vm, nil
 }
 
+// Check if newLabels is really a modify to oldLabels.
+// Also false if trying to clear an empty map of labels.
 func isUpdatingLabels(newLabels, oldLabels map[string]string) bool {
 	if reflect.DeepEqual(newLabels, oldLabels) {
 		return false

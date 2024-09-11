@@ -22,7 +22,7 @@ type VirtualMachineRequest struct {
 	Disk         []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
 	Guest        *GuestSpec         `json:"guest,omitempty" description:"Virtual machine guest operating system"`
 	Labels       map[string]string  `json:"labels,omitempty" description:"Virtual machine labels"`
-	NodeSelector string             `json:"node_selector,omitempty" description:"Virtual machine designated node"`
+	NodeSelector map[string]string  `json:"node_selector,omitempty" description:"Virtual machine node selector"`
 }
 
 type DiskSpec struct {
@@ -49,8 +49,8 @@ type ModifyVirtualMachineRequest struct {
 	Memory       uint              `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
 	Disk         []ModifyDiskSpec  `json:"disk,omitempty" description:"Virtual machine disks"`
 	Description  *string           `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
-	Labels       map[string]string `json:"labels,omitempty" description:"Virtual machine labels. Can be empty map." maximum:"128"`
-	NodeSelector *string           `json:"node_selector,omitempty" description:"Virtual machine designated node"`
+	Labels       map[string]string `json:"labels,omitempty" description:"Virtual machine labels. Can be empty map."`
+	NodeSelector map[string]string `json:"node_selector,omitempty" description:"Virtual machine node selector."`
 }
 
 type VirtualMachineResponse struct {
@@ -66,7 +66,7 @@ type VirtualMachineResponse struct {
 	NodeName     string             `json:"node_name" description:"Virtual machine node"`
 	PodName      string             `json:"pod_name" description:"Virtual machine pod"`
 	Labels       map[string]string  `json:"labels" description:"Virtual machine labels"`
-	NodeSelector string             `json:"node_selector" description:"Virtual machine designated node"`
+	NodeSelector map[string]string  `json:"node_selector" description:"Virtual machine node selector"`
 }
 
 type VirtualMachineIDResponse struct {

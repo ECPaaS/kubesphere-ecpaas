@@ -201,8 +201,8 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Status:       ui_vm_status,
 		NodeName:     h.getVirtualMachineNode(vm.Namespace, vm.Name),
 		PodName:      h.getVirtualMachinePod(vm.Namespace, vm.Name),
-		Labels:       getVirtualMachineLabels(&vm.Labels),
-		NodeSelector: vm.Annotations[virtzv1alpha1.VirtualizationNodeSelector],
+		Labels:       getMapOrEmptyMap(&vm.Labels),
+		NodeSelector: getMapOrEmptyMap(&vm.Spec.NodeSelector),
 	}
 }
 
@@ -238,9 +238,9 @@ func (h *virtzhandler) getVirtualMachinePod(namespace, vmName string) string {
 	return "Not Established"
 }
 
-func getVirtualMachineLabels(labels *map[string]string) map[string]string {
-	if *labels != nil {
-		return *labels
+func getMapOrEmptyMap(incomingMap *map[string]string) map[string]string {
+	if *incomingMap != nil {
+		return *incomingMap
 	} else {
 		return make(map[string]string)
 	}

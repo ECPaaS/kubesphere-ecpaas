@@ -230,16 +230,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// update nodeSelector
-	newNodeSelector := vm.Annotations[virtzv1alpha1.VirtualizationNodeSelector] // only valid nodeName or ""
-	if kvVM.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] != newNodeSelector {
-		if newNodeSelector != "" {
-			if kvVM.Spec.Template.Spec.NodeSelector == nil {
-				kvVM.Spec.Template.Spec.NodeSelector = make(map[string]string)
-			}
-			kvVM.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] = newNodeSelector
-		} else {
-			kvVM.Spec.Template.Spec.NodeSelector = nil
-		}
+	if !reflect.DeepEqual(vm.Spec.NodeSelector, kvVM.Spec.Template.Spec.NodeSelector) {
+		kvVM.Spec.Template.Spec.NodeSelector = vm.Spec.NodeSelector
 		modifiedFlag = true
 	}
 
@@ -826,11 +818,8 @@ func createVirtualMachine(virtClient kubecli.KubevirtClient, virtzVM *virtzv1alp
 	// doesn't matter whether virtzVM.Labels is nil
 	kvVM.Spec.Template.ObjectMeta.Labels = virtzVM.Labels
 	// Copy node selector from "ksvm" to "vm"
-	// check if key is really existed in Annotations
-	if nodeName, ok := virtzVM.Annotations[virtzv1alpha1.VirtualizationNodeSelector]; ok {
-		klog.Infof("Node Selector is set to \"%s\"", nodeName)
-		kvVM.Spec.Template.Spec.NodeSelector = map[string]string{"kubernetes.io/hostname" : nodeName}
-	}
+	// doesn't matter whether virtzVM.Spec.NodeSelector is nil
+	kvVM.Spec.Template.Spec.NodeSelector = virtzVM.Spec.NodeSelector
 
 	createdVM, err := virtClient.VirtualMachine(namespace).Create(kvVM)
 	if err != nil {

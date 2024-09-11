@@ -111,6 +111,9 @@ type VirtualMachineSpec struct {
 	Hardware Hardware `json:"hardware,omitempty"`
 	// RunStrategy is the run strategy of the VirtualMachine.
 	RunStrategy string `json:"runStrategy,omitempty"`
+	// NodeSelector is a selector which must be true for the VirtualMachine to fit on a node.
+	// Selector which must match a node's labels for the VirtualMachine to be scheduled on that node.
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // +kubebuilder:resource:shortName={ksvm,ksvms}
