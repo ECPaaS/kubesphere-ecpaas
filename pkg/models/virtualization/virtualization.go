@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -70,6 +71,10 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	vm := v1alpha1.VirtualMachine{}
 	vm_uuid := uuid.New().String()[:8]
 	vm.Namespace = namespace
+	klog.Infof("ui_vm.Labels: %v", ui_vm.Labels)
+	if ui_vm.Labels != nil && len(ui_vm.Labels) > 0 {
+		vm.Labels = ui_vm.Labels // copy labels to ksvm
+	}
 
 	ApplyVMSpec(ui_vm, &vm, vm_uuid)
 
@@ -642,6 +647,44 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 					return nil, err
 				}
 			}
+		}
+	}
+
+	if ui_vm.Labels != nil {
+		// Check if VM is started, then change labels on it
+		if vm.Status.PrintableStatus != kvapi.VirtualMachineStatusStopped { // "Stopped"
+			// try to update virt-launcher pod's metadata.labels directly
+			podList, listPodErr := v.k8sclient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+			if listPodErr == nil {
+				pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]{5}", name)
+				matchExp, err := regexp.Compile(pattern)
+				for _, pod := range podList.Items {
+					if err == nil && matchExp.MatchString(pod.Name) {
+						for key := range vm.Labels {
+							// delete old labels from pod
+							klog.Infof("Delete label %s:%s", key, pod.Labels[key])
+							delete(pod.Labels, key)
+						}
+						for key, value := range ui_vm.Labels {
+							// add new labels to pod
+							klog.Infof("Add label %s:%s", key, value)
+							pod.Labels[key] = value
+						}
+						v.k8sclient.CoreV1().Pods(namespace).Update(context.Background(), &pod, metav1.UpdateOptions{})
+						break; // no need to iterate remaining pods
+					} else {
+						klog.Error(err)
+					}
+				}
+			}
+		}
+
+		if len(ui_vm.Labels) == 0 {
+			// if ui_vm.Labels is empty map, clear ksvm.Labels
+			vm.Labels = nil
+		} else {
+			// if ui_vm.Labels is NOT empty map, copy labels to ksvm.Labels
+			vm.Labels = ui_vm.Labels
 		}
 	}
 

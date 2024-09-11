@@ -201,6 +201,7 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Status:      ui_vm_status,
 		NodeName:    h.getVirtualMachineNode(vm.Namespace, vm.Name),
 		PodName:     h.getVirtualMachinePod(vm.Namespace, vm.Name),
+		Labels:      getVirtualMachineLabels(&vm.Labels),
 	}
 }
 
@@ -234,6 +235,14 @@ func (h *virtzhandler) getVirtualMachinePod(namespace, vmName string) string {
 		}
 	}
 	return "Not Established"
+}
+
+func getVirtualMachineLabels(labels *map[string]string) map[string]string {
+	if *labels != nil {
+		return *labels
+	} else {
+		return make(map[string]string)
+	}
 }
 
 func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {

@@ -216,6 +216,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
+	// update labels
+	kvVM, err := virtClient.VirtualMachine(req.Namespace).Get(req.Name, &metav1.GetOptions{})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if !reflect.DeepEqual(vm.Labels, kvVM.Spec.Template.ObjectMeta.Labels) {
+		kvVM.Spec.Template.ObjectMeta.Labels = vm.Labels
+		virtClient.VirtualMachine(req.Namespace).Update(kvVM)
+	}
+
 	// update status, refresh the status even when the virtualmachine is not ready
 	if !reflect.DeepEqual(vm.Status, vm_instance.Status) {
 		if err := r.Status().Update(rootCtx, vm_instance); err != nil {
@@ -791,6 +801,8 @@ func createVirtualMachine(virtClient kubecli.KubevirtClient, virtzVM *virtzv1alp
 	})
 
 	applyVirtualMachineSpec(&kvVM.Spec, virtzVM.Spec)
+	// Copy labels from "ksvm" to "vm", so that these labels go to vmi and virt-launcher pod
+	kvVM.Spec.Template.ObjectMeta.Labels = virtzVM.Labels
 
 	createdVM, err := virtClient.VirtualMachine(namespace).Create(kvVM)
 	if err != nil {
