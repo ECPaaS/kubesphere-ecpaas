@@ -42,16 +42,12 @@ func AddToContainer(c *restful.Container, k8sClient kubernetes.Interface, meteri
 	ws.Route(ws.GET("/workspaces/{workspace}").
 		To(h.HandleWorkspaceMeterQuery).
 		Doc("Get workspace-level meter data of a specific workspace.").
-		Param(ws.QueryParameter("operation", "Metering operation.").DataType("string").Required(false).DefaultValue(monitoringv1alpha3.OperationQuery)).
+		Param(ws.QueryParameter("operation", "Metering operation. eg. query or export").DataType("string").Required(true).DefaultValue(monitoringv1alpha3.OperationQuery)).
 		Param(ws.PathParameter("workspace", "Workspace name.").DataType("string").Required(true)).
-		Param(ws.QueryParameter("metrics_filter", "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_cpu_usage|meter_workspace_memory_usage`.").DataType("string").Required(false)).
-		Param(ws.QueryParameter("storageclass", "The name of the storageclass.").DataType("string").Required(false)).
-		Param(ws.QueryParameter("pvc_filter", "The PVC filter consists of a regexp pattern. It specifies which PVC data to return.").DataType("string").Required(false)).
-		Param(ws.QueryParameter("start", "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ").DataType("string").Required(false)).
-		Param(ws.QueryParameter("end", "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ").DataType("string").Required(false)).
-		Param(ws.QueryParameter("step", "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).").DataType("string").DefaultValue("10m").Required(false)).
-		Param(ws.QueryParameter("time", "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.").DataType("string").Required(false)).
-		Param(ws.QueryParameter("type", "Additional operations. Currently available types is statistics. It retrieves the total number of namespaces, devops projects, members and roles in this workspace at the moment.").DataType("string").Required(false)).
+		Param(ws.QueryParameter("metrics_filter", "The metric name filter consists of a regexp pattern. eg. `meter_namespace_gpu_usage`.").DataType("string").Required(true)).
+		Param(ws.QueryParameter("start", "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ").DataType("string").Required(true)).
+		Param(ws.QueryParameter("end", "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ").DataType("string").Required(true)).
+		Param(ws.QueryParameter("step", "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).").DataType("string").DefaultValue("10m").Required(true)).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.WorkspaceMetersTag}).
 		Writes(model.Metrics{}).
 		Returns(http.StatusOK, respOK, model.Metrics{})).

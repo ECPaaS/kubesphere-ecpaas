@@ -449,9 +449,10 @@
           {
             "type": "string",
             "default": "query",
-            "description": "Metering operation.",
+            "description": "Metering operation. eg. query or export",
             "name": "operation",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
@@ -462,52 +463,32 @@
           },
           {
             "type": "string",
-            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_cpu_usage|meter_workspace_memory_usage`.",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_gpu_usage`.",
             "name": "metrics_filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "The name of the storageclass.",
-            "name": "storageclass",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "The PVC filter consists of a regexp pattern. It specifies which PVC data to return.",
-            "name": "pvc_filter",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
             "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
             "name": "start",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
             "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
             "name": "end",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
             "default": "10m",
             "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
             "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
-            "name": "time",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Additional operations. Currently available types is statistics. It retrieves the total number of namespaces, devops projects, members and roles in this workspace at the moment.",
-            "name": "type",
-            "in": "query"
+            "in": "query",
+            "required": true
           }
         ],
         "responses": {
@@ -533,133 +514,24 @@
         "parameters": [
           {
             "type": "string",
-            "description": "Metering level.",
+            "description": "Metering level. Current is LevelNamespace",
             "name": "level",
             "in": "query",
             "required": true
           },
           {
             "type": "string",
-            "description": "Node name.",
-            "name": "node",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Workspace name.",
-            "name": "workspace",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Namespace name.",
-            "name": "namespace",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Workload kind. One of deployment, daemonset, statefulset.",
-            "name": "kind",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Workload name.",
-            "name": "workload",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Pod name.",
-            "name": "pod",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Appliction names, format app_name[:app_version](such as nginx:v1, nignx) which are joined by \"|\" ",
-            "name": "applications",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Services which are joined by \"|\".",
-            "name": "services",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_cpu_usage|meter_workspace_memory_usage`.",
+            "description": "The metric name filter consists of a regexp pattern. eg. `meter_namespace_gpu_usage`.",
             "name": "metrics_filter",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
-            "description": "The workspace filter consists of a regexp pattern. It specifies which workspace data to return.",
+            "description": "The namepsace filter consists of a regexp pattern. It specifies which namespace data to return.",
             "name": "resources_filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
-            "name": "start",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
-            "name": "end",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
-            "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
-            "name": "time",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Sort workspaces by the specified metric. Not applicable if **start** and **end** are provided.",
-            "name": "sort_metric",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "desc.",
-            "description": "Sort order. One of asc, desc.",
-            "name": "sort_type",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "description": "The page number. This field paginates result data of each metric, then returns a specific page. For example, setting **page** to 2 returns the second page. It only applies to sorted metric data.",
-            "name": "page",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "default": 5,
-            "description": "Page size, the maximum number of results in a single page. Defaults to 5.",
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "The name of the storageclass.",
-            "name": "storageclass",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "The PVC filter consists of a regexp pattern. It specifies which PVC data to return.",
-            "name": "pvc_filter",
-            "in": "query"
+            "in": "query",
+            "required": true
           }
         ],
         "responses": {
@@ -1834,36 +1706,35 @@
       ],
       "properties": {
         "cpu_per_core_per_hour": {
-          "description": "cpu price",
+          "description": "CPU usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double"
         },
         "currency": {
-          "description": "currency",
+          "description": "currency code ref https://www.iban.com/currency-codes",
           "type": "string"
         },
         "egress_network_traffic_per_megabytes_per_hour": {
-          "description": "egress price",
           "type": "number",
           "format": "double"
         },
         "gpu_per_percentage_per_hour": {
-          "description": "gpu price",
+          "description": "CPU usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double"
         },
         "ingress_network_traffic_per_megabytes_per_hour": {
-          "description": "ingress price",
+          "description": "Ingress traffic count price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double"
         },
         "mem_per_gigabytes_per_hour": {
-          "description": "mem price",
+          "description": "Memory usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double"
         },
         "pvc_per_gigabytes_per_hour": {
-          "description": "pvc price",
+          "description": "PVC usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double"
         },
@@ -1891,10 +1762,11 @@
     "monitoring.Metric": {
       "properties": {
         "data": {
-          "description": "actual metric result",
+          "description": "actual metric result. If error exsit, this feild is omitted",
           "$ref": "#/definitions/monitoring.MetricData"
         },
         "error": {
+          "description": "error reason. If data field has value, this filed is omitted",
           "type": "string"
         },
         "metric_name": {
@@ -1906,7 +1778,7 @@
     "monitoring.MetricData": {
       "properties": {
         "result": {
-          "description": "metric data including labels, time series and values",
+          "description": "metric data including metric labels, time series values and min/max/sum/avg value",
           "type": "array",
           "items": {
             "$ref": "#/definitions/monitoring.MetricValue"
@@ -1934,21 +1806,22 @@
           "type": "string"
         },
         "currency_unit": {
+          "description": "currency code ref https://www.iban.com/currency-codes",
           "type": "string"
         },
         "exported_value": {
-          "description": "exported time series, values of vector type",
+          "description": "when query field operation is export. exported time series. If resultType=vector, value is vector type",
           "$ref": "#/definitions/monitoring.ExportPoint"
         },
         "exported_values": {
-          "description": "exported time series, values of matrix type",
+          "description": "when query field operation is export. exported time series, If resultType=matrix, values is matrix type",
           "type": "array",
           "items": {
             "$ref": "#/definitions/monitoring.ExportPoint"
           }
         },
         "fee": {
-          "description": "resource fee",
+          "description": "resource used fee",
           "type": "string"
         },
         "max_value": {
@@ -1956,7 +1829,7 @@
           "type": "string"
         },
         "metric": {
-          "description": "time series labels",
+          "description": "map string object, time series labels. eg. key1:value1, key2:value2",
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -1974,11 +1847,11 @@
           "type": "string"
         },
         "value": {
-          "description": "time series, values of vector type",
+          "description": "If resultType=vector. time series, values is vector type",
           "type": "string"
         },
         "values": {
-          "description": "time series, values of matrix type",
+          "description": "If resultType=matrix. time series. values is matrix type",
           "type": "array",
           "items": {
             "$ref": "#/definitions/monitoring.Point"
