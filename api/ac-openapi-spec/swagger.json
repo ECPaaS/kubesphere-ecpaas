@@ -1845,7 +1845,8 @@
         "cpu_per_core_per_hour": {
           "description": "cpu price",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "currency": {
           "description": "currency",
@@ -1854,30 +1855,36 @@
         "egress_network_traffic_per_megabytes_per_hour": {
           "description": "egress price",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "gpu_per_percentage_per_hour": {
           "description": "gpu price",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "ingress_network_traffic_per_megabytes_per_hour": {
           "description": "ingress price",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "mem_per_gigabytes_per_hour": {
           "description": "mem price",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "pvc_per_gigabytes_per_hour": {
           "description": "pvc price",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "retention_day": {
-          "type": "string"
+          "type": "string",
+          "default": "7d"
         }
       }
     },
