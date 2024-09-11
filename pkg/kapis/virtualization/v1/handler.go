@@ -190,18 +190,19 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 
 	memory, _ := strconv.ParseUint(strings.Replace(vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), "Gi", "", -1), 10, 32)
 	return ui_virtz.VirtualMachineResponse{
-		Name:        vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
-		ID:          vm.Name,
-		Namespace:   vm.Namespace,
-		Description: vm.Annotations[virtzv1alpha1.VirtualizationDescription],
-		CpuCores:    uint(vm.Spec.Hardware.Domain.CPU.Cores),
-		Memory:      uint(memory),
-		Image:       &ui_image_spec,
-		Disks:       h.getUIDisksResponse(vm),
-		Status:      ui_vm_status,
-		NodeName:    h.getVirtualMachineNode(vm.Namespace, vm.Name),
-		PodName:     h.getVirtualMachinePod(vm.Namespace, vm.Name),
-		Labels:      getVirtualMachineLabels(&vm.Labels),
+		Name:         vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
+		ID:           vm.Name,
+		Namespace:    vm.Namespace,
+		Description:  vm.Annotations[virtzv1alpha1.VirtualizationDescription],
+		CpuCores:     uint(vm.Spec.Hardware.Domain.CPU.Cores),
+		Memory:       uint(memory),
+		Image:        &ui_image_spec,
+		Disks:        h.getUIDisksResponse(vm),
+		Status:       ui_vm_status,
+		NodeName:     h.getVirtualMachineNode(vm.Namespace, vm.Name),
+		PodName:      h.getVirtualMachinePod(vm.Namespace, vm.Name),
+		Labels:       getVirtualMachineLabels(&vm.Labels),
+		NodeSelector: vm.Annotations[virtzv1alpha1.VirtualizationNodeSelector],
 	}
 }
 

@@ -216,13 +216,34 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
-	// update labels
+	// to update labels and node selector, we need kubevirtVM
 	kvVM, err := virtClient.VirtualMachine(req.Namespace).Get(req.Name, &metav1.GetOptions{})
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	modifiedFlag := false
+
+	// update labels
 	if !reflect.DeepEqual(vm.Labels, kvVM.Spec.Template.ObjectMeta.Labels) {
 		kvVM.Spec.Template.ObjectMeta.Labels = vm.Labels
+		modifiedFlag = true
+	}
+
+	// update nodeSelector
+	newNodeSelector := vm.Annotations[virtzv1alpha1.VirtualizationNodeSelector] // only valid nodeName or ""
+	if kvVM.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] != newNodeSelector {
+		if newNodeSelector != "" {
+			if kvVM.Spec.Template.Spec.NodeSelector == nil {
+				kvVM.Spec.Template.Spec.NodeSelector = make(map[string]string)
+			}
+			kvVM.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] = newNodeSelector
+		} else {
+			kvVM.Spec.Template.Spec.NodeSelector = nil
+		}
+		modifiedFlag = true
+	}
+
+	if modifiedFlag {
 		virtClient.VirtualMachine(req.Namespace).Update(kvVM)
 	}
 
@@ -802,7 +823,14 @@ func createVirtualMachine(virtClient kubecli.KubevirtClient, virtzVM *virtzv1alp
 
 	applyVirtualMachineSpec(&kvVM.Spec, virtzVM.Spec)
 	// Copy labels from "ksvm" to "vm", so that these labels go to vmi and virt-launcher pod
+	// doesn't matter whether virtzVM.Labels is nil
 	kvVM.Spec.Template.ObjectMeta.Labels = virtzVM.Labels
+	// Copy node selector from "ksvm" to "vm"
+	// check if key is really existed in Annotations
+	if nodeName, ok := virtzVM.Annotations[virtzv1alpha1.VirtualizationNodeSelector]; ok {
+		klog.Infof("Node Selector is set to \"%s\"", nodeName)
+		kvVM.Spec.Template.Spec.NodeSelector = map[string]string{"kubernetes.io/hostname" : nodeName}
+	}
 
 	createdVM, err := virtClient.VirtualMachine(namespace).Create(kvVM)
 	if err != nil {

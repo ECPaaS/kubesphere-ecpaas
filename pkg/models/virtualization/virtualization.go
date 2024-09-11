@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -71,12 +72,16 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	vm := v1alpha1.VirtualMachine{}
 	vm_uuid := uuid.New().String()[:8]
 	vm.Namespace = namespace
-	klog.Infof("ui_vm.Labels: %v", ui_vm.Labels)
+
+	ApplyVMSpec(ui_vm, &vm, vm_uuid)
+
 	if ui_vm.Labels != nil && len(ui_vm.Labels) > 0 {
 		vm.Labels = ui_vm.Labels // copy labels to ksvm
 	}
 
-	ApplyVMSpec(ui_vm, &vm, vm_uuid)
+	if ui_vm.NodeSelector != "" {
+		vm.Annotations[v1alpha1.VirtualizationNodeSelector] = ui_vm.NodeSelector // copy node selector to ksvm annotation
+	}
 
 	if ui_vm.Image != nil {
 		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(ui_vm.Image.Namespace).Get(context.Background(), ui_vm.Image.ID, metav1.GetOptions{})
@@ -650,8 +655,8 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		}
 	}
 
-	if ui_vm.Labels != nil {
-		// Check if VM is started, then change labels on it
+	if ui_vm.Labels != nil && isUpdatingLabels(ui_vm.Labels, vm.Labels) {
+		// Check if VM is started, then change labels on VM pod
 		if vm.Status.PrintableStatus != kvapi.VirtualMachineStatusStopped { // "Stopped"
 			// try to update virt-launcher pod's metadata.labels directly
 			podList, listPodErr := v.k8sclient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
@@ -662,12 +667,10 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 					if err == nil && matchExp.MatchString(pod.Name) {
 						for key := range vm.Labels {
 							// delete old labels from pod
-							klog.Infof("Delete label %s:%s", key, pod.Labels[key])
 							delete(pod.Labels, key)
 						}
 						for key, value := range ui_vm.Labels {
 							// add new labels to pod
-							klog.Infof("Add label %s:%s", key, value)
 							pod.Labels[key] = value
 						}
 						v.k8sclient.CoreV1().Pods(namespace).Update(context.Background(), &pod, metav1.UpdateOptions{})
@@ -688,12 +691,30 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		}
 	}
 
+	if ui_vm.NodeSelector != nil {
+		if *ui_vm.NodeSelector == "" {
+			delete(vm.Annotations, v1alpha1.VirtualizationNodeSelector)
+		} else {
+			vm.Annotations[v1alpha1.VirtualizationNodeSelector] = *ui_vm.NodeSelector
+		}
+	}
+
 	updated_vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	return updated_vm, nil
+}
+
+func isUpdatingLabels(newLabels, oldLabels map[string]string) bool {
+	if reflect.DeepEqual(newLabels, oldLabels) {
+		return false
+	} else if len(newLabels) == 0 && oldLabels == nil {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (v *virtualizationOperator) StartVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error) {

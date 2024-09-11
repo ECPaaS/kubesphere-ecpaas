@@ -14,14 +14,15 @@ const (
 
 // Virtual Machine
 type VirtualMachineRequest struct {
-	Name        string             `json:"name" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	CpuCores    uint               `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores" minimum:"1" maximum:"4"`
-	Memory      uint               `json:"memory" default:"1" description:"Virtual machine memory size, unit is GB" minimum:"1" maximum:"8"`
-	Description string             `json:"description" description:"Virtual machine description. Default is empty string." maximum:"128"`
-	Image       *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
-	Disk        []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
-	Guest       *GuestSpec         `json:"guest,omitempty" description:"Virtual machine guest operating system"`
-	Labels      map[string]string  `json:"labels,omitempty" description:"Virtual machine labels"`
+	Name         string             `json:"name" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	CpuCores     uint               `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores" minimum:"1" maximum:"4"`
+	Memory       uint               `json:"memory" default:"1" description:"Virtual machine memory size, unit is GB" minimum:"1" maximum:"8"`
+	Description  string             `json:"description" description:"Virtual machine description. Default is empty string." maximum:"128"`
+	Image        *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
+	Disk         []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
+	Guest        *GuestSpec         `json:"guest,omitempty" description:"Virtual machine guest operating system"`
+	Labels       map[string]string  `json:"labels,omitempty" description:"Virtual machine labels"`
+	NodeSelector string             `json:"node_selector,omitempty" description:"Virtual machine designated node"`
 }
 
 type DiskSpec struct {
@@ -43,27 +44,29 @@ type GuestSpec struct {
 }
 
 type ModifyVirtualMachineRequest struct {
-	Name        string            `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	CpuCores    uint              `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
-	Memory      uint              `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
-	Disk        []ModifyDiskSpec  `json:"disk,omitempty" description:"Virtual machine disks"`
-	Description *string           `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
-	Labels      map[string]string `json:"labels,omitempty" description:"Virtual machine labels. Can be empty map." maximum:"128"`
+	Name         string            `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	CpuCores     uint              `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
+	Memory       uint              `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
+	Disk         []ModifyDiskSpec  `json:"disk,omitempty" description:"Virtual machine disks"`
+	Description  *string           `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
+	Labels       map[string]string `json:"labels,omitempty" description:"Virtual machine labels. Can be empty map." maximum:"128"`
+	NodeSelector *string           `json:"node_selector,omitempty" description:"Virtual machine designated node"`
 }
 
 type VirtualMachineResponse struct {
-	ID          string             `json:"id" description:"Virtual machine id"`
-	Name        string             `json:"name" description:"Virtual machine name"`
-	Namespace   string             `json:"namespace" description:"Virtual machine namespace"`
-	Description string             `json:"description" description:"Virtual machine description"`
-	CpuCores    uint               `json:"cpu_cores" description:"Virtual machine cpu cores"`
-	Memory      uint               `json:"memory" description:"Virtual machine memory size"`
-	Image       *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
-	Disks       []DiskResponse     `json:"disks" description:"Virtual machine disks"`
-	Status      VMStatus           `json:"status" description:"Virtual machine status"`
-	NodeName    string             `json:"node_name" description:"Virtual machine node"`
-	PodName     string             `json:"pod_name" description:"Virtual machine pod"`
-	Labels      map[string]string  `json:"labels" description:"Virtual machine labels"`
+	ID           string             `json:"id" description:"Virtual machine id"`
+	Name         string             `json:"name" description:"Virtual machine name"`
+	Namespace    string             `json:"namespace" description:"Virtual machine namespace"`
+	Description  string             `json:"description" description:"Virtual machine description"`
+	CpuCores     uint               `json:"cpu_cores" description:"Virtual machine cpu cores"`
+	Memory       uint               `json:"memory" description:"Virtual machine memory size"`
+	Image        *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
+	Disks        []DiskResponse     `json:"disks" description:"Virtual machine disks"`
+	Status       VMStatus           `json:"status" description:"Virtual machine status"`
+	NodeName     string             `json:"node_name" description:"Virtual machine node"`
+	PodName      string             `json:"pod_name" description:"Virtual machine pod"`
+	Labels       map[string]string  `json:"labels" description:"Virtual machine labels"`
+	NodeSelector string             `json:"node_selector" description:"Virtual machine designated node"`
 }
 
 type VirtualMachineIDResponse struct {
