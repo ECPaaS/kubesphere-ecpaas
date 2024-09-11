@@ -549,6 +549,9 @@
         "produces": [
           "application/json"
         ],
+        "tags": [
+          "Workspace Meters"
+        ],
         "summary": "Get resource price.",
         "operationId": "HandlePriceInfoQuery",
         "responses": {
@@ -1702,13 +1705,20 @@
     "metering.PriceResponse": {
       "required": [
         "retention_day",
+        "cpu_per_core_per_hour",
+        "mem_per_gigabytes_per_hour",
+        "ingress_network_traffic_per_megabytes_per_hour",
+        "egress_network_traffic_per_megabytes_per_hour",
+        "pvc_per_gigabytes_per_hour",
+        "gpu_per_percentage_per_hour",
         "currency"
       ],
       "properties": {
         "cpu_per_core_per_hour": {
           "description": "CPU usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "currency": {
           "description": "currency code ref https://www.iban.com/currency-codes",
@@ -1716,30 +1726,36 @@
         },
         "egress_network_traffic_per_megabytes_per_hour": {
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "gpu_per_percentage_per_hour": {
           "description": "CPU usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "ingress_network_traffic_per_megabytes_per_hour": {
           "description": "Ingress traffic count price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "mem_per_gigabytes_per_hour": {
           "description": "Memory usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "pvc_per_gigabytes_per_hour": {
           "description": "PVC usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "default": 0
         },
         "retention_day": {
-          "type": "string"
+          "type": "string",
+          "default": "7d"
         }
       }
     },
