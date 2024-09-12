@@ -21,8 +21,8 @@ type VirtualMachineRequest struct {
 	Image        *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disk         []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
 	Guest        *GuestSpec         `json:"guest,omitempty" description:"Virtual machine guest operating system"`
-	Labels       map[string]string  `json:"labels,omitempty" description:"Virtual machine labels"`
-	NodeSelector map[string]string  `json:"node_selector,omitempty" description:"Virtual machine node selector"`
+	Labels       []Label            `json:"labels,omitempty" description:"Virtual machine labels"`
+	NodeSelector []NodeSelector     `json:"node_selector,omitempty" description:"Virtual machine node selector"`
 }
 
 type DiskSpec struct {
@@ -43,14 +43,24 @@ type GuestSpec struct {
 	Password string `json:"password" default:"abc1234" description:"Guest operating system password"`
 }
 
+type Label struct {
+	Key   string `json:"key" description:"Label key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)." minimum:"1" maximum:"316"`
+	Value string `json:"value" description:"Label value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string." maximum:"63"`
+}
+
+type NodeSelector struct {
+	Key   string `json:"key" description:"NodeSelector key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)." minimum:"1" maximum:"316"`
+	Value string `json:"value" description:"NodeSelector value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string." maximum:"63"`
+}
+
 type ModifyVirtualMachineRequest struct {
-	Name         string            `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
-	CpuCores     uint              `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
-	Memory       uint              `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
-	Disk         []ModifyDiskSpec  `json:"disk,omitempty" description:"Virtual machine disks"`
-	Description  *string           `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
-	Labels       map[string]string `json:"labels,omitempty" description:"Virtual machine labels. Can be empty map."`
-	NodeSelector map[string]string `json:"node_selector,omitempty" description:"Virtual machine node selector."`
+	Name         string           `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
+	CpuCores     uint             `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
+	Memory       uint             `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
+	Disk         []ModifyDiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
+	Description  *string          `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
+	Labels       []Label          `json:"labels,omitempty" description:"Virtual machine labels. Can be empty array."`
+	NodeSelector []NodeSelector   `json:"node_selector,omitempty" description:"Virtual machine node selector. Can be empty array."`
 }
 
 type VirtualMachineResponse struct {
@@ -65,8 +75,8 @@ type VirtualMachineResponse struct {
 	Status       VMStatus           `json:"status" description:"Virtual machine status"`
 	NodeName     string             `json:"node_name" description:"Virtual machine node"`
 	PodName      string             `json:"pod_name" description:"Virtual machine pod"`
-	Labels       map[string]string  `json:"labels" description:"Virtual machine labels"`
-	NodeSelector map[string]string  `json:"node_selector" description:"Virtual machine node selector"`
+	Labels       []Label            `json:"labels" description:"Virtual machine labels"`
+	NodeSelector []NodeSelector     `json:"node_selector" description:"Virtual machine node selector"`
 }
 
 type VirtualMachineIDResponse struct {

@@ -70,6 +70,14 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
+	if !isValidLabelDuplicated(ui_vm.Labels, resp) {
+		return
+	}
+
+	if !isValidNodeSelectorDuplicated(ui_vm.NodeSelector, resp) {
+		return
+	}
+
 	createdVM, err := h.virtz.CreateVirtualMachine(namespace, &ui_vm)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -98,6 +106,14 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	}
 
 	if !isValidDiskDuplicated(ui_vm.Disk, resp) {
+		return
+	}
+
+	if !isValidLabelDuplicated(ui_vm.Labels, resp) {
+		return
+	}
+
+	if !isValidNodeSelectorDuplicated(ui_vm.NodeSelector, resp) {
 		return
 	}
 
@@ -201,8 +217,8 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Status:       ui_vm_status,
 		NodeName:     h.getVirtualMachineNode(vm.Namespace, vm.Name),
 		PodName:      h.getVirtualMachinePod(vm.Namespace, vm.Name),
-		Labels:       getMapOrEmptyMap(&vm.Labels),
-		NodeSelector: getMapOrEmptyMap(&vm.Spec.NodeSelector),
+		Labels:       getLabelResponse(vm.Labels),
+		NodeSelector: getNodeSelectorResponse(vm.Spec.NodeSelector),
 	}
 }
 
@@ -238,12 +254,30 @@ func (h *virtzhandler) getVirtualMachinePod(namespace, vmName string) string {
 	return "Not Established"
 }
 
-func getMapOrEmptyMap(incomingMap *map[string]string) map[string]string {
-	if *incomingMap != nil {
-		return *incomingMap
-	} else {
-		return make(map[string]string)
+// Converts map[string]string to []Label.
+func getLabelResponse(incomingMap map[string]string) []ui_virtz.Label {
+	returnArray := make([]ui_virtz.Label, 0)
+	for key, value := range incomingMap {
+		newLabel := &ui_virtz.Label{
+			Key:   key,
+			Value: value,
+		}
+		returnArray = append(returnArray, *newLabel)
 	}
+	return returnArray
+}
+
+// Converts map[string]string to []NodeSelector.
+func getNodeSelectorResponse(incomingMap map[string]string) []ui_virtz.NodeSelector {
+	returnArray := make([]ui_virtz.NodeSelector, 0)
+	for key, value := range incomingMap {
+		newNodeSelector := &ui_virtz.NodeSelector{
+			Key:   key,
+			Value: value,
+		}
+		returnArray = append(returnArray, *newNodeSelector)
+	}
+	return returnArray
 }
 
 func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {

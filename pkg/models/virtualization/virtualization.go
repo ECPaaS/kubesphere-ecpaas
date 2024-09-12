@@ -76,11 +76,11 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	ApplyVMSpec(ui_vm, &vm, vm_uuid)
 
 	if ui_vm.Labels != nil && len(ui_vm.Labels) > 0 {
-		vm.Labels = ui_vm.Labels // copy labels to ksvm
+		vm.Labels = ConvertLabelToMap(ui_vm.Labels) // copy labels to ksvm
 	}
 
 	if ui_vm.NodeSelector != nil && len(ui_vm.NodeSelector) > 0 {
-		vm.Spec.NodeSelector = ui_vm.NodeSelector // copy node selector to ksvm
+		vm.Spec.NodeSelector = ConvertLabelToMap(ui_vm.NodeSelector) // copy node selector to ksvm
 	}
 
 	if ui_vm.Image != nil {
@@ -600,6 +600,21 @@ func ConvertModifyDiskSpecToDiskSpec(modifyDiskSpec *ModifyDiskSpec) *DiskSpec {
 	return &diskSpec
 }
 
+// Converts []Label or []NodeSelector to map[string]string.
+func ConvertLabelToMap(array interface{}) map[string]string {
+	returnMap := make(map[string]string, 0)
+	if labels, ok := array.([]Label); ok {
+		for _, label := range labels {
+			returnMap[label.Key] = label.Value
+		}
+	} else if nodeSelector, ok := array.([]NodeSelector); ok {
+		for _, selector := range nodeSelector {
+			returnMap[selector.Key] = selector.Value
+		}
+	}
+	return returnMap
+}
+
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -655,7 +670,7 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		}
 	}
 
-	if ui_vm.Labels != nil && isUpdatingLabels(ui_vm.Labels, vm.Labels) {
+	if ui_vm.Labels != nil && isUpdatingLabels(ConvertLabelToMap(ui_vm.Labels), vm.Labels) {
 		// Check if VM is started, then change labels on VM pod
 		if vm.Status.PrintableStatus != kvapi.VirtualMachineStatusStopped { // "Stopped"
 			// try to update virt-launcher pod's metadata.labels directly
@@ -669,9 +684,9 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 							// delete old labels from pod
 							delete(pod.Labels, key)
 						}
-						for key, value := range ui_vm.Labels {
+						for _, label := range ui_vm.Labels {
 							// add new labels to pod
-							pod.Labels[key] = value
+							pod.Labels[label.Key] = label.Value
 						}
 						v.k8sclient.CoreV1().Pods(namespace).Update(context.Background(), &pod, metav1.UpdateOptions{})
 						break; // no need to iterate remaining pods
@@ -687,7 +702,7 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 			vm.Labels = nil
 		} else {
 			// if ui_vm.Labels is NOT empty map, copy labels to ksvm.Labels
-			vm.Labels = ui_vm.Labels
+			vm.Labels = ConvertLabelToMap(ui_vm.Labels)
 		}
 	}
 
@@ -697,7 +712,7 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 			vm.Spec.NodeSelector = nil
 		} else {
 			// if ui_vm.NodeSelector is NOT empty map, copy nodeSelector to ksvm.spec.nodeSelector
-			vm.Spec.NodeSelector = ui_vm.NodeSelector
+			vm.Spec.NodeSelector = ConvertLabelToMap(ui_vm.NodeSelector)
 		}
 	}
 

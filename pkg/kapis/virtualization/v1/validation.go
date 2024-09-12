@@ -399,3 +399,102 @@ func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) boo
 	}
 
 }
+
+// Return true if no duplicated key in Labels.
+func isValidLabelDuplicated(labels []ui_virtz.Label, resp *restful.Response) bool {
+	keyMap := make(map[string]bool)
+	for _, label := range labels { // Empty array is also valid.
+		if _, ok := keyMap[label.Key]; ok {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				Reason: "Label Key should be unique",
+			})
+			return false
+		}
+		if isValidLabel(label, resp) {
+			keyMap[label.Key] = true
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+// Return true if no duplicated key in NodeSelector.
+func isValidNodeSelectorDuplicated(nodeSelectors []ui_virtz.NodeSelector, resp *restful.Response) bool {
+	keyMap := make(map[string]bool)
+	for _, nodeSelector := range nodeSelectors { // Empty array is also valid.
+		if _, ok := keyMap[nodeSelector.Key]; ok {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				Reason: "NodeSelector Key should be unique",
+			})
+			return false
+		}
+		if isValidLabel(nodeSelector, resp) {
+			keyMap[nodeSelector.Key] = true
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+func isValidLabel(item interface{}, resp *restful.Response) bool {
+	var reflectType reflect.Type
+	var key string
+	var value string
+	switch label := item.(type) {
+	case ui_virtz.Label:
+		reflectType = reflect.TypeOf(label)
+		key = label.Key
+		value = label.Value
+	case ui_virtz.NodeSelector:
+		reflectType = reflect.TypeOf(label)
+		key = label.Key
+		value = label.Value
+	default:
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Unknown type",
+		})
+		return false
+	}
+
+	if !isValidLength(reflectType, key, "Key", resp) {
+		return false
+	}
+
+	if !isValidKeyString(key, resp) {
+		return false
+	}
+
+	if !isValidLength(reflectType, value, "Value", resp) {
+		return false
+	}
+
+	if !isValidValueString(value, resp) {
+		return false
+	}
+
+	return true
+}
+
+func isValidKeyString(valueToValidate string, resp *restful.Response) bool {
+	validRegex := regexp.MustCompile("^[A-Za-z0-9-_./]+$")
+	if !validRegex.MatchString(valueToValidate) {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)",
+		})
+		return false
+	}
+	return true
+}
+
+func isValidValueString(valueToValidate string, resp *restful.Response) bool {
+	validRegex := regexp.MustCompile("^[A-Za-z0-9-_.]*$") // Also match "", so use '*'
+	if !validRegex.MatchString(valueToValidate) {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot)",
+		})
+		return false
+	}
+	return true
+}
