@@ -33,7 +33,6 @@ const (
 	VirtualizationDiskMinioImageName = "virtualization.ecpaas.io/disk-minio-image-name"
 	VirtualizationDiskMediaType      = "virtualization.ecpaas.io/disk-media-type"
 	VirtualizationDiskHotpluggable   = "virtualization.ecpaas.io/disk-hotpluggable"
-	VirtualizationNodeSelector       = "virtualization.ecpaas.io/node-selector"
 )
 
 const (
