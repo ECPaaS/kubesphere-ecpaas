@@ -53,7 +53,7 @@ func isValidLength(validateType reflect.Type, valueToValidate string, fieldName 
 	if found {
 		maximum, _ := strconv.Atoi(field.Tag.Get("maximum"))
 		if len(valueToValidate) > int(maximum) {
-			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
 				Reason: fieldName + " length should be less than " + field.Tag.Get("maximum"),
 			})
 			return false

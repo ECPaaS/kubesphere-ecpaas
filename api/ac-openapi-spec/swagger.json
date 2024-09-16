@@ -520,6 +520,54 @@
         }
       }
     },
+    "/kapis/scheduler.ecpaas.io/v1/scheduler": {
+      "get": {
+        "description": "This API provides multiple schedulerName options that can be specified in the Job resource's schedulerName field under the spec definition. Users can choose from the available schedulers to manage how their job is scheduled in the cluster.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Scheduler"
+        ],
+        "summary": "List all of scheduler name",
+        "operationId": "ListSchedulerName",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.SchedulerNameResponse"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/scheduler.ecpaas.io/v1/yunikorn/queues": {
+      "get": {
+        "description": "This API provides the available YuniKorn leaf queues, which can be specified in the Job resource's labels, e.g., queue: root.system.high-priority",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Scheduler"
+        ],
+        "summary": "List YouniKorn's queues",
+        "operationId": "ListYuniKornQueues",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.YunikornQueuesResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/tenant.kubesphere.io/v1alpha4/metering": {
       "get": {
         "produces": [
@@ -676,6 +724,9 @@
       "get": {
         "produces": [
           "application/json"
+        ],
+        "tags": [
+          "Workspace Meters"
         ],
         "summary": "Get resource price.",
         "operationId": "HandlePriceInfoQuery",
@@ -2323,6 +2374,20 @@
         }
       }
     },
+    "v1.SchedulerNameResponse": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Available scheduler name",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "v1.VPCNetwork": {
       "required": [
         "spec"
@@ -2446,6 +2511,20 @@
         },
         "vpc": {
           "type": "string"
+        }
+      }
+    },
+    "v1.YunikornQueuesResponse": {
+      "required": [
+        "queues"
+      ],
+      "properties": {
+        "queues": {
+          "description": "Available yunikorn queues",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
