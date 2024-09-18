@@ -32,7 +32,12 @@ func newHandler(k8sclient kubernetes.Interface, ksclient kubesphere.Interface) *
 }
 
 type YunikornQueuesResponse struct {
-	Queues []string `json:"queues"  description:"Available yunikorn queues"`
+	TotalCount int             `json:"total_count" description:"Total number of queues"`
+	Items      []YunikornQueue `json:"items" description:"Available yunikorn queues"`
+}
+
+type YunikornQueue struct {
+	Queue string `json:"queue"  description:"Available yunikorn queue"`
 }
 
 type YunikornPatition struct {
@@ -47,22 +52,34 @@ type YunikornQueues struct {
 }
 
 type SchedulerNameResponse struct {
-	Name []string `json:"name"  description:"Available scheduler name"`
+	TotalCount int             `json:"total_count" description:"Total number of scheduler"`
+	Items      []SchedulerName `json:"items" description:"Available schedulers name"`
+}
+
+type SchedulerName struct {
+	Name string `json:"name"  description:"Available scheduler name"`
 }
 
 func (h *handler) ListSchedulerName(request *restful.Request, response *restful.Response) {
-	schedulers := SchedulerNameResponse{
-		Name: []string{
-			"default-scheduler",
+	schedulers := []SchedulerName{
+		{
+			Name: "default-scheduler",
 		},
 	}
 
 	// Yunikorn scheduler
 	if isYunikornAvailable(h) {
-		schedulers.Name = append(schedulers.Name, "yunikorn")
+		schedulers = append(schedulers, SchedulerName{
+			Name: "yunikorn",
+		})
 	}
 
-	response.WriteAsJson(schedulers)
+	schedulerResponse := SchedulerNameResponse{
+		TotalCount: len(schedulers),
+		Items:      schedulers,
+	}
+
+	response.WriteAsJson(schedulerResponse)
 }
 
 func isYunikornAvailable(h *handler) bool {
@@ -95,8 +112,6 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 		response.WriteError(http.StatusInternalServerError, err)
 	}
 
-	queuesResponse := YunikornQueuesResponse{}
-
 	partitionNames, err := getAllPartition(yunikornServiceDNS)
 	if err != nil {
 		klog.Error(err.Error())
@@ -106,7 +121,7 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 		response.WriteError(http.StatusInternalServerError, err)
 	}
 
-	queuesResponse.Queues, err = getAllLeafQueues(yunikornServiceDNS, partitionNames)
+	queues, err := getAllLeafQueues(yunikornServiceDNS, partitionNames)
 
 	if err != nil {
 		klog.Error(err.Error())
@@ -114,6 +129,16 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 			response.WriteError(http.StatusNotFound, err)
 		}
 		response.WriteError(http.StatusInternalServerError, err)
+	}
+	yunikornQueue := []YunikornQueue{}
+
+	for _, queuename := range queues {
+		yunikornQueue = append(yunikornQueue, YunikornQueue{Queue: queuename})
+	}
+
+	queuesResponse := YunikornQueuesResponse{
+		TotalCount: len(yunikornQueue),
+		Items:      yunikornQueue,
 	}
 
 	response.WriteAsJson(queuesResponse)
