@@ -21,6 +21,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/constants"
 	"kubesphere.io/kubesphere/pkg/informers"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
@@ -51,7 +52,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Reads(ui_virtz.VirtualMachineRequest{}).
 		Doc("Create virtual machine").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.VirtualMachineIDResponse{}).
-		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
@@ -63,7 +64,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Doc("Update virtual machine").
 		Notes(vmPutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
-		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
 
@@ -126,7 +127,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Reads(ui_virtz.DiskRequest{}).
 		Doc("Create disk").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.DiskIDResponse{}).
-		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
 
@@ -138,7 +139,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Doc("Update disk").
 		Notes(diskPutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
-		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DiskTag}))
@@ -184,7 +185,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Reads(ui_virtz.ImageRequest{}).
 		Doc("Create image").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageIDResponse{}).
-		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
@@ -195,7 +196,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Doc("Clone image").
 		Notes(imagePostCloneNotes).
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ImageIDResponse{}).
-		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))
 
@@ -207,7 +208,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Doc("Update image").
 		Notes(imagePutNotes).
 		Returns(http.StatusOK, api.StatusOK, nil).
-		Returns(http.StatusForbidden, "Invalid format", BadRequestError{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ImageTag}))

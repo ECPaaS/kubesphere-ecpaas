@@ -16,6 +16,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
@@ -23,7 +24,7 @@ var bucketName = "ecpaas-images"
 
 func isValidModifyDisk(validateType reflect.Type, disk ui_virtz.ModifyDiskSpec, resp *restful.Response) bool {
 	if disk.Action != "mount" && disk.Action != "unmount" {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "Disk action should be 'mount' or 'unmount'",
 		})
 		return false
@@ -38,7 +39,7 @@ func isValidWithinRange(validateType reflect.Type, valueToValidate int, fieldNam
 		minimum, _ := strconv.Atoi(field.Tag.Get("minimum"))
 		maximum, _ := strconv.Atoi(field.Tag.Get("maximum"))
 		if valueToValidate > maximum || valueToValidate < minimum {
-			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 				Reason: fieldName + " should be in the range of " + field.Tag.Get("minimum") + " to " + field.Tag.Get("maximum"),
 			})
 			return false
@@ -48,24 +49,10 @@ func isValidWithinRange(validateType reflect.Type, valueToValidate int, fieldNam
 
 }
 
-func isValidLength(validateType reflect.Type, valueToValidate string, fieldName string, resp *restful.Response) bool {
-	field, found := validateType.FieldByName(fieldName)
-	if found {
-		maximum, _ := strconv.Atoi(field.Tag.Get("maximum"))
-		if len(valueToValidate) > int(maximum) {
-			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-				Reason: fieldName + " length should be less than " + field.Tag.Get("maximum"),
-			})
-			return false
-		}
-	}
-	return true
-}
-
 func isValidString(valueToValidate string, resp *restful.Response) bool {
 	validRegex := regexp.MustCompile("^[A-Za-z0-9-]+$")
 	if !validRegex.MatchString(valueToValidate) {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "Valid characters: A-Z, a-z, 0-9, and -(hyphen)",
 		})
 		return false
@@ -76,7 +63,7 @@ func isValidString(valueToValidate string, resp *restful.Response) bool {
 func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(vm)
-	if !isValidLength(reflectType, vm.Name, "Name", resp) {
+	if !util.IsValidLength(reflectType, vm.Name, "Name", resp) {
 		return false
 	}
 
@@ -84,7 +71,7 @@ func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Resp
 		return false
 	}
 
-	if !isValidLength(reflectType, vm.Description, "Description", resp) {
+	if !util.IsValidLength(reflectType, vm.Description, "Description", resp) {
 		return false
 	}
 
@@ -102,7 +89,7 @@ func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Resp
 func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(vm)
-	if !isValidLength(reflectType, vm.Name, "Name", resp) {
+	if !util.IsValidLength(reflectType, vm.Name, "Name", resp) {
 		return false
 	}
 
@@ -113,7 +100,7 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 	}
 
 	if vm.Description != nil {
-		if !isValidLength(reflectType, *vm.Description, "Description", resp) {
+		if !util.IsValidLength(reflectType, *vm.Description, "Description", resp) {
 			return false
 		}
 	}
@@ -144,7 +131,7 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 func isValidDiskRequest(disk ui_virtz.DiskRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(disk)
-	if !isValidLength(reflectType, disk.Name, "Name", resp) {
+	if !util.IsValidLength(reflectType, disk.Name, "Name", resp) {
 		return false
 	}
 
@@ -152,7 +139,7 @@ func isValidDiskRequest(disk ui_virtz.DiskRequest, resp *restful.Response) bool 
 		return false
 	}
 
-	if !isValidLength(reflectType, disk.Description, "Description", resp) {
+	if !util.IsValidLength(reflectType, disk.Description, "Description", resp) {
 		return false
 	}
 
@@ -166,7 +153,7 @@ func isValidDiskRequest(disk ui_virtz.DiskRequest, resp *restful.Response) bool 
 func isValidModifyDiskRequest(disk ui_virtz.ModifyDiskRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(disk)
-	if !isValidLength(reflectType, disk.Name, "Name", resp) {
+	if !util.IsValidLength(reflectType, disk.Name, "Name", resp) {
 		return false
 	}
 
@@ -177,7 +164,7 @@ func isValidModifyDiskRequest(disk ui_virtz.ModifyDiskRequest, resp *restful.Res
 	}
 
 	if disk.Description != nil {
-		if !isValidLength(reflectType, *disk.Description, "Description", resp) {
+		if !util.IsValidLength(reflectType, *disk.Description, "Description", resp) {
 			return false
 		}
 	}
@@ -194,7 +181,7 @@ func isValidModifyDiskRequest(disk ui_virtz.ModifyDiskRequest, resp *restful.Res
 func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(image)
-	if !isValidLength(reflectType, image.Name, "Name", resp) {
+	if !util.IsValidLength(reflectType, image.Name, "Name", resp) {
 		return false
 	}
 
@@ -202,7 +189,7 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 		return false
 	}
 
-	if !isValidLength(reflectType, image.Description, "Description", resp) {
+	if !util.IsValidLength(reflectType, image.Description, "Description", resp) {
 		return false
 	}
 
@@ -232,7 +219,7 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 func isValidCloneImageRequest(image ui_virtz.CloneImageRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(image)
-	if !isValidLength(reflectType, image.NewImageName, "DestinationImageName", resp) {
+	if !util.IsValidLength(reflectType, image.NewImageName, "DestinationImageName", resp) {
 		return false
 	}
 
@@ -246,7 +233,7 @@ func isValidCloneImageRequest(image ui_virtz.CloneImageRequest, resp *restful.Re
 func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(image)
-	if !isValidLength(reflectType, image.Name, "Name", resp) {
+	if !util.IsValidLength(reflectType, image.Name, "Name", resp) {
 		return false
 	}
 
@@ -257,7 +244,7 @@ func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.
 	}
 
 	if image.Description != nil {
-		if !isValidLength(reflectType, *image.Description, "Description", resp) {
+		if !util.IsValidLength(reflectType, *image.Description, "Description", resp) {
 			return false
 		}
 	}
@@ -292,7 +279,7 @@ func isValidImageSize(h *virtzhandler, namespace string, imageName string, newIm
 
 	oldImageSize, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationImageStorage], 10, 32)
 	if int(oldImageSize) >= newImageSize {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "The new image size must be larger than the old image size",
 		})
 		return false
@@ -309,7 +296,7 @@ func isValidDiskSize(h *virtzhandler, namespace string, diskName string, newDisk
 
 	oldDiskSize, _ := strconv.ParseUint(strings.Replace(diskVolume.Spec.Resources.Requests.Storage().String(), "Gi", "", -1), 10, 32)
 	if int(oldDiskSize) >= newDiskSize {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "The new disk size must be larger than the old disk size",
 		})
 		return false
@@ -319,7 +306,7 @@ func isValidDiskSize(h *virtzhandler, namespace string, diskName string, newDisk
 
 func isValidImageType(imageType string, resp *restful.Response) bool {
 	if imageType != "cloud" && imageType != "iso" {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "Image type should be 'cloud' or 'iso'",
 		})
 		return false
@@ -330,14 +317,14 @@ func isValidImageType(imageType string, resp *restful.Response) bool {
 func isValidMinioImageSize(minioClient *minio.Client, minioImageName string, resp *restful.Response) bool {
 	objectInfo, err := minioClient.StatObject(context.Background(), bucketName, minioImageName, minio.StatObjectOptions{})
 	if err != nil {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "Minio image does not exist",
 		})
 		return false
 	}
 
 	if objectInfo.Size <= 0 {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "Minio image '" + minioImageName + "' size should be larger than 0",
 		})
 		return false
@@ -355,7 +342,7 @@ func isValidOSFamily(osFamily string, resp *restful.Response) bool {
 		}
 	}
 
-	resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+	resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 		Reason: "OS family should be one of the following: centos, debian, ubuntu, fedora, windows",
 	})
 
@@ -371,7 +358,7 @@ func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) boo
 				continue
 			}
 			if _, ok := diskMap[disk.ID]; ok {
-				resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 					Reason: "Disk ID should be unique",
 				})
 				return false
@@ -386,7 +373,7 @@ func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) boo
 				continue
 			}
 			if _, ok := diskMap[disk.ID]; ok {
-				resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 					Reason: "Disk ID should be unique",
 				})
 				return false
@@ -398,103 +385,4 @@ func isValidDiskDuplicated(diskSpecList interface{}, resp *restful.Response) boo
 		return false
 	}
 
-}
-
-// Return true if no duplicated key in Labels.
-func isValidLabelDuplicated(labels []ui_virtz.Label, resp *restful.Response) bool {
-	keyMap := make(map[string]bool)
-	for _, label := range labels { // Empty array is also valid.
-		if _, ok := keyMap[label.Key]; ok {
-			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-				Reason: "Label Key should be unique",
-			})
-			return false
-		}
-		if isValidLabel(label, resp) {
-			keyMap[label.Key] = true
-		} else {
-			return false
-		}
-	}
-	return true
-}
-
-// Return true if no duplicated key in NodeSelector.
-func isValidNodeSelectorDuplicated(nodeSelectors []ui_virtz.NodeSelector, resp *restful.Response) bool {
-	keyMap := make(map[string]bool)
-	for _, nodeSelector := range nodeSelectors { // Empty array is also valid.
-		if _, ok := keyMap[nodeSelector.Key]; ok {
-			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-				Reason: "NodeSelector Key should be unique",
-			})
-			return false
-		}
-		if isValidLabel(nodeSelector, resp) {
-			keyMap[nodeSelector.Key] = true
-		} else {
-			return false
-		}
-	}
-	return true
-}
-
-func isValidLabel(item interface{}, resp *restful.Response) bool {
-	var reflectType reflect.Type
-	var key string
-	var value string
-	switch label := item.(type) {
-	case ui_virtz.Label:
-		reflectType = reflect.TypeOf(label)
-		key = label.Key
-		value = label.Value
-	case ui_virtz.NodeSelector:
-		reflectType = reflect.TypeOf(label)
-		key = label.Key
-		value = label.Value
-	default:
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Unknown type",
-		})
-		return false
-	}
-
-	if !isValidLength(reflectType, key, "Key", resp) {
-		return false
-	}
-
-	if !isValidKeyString(key, resp) {
-		return false
-	}
-
-	if !isValidLength(reflectType, value, "Value", resp) {
-		return false
-	}
-
-	if !isValidValueString(value, resp) {
-		return false
-	}
-
-	return true
-}
-
-func isValidKeyString(valueToValidate string, resp *restful.Response) bool {
-	validRegex := regexp.MustCompile("^[A-Za-z0-9-_./]+$")
-	if !validRegex.MatchString(valueToValidate) {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)",
-		})
-		return false
-	}
-	return true
-}
-
-func isValidValueString(valueToValidate string, resp *restful.Response) bool {
-	validRegex := regexp.MustCompile("^[A-Za-z0-9-_.]*$") // Also match "", so use '*'
-	if !validRegex.MatchString(valueToValidate) {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot)",
-		})
-		return false
-	}
-	return true
 }

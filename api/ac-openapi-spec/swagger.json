@@ -805,7 +805,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -896,7 +896,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -1012,7 +1012,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -1059,7 +1059,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -1150,7 +1150,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -1266,7 +1266,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -1357,7 +1357,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -2047,6 +2047,16 @@
         }
       }
     },
+    "util.BadRequestError": {
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
     "v1.ClusterRouterPolicy": {
       "required": [
         "destination",
@@ -2461,16 +2471,6 @@
           "type": "string"
         },
         "vpc": {
-          "type": "string"
-        }
-      }
-    },
-    "virtualization.BadRequestError": {
-      "required": [
-        "reason"
-      ],
-      "properties": {
-        "reason": {
           "type": "string"
         }
       }

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/klog"
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/informers"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 	"kubesphere.io/kubesphere/pkg/models/quotas"
 	"kubevirt.io/client-go/kubecli"
 
@@ -36,10 +38,6 @@ type virtzhandler struct {
 	minioClient         *minio.Client
 	k8sClient           kubernetes.Interface
 	kubevirtClient      kubecli.KubevirtClient
-}
-
-type BadRequestError struct {
-	Reason string `json:"reason"`
 }
 
 func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory, minioClient *minio.Client, virtClient kubecli.KubevirtClient) virtzhandler {
@@ -70,11 +68,13 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	if !isValidLabelDuplicated(ui_vm.Labels, resp) {
+	validateType := reflect.TypeOf(ui_vm.Labels).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.Labels), ui_virtz.ConvertLabelToMap(ui_vm.Labels), resp) {
 		return
 	}
 
-	if !isValidNodeSelectorDuplicated(ui_vm.NodeSelector, resp) {
+	validateType = reflect.TypeOf(ui_vm.NodeSelector).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.NodeSelector), ui_virtz.ConvertLabelToMap(ui_vm.NodeSelector), resp) {
 		return
 	}
 
@@ -109,11 +109,13 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	if !isValidLabelDuplicated(ui_vm.Labels, resp) {
+	validateType := reflect.TypeOf(ui_vm.Labels).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.Labels), ui_virtz.ConvertLabelToMap(ui_vm.Labels), resp) {
 		return
 	}
 
-	if !isValidNodeSelectorDuplicated(ui_vm.NodeSelector, resp) {
+	validateType = reflect.TypeOf(ui_vm.NodeSelector).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.NodeSelector), ui_virtz.ConvertLabelToMap(ui_vm.NodeSelector), resp) {
 		return
 	}
 

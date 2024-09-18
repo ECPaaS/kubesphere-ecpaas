@@ -690,7 +690,7 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 						}
 						v.k8sclient.CoreV1().Pods(namespace).Update(context.Background(), &pod, metav1.UpdateOptions{})
 						break; // no need to iterate remaining pods
-					} else {
+					} else if err != nil {
 						klog.Error(err)
 					}
 				}
