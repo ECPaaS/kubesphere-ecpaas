@@ -81,7 +81,6 @@ func AddToContainer(c *restful.Container, factory informers.InformerFactory, k8s
 	ws.Route(ws.GET("/metering/price").
 		To(handler.HandlePriceInfoQuery).
 		Doc("Get resource price.").
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.WorkspaceMetersTag}).
 		Writes(metering.PriceResponse{}).
 		Returns(http.StatusOK, api.StatusOK, metering.PriceResponse{}))
 
