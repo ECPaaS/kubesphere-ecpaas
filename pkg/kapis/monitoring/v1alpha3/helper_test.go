@@ -405,8 +405,8 @@ func TestExportMetrics(t *testing.T) {
 	}
 
 	fakeExportedSeries := []monitoring.ExportPoint{
-		{TimestampExportPoint: 1616641733, ValueExportPoint: 2},
-		{TimestampExportPoint: 1616641800, ValueExportPoint: 4},
+		{1616641733, 2},
+		{1616641800, 4},
 	}
 
 	tests := []struct {

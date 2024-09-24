@@ -30,7 +30,6 @@ const (
 	METER_RESOURCE_TYPE_NET_INGRESS
 	METER_RESOURCE_TYPE_NET_EGRESS
 	METER_RESOURCE_TYPE_PVC
-	METER_RESOURCE_TYPE_GPU
 
 	meteringConfigDir  = "/etc/kubesphere/metering/"
 	meteringConfigName = "ks-metering.yaml"
@@ -45,7 +44,6 @@ var meterResourceUnitMap = map[int]string{
 	METER_RESOURCE_TYPE_NET_INGRESS: "bytes",
 	METER_RESOURCE_TYPE_NET_EGRESS:  "bytes",
 	METER_RESOURCE_TYPE_PVC:         "bytes",
-	METER_RESOURCE_TYPE_GPU:         "percentages",
 }
 
 var MeterResourceMap = map[string]int{
@@ -64,13 +62,11 @@ var MeterResourceMap = map[string]int{
 	"meter_workspace_net_bytes_transmitted":      METER_RESOURCE_TYPE_NET_EGRESS,
 	"meter_workspace_net_bytes_received":         METER_RESOURCE_TYPE_NET_INGRESS,
 	"meter_workspace_pvc_bytes_total":            METER_RESOURCE_TYPE_PVC,
-	"meter_workspace_gpu_usage":                  METER_RESOURCE_TYPE_GPU,
 	"meter_namespace_cpu_usage":                  METER_RESOURCE_TYPE_CPU,
 	"meter_namespace_memory_usage_wo_cache":      METER_RESOURCE_TYPE_MEM,
 	"meter_namespace_net_bytes_transmitted":      METER_RESOURCE_TYPE_NET_EGRESS,
 	"meter_namespace_net_bytes_received":         METER_RESOURCE_TYPE_NET_INGRESS,
 	"meter_namespace_pvc_bytes_total":            METER_RESOURCE_TYPE_PVC,
-	"meter_namespace_gpu_usage":                  METER_RESOURCE_TYPE_GPU,
 	"meter_application_cpu_usage":                METER_RESOURCE_TYPE_CPU,
 	"meter_application_memory_usage_wo_cache":    METER_RESOURCE_TYPE_MEM,
 	"meter_application_net_bytes_transmitted":    METER_RESOURCE_TYPE_NET_EGRESS,
@@ -101,10 +97,10 @@ func getMaxPointValue(points []monitoring.Point) string {
 	var max *big.Float
 	for i, p := range points {
 		if i == 0 {
-			max = new(big.Float).SetFloat64(p.Value)
+			max = new(big.Float).SetFloat64(p.Value())
 		}
 
-		pf := new(big.Float).SetFloat64(p.Value)
+		pf := new(big.Float).SetFloat64(p.Value())
 		if pf.Cmp(max) == 1 {
 			max = pf
 		}
@@ -117,10 +113,10 @@ func getMinPointValue(points []monitoring.Point) string {
 	var min *big.Float
 	for i, p := range points {
 		if i == 0 {
-			min = new(big.Float).SetFloat64(p.Value)
+			min = new(big.Float).SetFloat64(p.Value())
 		}
 
-		pf := new(big.Float).SetFloat64(p.Value)
+		pf := new(big.Float).SetFloat64(p.Value())
 		if min.Cmp(pf) == 1 {
 			min = pf
 		}
@@ -133,7 +129,7 @@ func getSumPointValue(points []monitoring.Point) string {
 	sum := new(big.Float).SetFloat64(0)
 
 	for _, p := range points {
-		pf := new(big.Float).SetFloat64(p.Value)
+		pf := new(big.Float).SetFloat64(p.Value())
 		sum.Add(sum, pf)
 	}
 
@@ -215,11 +211,6 @@ func getFeeWithMeterName(meterName string, sum string, priceInfo meteringclient.
 			s.Quo(s, oneGiga)
 
 			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), s.Mul(s, PvcPerGigabytesPerHour))
-		case METER_RESOURCE_TYPE_GPU:
-			GpuPerPercentagePerHour := new(big.Float).SetFloat64(priceInfo.GpuPerPercentagePerHour)
-			tmp := s.Mul(s, GpuPerPercentagePerHour)
-
-			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
 		}
 
 		return ""

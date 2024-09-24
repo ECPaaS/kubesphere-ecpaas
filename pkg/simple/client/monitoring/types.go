@@ -58,10 +58,7 @@ type DashboardEntity struct {
 
 // The first element is the timestamp, the second is the metric value.
 // eg, [1585658599.195, 0.528]
-type Point struct {
-	Timestamp float64
-	Value     float64
-}
+type Point [2]float64
 
 type MetricValue struct {
 	Metadata map[string]string `json:"metric,omitempty" description:"time series labels"`
@@ -98,30 +95,30 @@ func (mv *MetricValue) TransferToExportedMetricValue() {
 	return
 }
 
-// func (p Point) Timestamp() float64 {
-// 	return p[0]
-// }
+func (p Point) Timestamp() float64 {
+	return p[0]
+}
 
-// func (p Point) Value() float64 {
-// 	return p[1]
-// }
+func (p Point) Value() float64 {
+	return p[1]
+}
 
 func (p Point) transferToExported() ExportPoint {
-	return ExportPoint{p.Timestamp, p.Value}
+	return ExportPoint{p[0], p[1]}
 }
 
 func (p Point) Add(other Point) Point {
-	return Point{p.Timestamp, p.Value + other.Value}
+	return Point{p[0], p[1] + other[1]}
 }
 
 // MarshalJSON implements json.Marshaler. It will be called when writing JSON to HTTP response
 // Inspired by prometheus/client_golang
 func (p Point) MarshalJSON() ([]byte, error) {
-	t, err := jsoniter.Marshal(p.Timestamp)
+	t, err := jsoniter.Marshal(p.Timestamp())
 	if err != nil {
 		return nil, err
 	}
-	v, err := jsoniter.Marshal(strconv.FormatFloat(p.Value, 'f', -1, 64))
+	v, err := jsoniter.Marshal(strconv.FormatFloat(p.Value(), 'f', -1, 64))
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +153,8 @@ func (p *Point) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	p.Timestamp = ts
-	p.Value = valf
+	p[0] = ts
+	p[1] = valf
 	return nil
 }
 
@@ -169,21 +166,18 @@ type CSVPoint struct {
 	ResourceUnit string `csv:"unit"`
 }
 
-type ExportPoint struct {
-	TimestampExportPoint float64
-	ValueExportPoint     float64
-}
+type ExportPoint [2]float64
 
 func (p ExportPoint) Timestamp() string {
-	return time.Unix(int64(p.TimestampExportPoint), 0).Format("2006-01-02 03:04:05 PM")
+	return time.Unix(int64(p[0]), 0).Format("2006-01-02 03:04:05 PM")
 }
 
-// func (p ExportPoint) Value() float64 {
-// 	return p[1]
-// }
+func (p ExportPoint) Value() float64 {
+	return p[1]
+}
 
 func (p ExportPoint) Format() string {
-	return p.Timestamp() + " " + strconv.FormatFloat(p.ValueExportPoint, 'f', -1, 64)
+	return p.Timestamp() + " " + strconv.FormatFloat(p.Value(), 'f', -1, 64)
 }
 
 func (p ExportPoint) TransformToCSVPoint(metricName string, selector string, resourceUnit string) CSVPoint {
@@ -191,7 +185,7 @@ func (p ExportPoint) TransformToCSVPoint(metricName string, selector string, res
 		MetricName:   metricName,
 		Selector:     selector,
 		Time:         p.Timestamp(),
-		Value:        strconv.FormatFloat(p.ValueExportPoint, 'f', -1, 64),
+		Value:        strconv.FormatFloat(p.Value(), 'f', -1, 64),
 		ResourceUnit: resourceUnit,
 	}
 }

@@ -121,63 +121,61 @@ var promQLTemplates = map[string]string{
 	"node_device_size_utilisation": `1 - sum by(device, node, host_ip, role) (node_filesystem_avail_bytes{device!~"/dev/loop\\d+",device=~"/dev/.*",job="node-exporter"} * on(namespace, pod) group_left(node, host_ip, role) node_namespace_pod:kube_pod_info:{$1}) / sum by(device, node, host_ip, role) (node_filesystem_size_bytes{device!~"/dev/loop\\d+",device=~"/dev/.*",job="node-exporter"} * on(namespace, pod) group_left(node, host_ip, role) node_namespace_pod:kube_pod_info:{$1})`,
 
 	// workspace
-	"workspace_cpu_usage":                  `round(sum by (workspace) (namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}), 0.001)`,
-	"workspace_memory_usage":               `sum by (workspace) (namespace:container_memory_usage_bytes:sum{namespace!="", $2})`,
-	"workspace_memory_usage_wo_cache":      `sum by (workspace) (namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $2})`,
-	"workspace_net_bytes_transmitted":      `sum by (workspace) (sum by (namespace) (irate(container_network_transmit_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)`,
-	"workspace_net_bytes_received":         `sum by (workspace) (sum by (namespace) (irate(container_network_receive_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)`,
-	"workspace_net_packets_transmitted":    `sum by (workspace) (sum by (namespace) (irate(container_network_transmit_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)`,
-	"workspace_net_packets_received":       `sum by (workspace) (sum by (namespace) (irate(container_network_receive_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)`,
-	"workspace_pod_count":                  `sum by (workspace) (kube_pod_status_phase{phase!~"Failed|Succeeded", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2})) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)`,
-	"workspace_pod_running_count":          `sum by (workspace) (kube_pod_status_phase{phase="Running", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2})) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)`,
-	"workspace_pod_succeeded_count":        `sum by (workspace) (kube_pod_status_phase{phase="Succeeded", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2})) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)`,
-	"workspace_pod_abnormal_count":         `count by (workspace) ((kube_pod_info{node!=""} unless on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"}>0) unless on (pod, namespace) ((kube_pod_status_ready{job="kube-state-metrics", condition="true"}>0) and on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Running"}>0)) unless on (pod, namespace) (kube_pod_container_status_waiting_reason{job="kube-state-metrics", reason="ContainerCreating"}>0)) * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_ingresses_extensions_count": `sum by (workspace) (kube_ingress_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_cronjob_count":              `sum by (workspace) (kube_cronjob_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_pvc_count":                  `sum by (workspace) (kube_persistentvolumeclaim_info{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_daemonset_count":            `sum by (workspace) (kube_daemonset_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_deployment_count":           `sum by (workspace) (kube_deployment_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_endpoint_count":             `sum by (workspace) (kube_endpoint_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_hpa_count":                  `sum by (workspace) (kube_horizontalpodautoscaler_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_job_count":                  `sum by (workspace) (kube_job_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_statefulset_count":          `sum by (workspace) (kube_statefulset_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_replicaset_count":           `count by (workspace) (kube_replicaset_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_service_count":              `sum by (workspace) (kube_service_info{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_secret_count":               `sum by (workspace) (kube_secret_info{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_pod_abnormal_ratio":         `count by (workspace) ((kube_pod_info{node!=""} unless on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"}>0) unless on (pod, namespace) ((kube_pod_status_ready{job="kube-state-metrics", condition="true"}>0) and on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Running"}>0)) unless on (pod, namespace) (kube_pod_container_status_waiting_reason{job="kube-state-metrics", reason="ContainerCreating"}>0)) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) / sum by (workspace) (kube_pod_status_phase{phase!="Succeeded", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$2}))`,
-	"workspace_gpu_usage":                  `sum by (workspace) (DCGM_FI_DEV_GPU_UTIL{exported_namespace!=""} * on (exported_namespace) group_left(workspace)(label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)"))) or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+	"workspace_cpu_usage":                  `round(sum by (workspace) (namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}), 0.001)`,
+	"workspace_memory_usage":               `sum by (workspace) (namespace:container_memory_usage_bytes:sum{namespace!="", $1})`,
+	"workspace_memory_usage_wo_cache":      `sum by (workspace) (namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $1})`,
+	"workspace_net_bytes_transmitted":      `sum by (workspace) (sum by (namespace) (irate(container_network_transmit_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)`,
+	"workspace_net_bytes_received":         `sum by (workspace) (sum by (namespace) (irate(container_network_receive_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)`,
+	"workspace_net_packets_transmitted":    `sum by (workspace) (sum by (namespace) (irate(container_network_transmit_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)`,
+	"workspace_net_packets_received":       `sum by (workspace) (sum by (namespace) (irate(container_network_receive_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m])) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)`,
+	"workspace_pod_count":                  `sum by (workspace) (kube_pod_status_phase{phase!~"Failed|Succeeded", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1})) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)`,
+	"workspace_pod_running_count":          `sum by (workspace) (kube_pod_status_phase{phase="Running", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1})) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)`,
+	"workspace_pod_succeeded_count":        `sum by (workspace) (kube_pod_status_phase{phase="Succeeded", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1})) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)`,
+	"workspace_pod_abnormal_count":         `count by (workspace) ((kube_pod_info{node!=""} unless on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"}>0) unless on (pod, namespace) ((kube_pod_status_ready{job="kube-state-metrics", condition="true"}>0) and on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Running"}>0)) unless on (pod, namespace) (kube_pod_container_status_waiting_reason{job="kube-state-metrics", reason="ContainerCreating"}>0)) * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_ingresses_extensions_count": `sum by (workspace) (kube_ingress_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_cronjob_count":              `sum by (workspace) (kube_cronjob_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_pvc_count":                  `sum by (workspace) (kube_persistentvolumeclaim_info{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_daemonset_count":            `sum by (workspace) (kube_daemonset_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_deployment_count":           `sum by (workspace) (kube_deployment_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_endpoint_count":             `sum by (workspace) (kube_endpoint_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_hpa_count":                  `sum by (workspace) (kube_horizontalpodautoscaler_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_job_count":                  `sum by (workspace) (kube_job_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_statefulset_count":          `sum by (workspace) (kube_statefulset_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_replicaset_count":           `count by (workspace) (kube_replicaset_labels{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_service_count":              `sum by (workspace) (kube_service_info{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_secret_count":               `sum by (workspace) (kube_secret_info{namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
+	"workspace_pod_abnormal_ratio":         `count by (workspace) ((kube_pod_info{node!=""} unless on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"}>0) unless on (pod, namespace) ((kube_pod_status_ready{job="kube-state-metrics", condition="true"}>0) and on (pod, namespace) (kube_pod_status_phase{job="kube-state-metrics", phase="Running"}>0)) unless on (pod, namespace) (kube_pod_container_status_waiting_reason{job="kube-state-metrics", reason="ContainerCreating"}>0)) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) / sum by (workspace) (kube_pod_status_phase{phase!="Succeeded", namespace!=""} * on (namespace) group_left(workspace)(kube_namespace_labels{$1}))`,
 
 	//namespace
-	"namespace_cpu_usage":                  `round(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}, 0.001)`,
-	"namespace_memory_usage":               `namespace:container_memory_usage_bytes:sum{namespace!="", $2}`,
-	"namespace_memory_usage_wo_cache":      `namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $2}`,
-	"namespace_net_bytes_transmitted":      `sum by (namespace) (irate(container_network_transmit_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)`,
-	"namespace_net_bytes_received":         `sum by (namespace) (irate(container_network_receive_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)`,
-	"namespace_net_packets_transmitted":    `sum by (namespace) (irate(container_network_transmit_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)`,
-	"namespace_net_packets_received":       `sum by (namespace) (irate(container_network_receive_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)`,
-	"namespace_pod_count":                  `sum by (namespace) (kube_pod_status_phase{phase!~"Failed|Succeeded", namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)`,
-	"namespace_pod_running_count":          `sum by (namespace) (kube_pod_status_phase{phase="Running", namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)`,
-	"namespace_pod_succeeded_count":        `sum by (namespace) (kube_pod_status_phase{phase="Succeeded", namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2}) or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)`,
-	"namespace_pod_abnormal_count":         `namespace:pod_abnormal:count{namespace!="", $2}`,
-	"namespace_pod_abnormal_ratio":         `namespace:pod_abnormal:ratio{namespace!="", $2}`,
-	"namespace_memory_limit_hard":          `min by (namespace) (kube_resourcequota{resourcequota!="quota", type="hard", namespace!="", resource="limits.memory"} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_cpu_limit_hard":             `min by (namespace) (kube_resourcequota{resourcequota!="quota", type="hard", namespace!="", resource="limits.cpu"} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_pod_count_hard":             `min by (namespace) (kube_resourcequota{resourcequota!="quota", type="hard", namespace!="", resource="count/pods"} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_cronjob_count":              `sum by (namespace) (kube_cronjob_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_pvc_count":                  `sum by (namespace) (kube_persistentvolumeclaim_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_daemonset_count":            `sum by (namespace) (kube_daemonset_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_deployment_count":           `sum by (namespace) (kube_deployment_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_endpoint_count":             `sum by (namespace) (kube_endpoint_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_hpa_count":                  `sum by (namespace) (kube_horizontalpodautoscaler_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_job_count":                  `sum by (namespace) (kube_job_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_statefulset_count":          `sum by (namespace) (kube_statefulset_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_replicaset_count":           `count by (namespace) (kube_replicaset_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_service_count":              `sum by (namespace) (kube_service_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_secret_count":               `sum by (namespace) (kube_secret_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_configmap_count":            `sum by (namespace) (kube_configmap_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_ingresses_extensions_count": `sum by (namespace) (kube_ingress_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_s2ibuilder_count":           `sum by (namespace) (s2i_s2ibuilder_created{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$2})`,
-	"namespace_gpu_usage":                  `sum by (namespace) (DCGM_FI_DEV_GPU_UTIL{exported_namespace!=""} * on (exported_namespace) group_left(workspace)(label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)"))) or on(namespace) max by(namespace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+	"namespace_cpu_usage":                  `round(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}, 0.001)`,
+	"namespace_memory_usage":               `namespace:container_memory_usage_bytes:sum{namespace!="", $1}`,
+	"namespace_memory_usage_wo_cache":      `namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $1}`,
+	"namespace_net_bytes_transmitted":      `sum by (namespace) (irate(container_network_transmit_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)`,
+	"namespace_net_bytes_received":         `sum by (namespace) (irate(container_network_receive_bytes_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)`,
+	"namespace_net_packets_transmitted":    `sum by (namespace) (irate(container_network_transmit_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)`,
+	"namespace_net_packets_received":       `sum by (namespace) (irate(container_network_receive_packets_total{namespace!="", pod!="", interface!~"^(cali.+|tunl.+|dummy.+|kube.+|flannel.+|cni.+|docker.+|veth.+|lo.*)", job="kubelet"}[5m]) * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)`,
+	"namespace_pod_count":                  `sum by (namespace) (kube_pod_status_phase{phase!~"Failed|Succeeded", namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)`,
+	"namespace_pod_running_count":          `sum by (namespace) (kube_pod_status_phase{phase="Running", namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)`,
+	"namespace_pod_succeeded_count":        `sum by (namespace) (kube_pod_status_phase{phase="Succeeded", namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1}) or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)`,
+	"namespace_pod_abnormal_count":         `namespace:pod_abnormal:count{namespace!="", $1}`,
+	"namespace_pod_abnormal_ratio":         `namespace:pod_abnormal:ratio{namespace!="", $1}`,
+	"namespace_memory_limit_hard":          `min by (namespace) (kube_resourcequota{resourcequota!="quota", type="hard", namespace!="", resource="limits.memory"} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_cpu_limit_hard":             `min by (namespace) (kube_resourcequota{resourcequota!="quota", type="hard", namespace!="", resource="limits.cpu"} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_pod_count_hard":             `min by (namespace) (kube_resourcequota{resourcequota!="quota", type="hard", namespace!="", resource="count/pods"} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_cronjob_count":              `sum by (namespace) (kube_cronjob_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_pvc_count":                  `sum by (namespace) (kube_persistentvolumeclaim_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_daemonset_count":            `sum by (namespace) (kube_daemonset_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_deployment_count":           `sum by (namespace) (kube_deployment_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_endpoint_count":             `sum by (namespace) (kube_endpoint_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_hpa_count":                  `sum by (namespace) (kube_horizontalpodautoscaler_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_job_count":                  `sum by (namespace) (kube_job_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_statefulset_count":          `sum by (namespace) (kube_statefulset_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_replicaset_count":           `count by (namespace) (kube_replicaset_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_service_count":              `sum by (namespace) (kube_service_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_secret_count":               `sum by (namespace) (kube_secret_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_configmap_count":            `sum by (namespace) (kube_configmap_info{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_ingresses_extensions_count": `sum by (namespace) (kube_ingress_labels{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
+	"namespace_s2ibuilder_count":           `sum by (namespace) (s2i_s2ibuilder_created{namespace!=""} * on (namespace) group_left(workspace) kube_namespace_labels{$1})`,
 
 	// ingress
 	"ingress_request_count":                 `round(sum(increase(nginx_ingress_controller_requests{$1,$2}[$3])))`,
@@ -336,7 +334,7 @@ func makeWorkspaceMetricExpr(tmpl string, o monitoring.QueryOptions) string {
 	} else {
 		workspaceSelector = fmt.Sprintf(`workspace=~"%s", workspace!=""`, o.ResourceFilter)
 	}
-	return strings.Replace(tmpl, "$2", workspaceSelector, -1)
+	return strings.Replace(tmpl, "$1", workspaceSelector, -1)
 }
 
 func makeNamespaceMetricExpr(tmpl string, o monitoring.QueryOptions) string {
@@ -346,7 +344,7 @@ func makeNamespaceMetricExpr(tmpl string, o monitoring.QueryOptions) string {
 	// GET /workspaces/{workspace}/namespaces
 	if o.WorkspaceName != "" {
 		namespaceSelector = fmt.Sprintf(`workspace="%s", namespace=~"%s"`, o.WorkspaceName, o.ResourceFilter)
-		return strings.Replace(tmpl, "$2", namespaceSelector, -1)
+		return strings.Replace(tmpl, "$1", namespaceSelector, -1)
 	}
 
 	// For monitoring the specific namespaces
@@ -357,7 +355,7 @@ func makeNamespaceMetricExpr(tmpl string, o monitoring.QueryOptions) string {
 	} else {
 		namespaceSelector = fmt.Sprintf(`namespace=~"%s"`, o.ResourceFilter)
 	}
-	return strings.Replace(tmpl, "$2", namespaceSelector, -1)
+	return strings.Replace(tmpl, "$1", namespaceSelector, -1)
 }
 
 func makeWorkloadMetricExpr(metric, tmpl string, o monitoring.QueryOptions) string {

@@ -243,18 +243,18 @@ round(
 					owner_kind!="Job",
 					namespace!="",
 					resource="cpu",
-					$2
+					$1
 				}[$step]
 			)
 		) >=
 		sum by (workspace) (
-			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}[$step])
 		)
 	)
 	or
 	(
 		sum by (workspace) (
-			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}[$step])
 		) >
 		sum by (workspace) (
 			avg_over_time(
@@ -262,7 +262,7 @@ round(
 					owner_kind!="Job",
 					namespace!="",
 					resource="cpu",
-					$2
+					$1
 				}[$step]
 			)
 		)
@@ -270,7 +270,7 @@ round(
 	or
 	(
 		sum by (workspace) (
-			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}[$step])
 		)
 	),
 	0.001
@@ -285,23 +285,23 @@ round(
 					owner_kind!="Job",
 					namespace!="",
 					resource="memory",
-					$2
+					$1
 				}[$step]
 			)
 		) >=
 		sum by (workspace) (
-			avg_over_time(namespace:container_memory_usage_bytes:sum{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_memory_usage_bytes:sum{namespace!="", $1}[$step])
 		)
 	)
 	or
 	(
 		sum by (workspace) (
-			avg_over_time(namespace:container_memory_usage_bytes:sum{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_memory_usage_bytes:sum{namespace!="", $1}[$step])
 		) >
 		sum by (workspace) (
 			avg_over_time(
 				namespace:kube_pod_resource_request:sum{
-					owner_kind!="Job", namespace!="", resource="memory", $2
+					owner_kind!="Job", namespace!="", resource="memory", $1
 				}[$step]
 			)
 		)
@@ -309,7 +309,7 @@ round(
 	or
 	(
 		sum by (workspace) (
-			avg_over_time(namespace:container_memory_usage_bytes:sum{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_memory_usage_bytes:sum{namespace!="", $1}[$step])
 		)
 	),
 	1
@@ -330,8 +330,8 @@ round(
 					}[$step]
 				)
 			) * on (namespace) group_left(workspace)
-			kube_namespace_labels{$2}
-		) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)
+			kube_namespace_labels{$1}
+		) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)
 	) / $factor, 
 	1
 )`,
@@ -350,8 +350,8 @@ round(
 					}[$step]
 				)
 			) * on (namespace) group_left(workspace)
-			kube_namespace_labels{$2}
-		) or on(workspace) max by(workspace) (kube_namespace_labels{$2} * 0)
+			kube_namespace_labels{$1}
+		) or on(workspace) max by(workspace) (kube_namespace_labels{$1} * 0)
 	) / $factor, 
 	1
 )`,
@@ -360,27 +360,9 @@ round(
 sum (
 	topk(
 		1,
-		avg_over_time(namespace:pvc_bytes_total:sum{$2}[$step])
+		avg_over_time(namespace:pvc_bytes_total:sum{$1}[$step])
 	) by (persistentvolumeclaim, workspace)
 ) by (workspace)`,
-
-	"meter_workspace_gpu_usage": `
-sum by (workspace) (
-	sum_over_time (
-		DCGM_FI_DEV_GPU_UTIL{
-			exported_namespace!="",
-			exported_pod!=""
-		}[$step]
-	) * on (exported_namespace) group_left(workspace)(
-		label_replace(
-			kube_namespace_labels{$2},
-			"exported_namespace", 
-			"$1", 
-			"namespace", 
-			"(.*)"
-		)
-	)
-) or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
 
 	// namespace
 	"meter_namespace_cpu_usage": `
@@ -392,22 +374,22 @@ round(
 					owner_kind!="Job",
 					namespace!="",
 					resource="cpu",
-					$2
+					$1
 				}[$step]
 			)
 		) >=
 		sum by (namespace) (
-			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}[$step])
 		)
 	)
 	or
 	(
 		sum by (namespace) (
-			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}[$step])
 		) >
 		sum by (namespace) (
 			avg_over_time(
-				namespace:kube_pod_resource_request:sum{owner_kind!="Job", namespace!="", resource="cpu", $2}[$step]
+				namespace:kube_pod_resource_request:sum{owner_kind!="Job", namespace!="", resource="cpu", $1}[$step]
 			)
 		)
 	)
@@ -415,7 +397,7 @@ round(
 	(
 		sum by (namespace) (
 			avg_over_time(
-				namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $2}[$step]
+				namespace:container_cpu_usage_seconds_total:sum_rate{namespace!="", $1}[$step]
 			)
 		)
 	),
@@ -431,23 +413,23 @@ round(
 					owner_kind!="Job",
 					namespace!="",
 					resource="memory",
-					$2
+					$1
 				}[$step]
 			)
 		) >=
 		sum by (namespace) (
-			avg_over_time(namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $1}[$step])
 		)
 	)
 	or
 	(
 		sum by (namespace) (
-			avg_over_time(namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $2}[$step])
+			avg_over_time(namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $1}[$step])
 		) >
 		sum by (namespace) (
 			avg_over_time(
 				namespace:kube_pod_resource_request:sum{
-					owner_kind!="Job", namespace!="", resource="memory", $2
+					owner_kind!="Job", namespace!="", resource="memory", $1
 				}[$step]
 			)
 		)
@@ -456,7 +438,7 @@ round(
 	(
 		sum by (namespace) (
 			avg_over_time(
-				namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $2}[$step]
+				namespace:container_memory_usage_bytes_wo_cache:sum{namespace!="", $1}[$step]
 			)
 		)
 	),
@@ -476,9 +458,9 @@ round(
 				}[$step]
 			)
 			* on (namespace) group_left(workspace)
-			kube_namespace_labels{$2}
+			kube_namespace_labels{$1}
 		)
-		or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)
+		or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)
 	) / $factor, 
 	1
 )`,
@@ -496,9 +478,9 @@ round(
 				}[$step]
 			)
 			* on (namespace) group_left(workspace)
-			kube_namespace_labels{$2}
+			kube_namespace_labels{$1}
 		)
-		or on(namespace) max by(namespace) (kube_namespace_labels{$2} * 0)
+		or on(namespace) max by(namespace) (kube_namespace_labels{$1} * 0)
 	) / $factor, 
 	1
 )`,
@@ -507,27 +489,9 @@ round(
 sum (
 	topk(
 		1,
-		avg_over_time(namespace:pvc_bytes_total:sum{$2}[$step])
+		avg_over_time(namespace:pvc_bytes_total:sum{$1}[$step])
 	) by (persistentvolumeclaim, namespace)
 ) by (namespace)`,
-
-	"meter_namespace_gpu_usage": `
-sum by (exported_namespace) (
-	sum_over_time (
-		DCGM_FI_DEV_GPU_UTIL{
-			exported_namespace!="",
-			exported_pod!=""
-		}[$step]
-	) * on (exported_namespace) group_left(workspace)(
-		label_replace(
-			kube_namespace_labels{$2},
-			"exported_namespace", 
-			"$1", 
-			"namespace", 
-			"(.*)"
-		)
-	)
-) or on(exported_namespace) max by(exported_namespace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
 
 	// application
 	"meter_application_cpu_usage": `
