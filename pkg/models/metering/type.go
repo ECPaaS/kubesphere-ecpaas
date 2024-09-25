@@ -16,21 +16,23 @@ package metering
 
 type PriceInfo struct {
 	// currency unit, currently support CNY and USD
-	Currency string `json:"currency" description:"currency"`
+	Currency string `json:"currency" description:"currency code ref https://www.iban.com/currency-codes"`
 	// cpu cost with above currency unit for per core per hour
-	CpuPerCorePerHour float64 `json:"cpu_per_core_per_hour,omitempty" description:"cpu price"`
+	CpuPerCorePerHour float64 `json:"cpu_per_core_per_hour" description:"CPU usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// mem cost with above currency unit for per GB per hour
-	MemPerGigabytesPerHour float64 `json:"mem_per_gigabytes_per_hour,omitempty" description:"mem price"`
+	MemPerGigabytesPerHour float64 `json:"mem_per_gigabytes_per_hour" description:"Memory usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// ingress network traffic cost with above currency unit for per MB per hour
-	IngressNetworkTrafficPerMegabytesPerHour float64 `json:"ingress_network_traffic_per_megabytes_per_hour,omitempty" description:"ingress price"`
+	IngressNetworkTrafficPerMegabytesPerHour float64 `json:"ingress_network_traffic_per_megabytes_per_hour" description:"Ingress traffic count price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// egress network traffice cost with above currency unit for per MB per hour
-	EgressNetworkTrafficPerMegabytesPerHour float64 `json:"egress_network_traffic_per_megabytes_per_hour,omitempty" description:"egress price"`
+	EgressNetworkTrafficPerMegabytesPerHour float64 `json:"egress_network_traffic_per_megabytes_per_hour" description:"Egress traffic count price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// pvc cost with above currency unit for per GB per hour
-	PvcPerGigabytesPerHour float64 `json:"pvc_per_gigabytes_per_hour,omitempty" description:"pvc price"`
+	PvcPerGigabytesPerHour float64 `json:"pvc_per_gigabytes_per_hour" description:"PVC usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
+	// gpu cost with above currency unit for per percentage per hour
+	GpuPerPercentagePerHour float64 `json:"gpu_per_percentage_per_hour" description:"GPU usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
 }
 
 type PriceResponse struct {
-	RetentionDay string `json:"retention_day"`
+	RetentionDay string `json:"retention_day" default:"7d"`
 	PriceInfo    `json:",inline"`
 }
 

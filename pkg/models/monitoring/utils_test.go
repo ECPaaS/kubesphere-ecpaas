@@ -31,22 +31,22 @@ func TestGetMaxPointValue(t *testing.T) {
 	}{
 		{
 			actualPoints: []monitoring.Point{
-				{1.0, 2.0},
-				{3.0, 4.0},
+				{Timestamp: 1.0, Value: 2.0},
+				{Timestamp: 3.0, Value: 4.0},
 			},
 			expectedValue: "4.0000000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{2, 1},
-				{4, 3.1},
+				{Timestamp: 2, Value: 1},
+				{Timestamp: 4, Value: 3.1},
 			},
 			expectedValue: "3.1000000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{5, 100},
-				{6, 100000.001},
+				{Timestamp: 5, Value: 100},
+				{Timestamp: 6, Value: 100000.001},
 			},
 			expectedValue: "100000.0010000000",
 		},
@@ -69,22 +69,22 @@ func TestGetMinPointValue(t *testing.T) {
 	}{
 		{
 			actualPoints: []monitoring.Point{
-				{1.0, 2.0},
-				{3.0, 4.0},
+				{Timestamp: 1.0, Value: 2.0},
+				{Timestamp: 3.0, Value: 4.0},
 			},
 			expectedValue: "2.0000000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{2, 1},
-				{4, 3.1},
+				{Timestamp: 2, Value: 1},
+				{Timestamp: 4, Value: 3.1},
 			},
 			expectedValue: "1.0000000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{5, 100},
-				{6, 100000.001},
+				{Timestamp: 5, Value: 100},
+				{Timestamp: 6, Value: 100000.001},
 			},
 			expectedValue: "100.0000000000",
 		},
@@ -107,22 +107,22 @@ func TestGetSumPointValue(t *testing.T) {
 	}{
 		{
 			actualPoints: []monitoring.Point{
-				{1.0, 2.0},
-				{3.0, 4.0},
+				{Timestamp: 1.0, Value: 2.0},
+				{Timestamp: 3.0, Value: 4.0},
 			},
 			expectedValue: "6.0000000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{2, 1},
-				{4, 3.1},
+				{Timestamp: 2, Value: 1},
+				{Timestamp: 4, Value: 3.1},
 			},
 			expectedValue: "4.1000000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{5, 100},
-				{6, 100000.001},
+				{Timestamp: 5, Value: 100},
+				{Timestamp: 6, Value: 100000.001},
 			},
 			expectedValue: "100100.0010000000",
 		},
@@ -145,22 +145,22 @@ func TestGetAvgPointValue(t *testing.T) {
 	}{
 		{
 			actualPoints: []monitoring.Point{
-				{1.0, 2.0},
-				{3.0, 4.0},
+				{Timestamp: 1.0, Value: 2.0},
+				{Timestamp: 3.0, Value: 4.0},
 			},
 			expectedValue: "3.0000000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{2, 1},
-				{4, 3.1},
+				{Timestamp: 2, Value: 1},
+				{Timestamp: 4, Value: 3.1},
 			},
 			expectedValue: "2.0500000000",
 		},
 		{
 			actualPoints: []monitoring.Point{
-				{5, 100},
-				{6, 100000.001},
+				{Timestamp: 5, Value: 100},
+				{Timestamp: 6, Value: 100000.001},
 			},
 			expectedValue: "50050.0005000000",
 		},
@@ -215,44 +215,44 @@ func TestSquashPoints(t *testing.T) {
 	}{
 		{
 			input: []monitoring.Point{
-				{1, 1},
-				{2, 2},
-				{3, 3},
-				{4, 4},
-				{5, 5},
-				{6, 6},
-				{7, 7},
-				{8, 8},
+				{Timestamp: 1, Value: 1},
+				{Timestamp: 2, Value: 2},
+				{Timestamp: 3, Value: 3},
+				{Timestamp: 4, Value: 4},
+				{Timestamp: 5, Value: 5},
+				{Timestamp: 6, Value: 6},
+				{Timestamp: 7, Value: 7},
+				{Timestamp: 8, Value: 8},
 			},
 			factor: 1,
 			expected: []monitoring.Point{
-				{1, 1},
-				{2, 2},
-				{3, 3},
-				{4, 4},
-				{5, 5},
-				{6, 6},
-				{7, 7},
-				{8, 8},
+				{Timestamp: 1, Value: 1},
+				{Timestamp: 2, Value: 2},
+				{Timestamp: 3, Value: 3},
+				{Timestamp: 4, Value: 4},
+				{Timestamp: 5, Value: 5},
+				{Timestamp: 6, Value: 6},
+				{Timestamp: 7, Value: 7},
+				{Timestamp: 8, Value: 8},
 			},
 		},
 		{
 			input: []monitoring.Point{
-				{1, 1},
-				{2, 2},
-				{3, 3},
-				{4, 4},
-				{5, 5},
-				{6, 6},
-				{7, 7},
-				{8, 8},
+				{Timestamp: 1, Value: 1},
+				{Timestamp: 2, Value: 2},
+				{Timestamp: 3, Value: 3},
+				{Timestamp: 4, Value: 4},
+				{Timestamp: 5, Value: 5},
+				{Timestamp: 6, Value: 6},
+				{Timestamp: 7, Value: 7},
+				{Timestamp: 8, Value: 8},
 			},
 			factor: 2,
 			expected: []monitoring.Point{
-				{2, 3},
-				{4, 7},
-				{6, 11},
-				{8, 15},
+				{Timestamp: 2, Value: 3},
+				{Timestamp: 4, Value: 7},
+				{Timestamp: 6, Value: 11},
+				{Timestamp: 8, Value: 15},
 			},
 		},
 	}
@@ -274,6 +274,7 @@ func TestGetFeeWithMeterName(t *testing.T) {
 		MemPerGigabytesPerHour:                   4,
 		PvcPerGigabytesPerHour:                   5,
 		CurrencyUnit:                             "CNY",
+		GpuPerPercentagePerHour:                  6,
 	}
 
 	if getFeeWithMeterName("meter_cluster_cpu_usage", "1", priceInfo) != "3.000" {
@@ -296,6 +297,10 @@ func TestGetFeeWithMeterName(t *testing.T) {
 		t.Error("failed to get fee with meter_cluster_pvc_bytes_total")
 		return
 	}
+	if getFeeWithMeterName("meter_workspace_gpu_usage", "1", priceInfo) != "6.000" {
+		t.Error("failed to get fee with meter_workspace_gpu_usage")
+		return
+	}
 }
 
 func TestUpdateMetricStatData(t *testing.T) {
@@ -307,6 +312,7 @@ func TestUpdateMetricStatData(t *testing.T) {
 		MemPerGigabytesPerHour:                   4,
 		PvcPerGigabytesPerHour:                   5,
 		CurrencyUnit:                             "CNY",
+		GpuPerPercentagePerHour:                  6,
 	}
 
 	tests := []struct {
@@ -323,8 +329,8 @@ func TestUpdateMetricStatData(t *testing.T) {
 						{
 							Metadata: map[string]string{},
 							Series: []monitoring.Point{
-								{1, 1},
-								{2, 2},
+								{Timestamp: 1, Value: 1},
+								{Timestamp: 2, Value: 2},
 							},
 						},
 					},
@@ -339,8 +345,8 @@ func TestUpdateMetricStatData(t *testing.T) {
 					{
 						Metadata: map[string]string{},
 						Series: []monitoring.Point{
-							{1, 1},
-							{2, 2},
+							{Timestamp: 1, Value: 1},
+							{Timestamp: 2, Value: 2},
 						},
 						MinValue:     "1.0000000000",
 						MaxValue:     "2.0000000000",
@@ -359,7 +365,7 @@ func TestUpdateMetricStatData(t *testing.T) {
 					MetricValues: []monitoring.MetricValue{
 						{
 							Metadata: map[string]string{},
-							Sample:   &monitoring.Point{1, 2},
+							Sample:   &monitoring.Point{Timestamp: 1, Value: 2},
 						},
 					},
 				},
@@ -370,7 +376,7 @@ func TestUpdateMetricStatData(t *testing.T) {
 				MetricValues: []monitoring.MetricValue{
 					{
 						Metadata:     map[string]string{},
-						Sample:       &monitoring.Point{1, 2},
+						Sample:       &monitoring.Point{Timestamp: 1, Value: 2},
 						MinValue:     "2.0000000000",
 						MaxValue:     "2.0000000000",
 						AvgValue:     "2.0000000000",

@@ -62,19 +62,19 @@ func (w wrapper) Less(i, j int) bool {
 	}
 
 	// If both Samples are Nil or have the same metric value, sort by resource name
-	if p.Sample == q.Sample || p.Sample[1] == q.Sample[1] {
+	if p.Sample == q.Sample || p.Sample.Value == q.Sample.Value {
 		return p.Metadata[w.identifier] < q.Metadata[w.identifier]
 	}
 	// Place NaN to the tail (NaN takes precedence over Nil).
-	if math.IsNaN(p.Sample[1]) != math.IsNaN(q.Sample[1]) {
-		return !math.IsNaN(p.Sample[1])
+	if math.IsNaN(p.Sample.Value) != math.IsNaN(q.Sample.Value) {
+		return !math.IsNaN(p.Sample.Value)
 	}
 
 	switch w.order {
 	case OrderAscending:
-		return p.Sample.Value() < q.Sample.Value()
+		return p.Sample.Value < q.Sample.Value
 	default:
-		return p.Sample.Value() > q.Sample.Value()
+		return p.Sample.Value > q.Sample.Value
 	}
 }
 

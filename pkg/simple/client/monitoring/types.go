@@ -38,15 +38,15 @@ type Metadata struct {
 
 type Metric struct {
 	MetricName string `json:"metric_name,omitempty" description:"metric name, eg. scheduler_up_sum" csv:"metric_name"`
-	MetricData `json:"data,omitempty" description:"actual metric result"`
-	Error      string `json:"error,omitempty" csv:"-"`
+	MetricData `json:"data,omitempty" description:"actual metric result. If error exsit, this feild is omitted"`
+	Error      string `json:"error,omitempty" description:"error reason. If data field has value, this filed is omitted" csv:"-"`
 }
 
 type MetricValues []MetricValue
 
 type MetricData struct {
 	MetricType   string `json:"resultType,omitempty" description:"result type, one of matrix, vector" csv:"metric_type"`
-	MetricValues `json:"result,omitempty" description:"metric data including labels, time series and values" csv:"metric_values"`
+	MetricValues `json:"result,omitempty" description:"metric data including metric labels, time series values and min/max/sum/avg value" csv:"metric_values"`
 }
 
 type DashboardEntity struct {
@@ -58,25 +58,33 @@ type DashboardEntity struct {
 
 // The first element is the timestamp, the second is the metric value.
 // eg, [1585658599.195, 0.528]
-type Point [2]float64
+type Point struct {
+	Timestamp float64
+	Value     float64
+}
+
+type ExportPoint struct {
+	TimestampExportPoint float64
+	ValueExportPoint     float64
+}
 
 type MetricValue struct {
-	Metadata map[string]string `json:"metric,omitempty" description:"time series labels"`
+	Metadata map[string]string `json:"metric,omitempty" description:"map string object, time series labels. eg. key1:value1, key2:value2"`
 	// The type of Point is a float64 array with fixed length of 2.
 	// So Point will always be initialized as [0, 0], rather than nil.
 	// To allow empty Sample, we should declare Sample to type *Point
-	Sample         *Point        `json:"value,omitempty" description:"time series, values of vector type"`
-	Series         []Point       `json:"values,omitempty" description:"time series, values of matrix type"`
-	ExportSample   *ExportPoint  `json:"exported_value,omitempty" description:"exported time series, values of vector type"`
-	ExportedSeries []ExportPoint `json:"exported_values,omitempty" description:"exported time series, values of matrix type"`
+	Sample         *Point        `json:"value,omitempty" description:"If resultType=vector. time series, If resultType=vector and query field opertation is qeury, values is vector type"`
+	Series         []Point       `json:"values,omitempty" description:"If resultType=matrix. time series. If resultType=vector and query field opertation is query, values is matrix type"`
+	ExportSample   *ExportPoint  `json:"exported_value,omitempty" description:"when query field operation is export. exported time series. If resultType=vector and query field opertation is export, value is vector type"`
+	ExportedSeries []ExportPoint `json:"exported_values,omitempty" description:"when query field operation is export. exported time series, If resultType=matrix and query field opertation is export, values is matrix type"`
 
 	MinValue     string `json:"min_value" description:"minimum value from monitor points"`
 	MaxValue     string `json:"max_value" description:"maximum value from monitor points"`
 	AvgValue     string `json:"avg_value" description:"average value from monitor points"`
 	SumValue     string `json:"sum_value" description:"sum value from monitor points"`
-	Fee          string `json:"fee" description:"resource fee"`
-	ResourceUnit string `json:"resource_unit"`
-	CurrencyUnit string `json:"currency_unit"`
+	Fee          string `json:"fee" description:"resource used fee"`
+	ResourceUnit string `json:"resource_unit" description:"resource unit eg. percentages, cores or bytes"`
+	CurrencyUnit string `json:"currency_unit" description:"currency code ref https://www.iban.com/currency-codes"`
 }
 
 func (mv *MetricValue) TransferToExportedMetricValue() {
@@ -95,30 +103,30 @@ func (mv *MetricValue) TransferToExportedMetricValue() {
 	return
 }
 
-func (p Point) Timestamp() float64 {
-	return p[0]
-}
+// func (p Point) Timestamp() float64 {
+// 	return p[0]
+// }
 
-func (p Point) Value() float64 {
-	return p[1]
-}
+// func (p Point) Value() float64 {
+// 	return p[1]
+// }
 
 func (p Point) transferToExported() ExportPoint {
-	return ExportPoint{p[0], p[1]}
+	return ExportPoint{p.Timestamp, p.Value}
 }
 
 func (p Point) Add(other Point) Point {
-	return Point{p[0], p[1] + other[1]}
+	return Point{p.Timestamp, p.Value + other.Value}
 }
 
 // MarshalJSON implements json.Marshaler. It will be called when writing JSON to HTTP response
 // Inspired by prometheus/client_golang
 func (p Point) MarshalJSON() ([]byte, error) {
-	t, err := jsoniter.Marshal(p.Timestamp())
+	t, err := jsoniter.Marshal(p.Timestamp)
 	if err != nil {
 		return nil, err
 	}
-	v, err := jsoniter.Marshal(strconv.FormatFloat(p.Value(), 'f', -1, 64))
+	v, err := jsoniter.Marshal(strconv.FormatFloat(p.Value, 'f', -1, 64))
 	if err != nil {
 		return nil, err
 	}
@@ -153,8 +161,8 @@ func (p *Point) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	p[0] = ts
-	p[1] = valf
+	p.Timestamp = ts
+	p.Value = valf
 	return nil
 }
 
@@ -166,18 +174,16 @@ type CSVPoint struct {
 	ResourceUnit string `csv:"unit"`
 }
 
-type ExportPoint [2]float64
-
 func (p ExportPoint) Timestamp() string {
-	return time.Unix(int64(p[0]), 0).Format("2006-01-02 03:04:05 PM")
+	return time.Unix(int64(p.TimestampExportPoint), 0).Format("2006-01-02 03:04:05 PM")
 }
 
-func (p ExportPoint) Value() float64 {
-	return p[1]
-}
+// func (p ExportPoint) Value() float64 {
+// 	return p[1]
+// }
 
 func (p ExportPoint) Format() string {
-	return p.Timestamp() + " " + strconv.FormatFloat(p.Value(), 'f', -1, 64)
+	return p.Timestamp() + " " + strconv.FormatFloat(p.ValueExportPoint, 'f', -1, 64)
 }
 
 func (p ExportPoint) TransformToCSVPoint(metricName string, selector string, resourceUnit string) CSVPoint {
@@ -185,7 +191,7 @@ func (p ExportPoint) TransformToCSVPoint(metricName string, selector string, res
 		MetricName:   metricName,
 		Selector:     selector,
 		Time:         p.Timestamp(),
-		Value:        strconv.FormatFloat(p.Value(), 'f', -1, 64),
+		Value:        strconv.FormatFloat(p.ValueExportPoint, 'f', -1, 64),
 		ResourceUnit: resourceUnit,
 	}
 }
