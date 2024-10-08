@@ -164,6 +164,9 @@ var WorkspaceMetrics = []string{
 	"workspace_secret_count",
 	"workspace_pod_abnormal_ratio",
 	"workspace_gpu_usage",
+	"workspace_gpu_framebuffer_usage",
+	"workspace_gpu_power_usage",
+	"workspace_gpu_memory_usage",
 
 	// meter
 	"meter_workspace_cpu_usage",
@@ -172,6 +175,9 @@ var WorkspaceMetrics = []string{
 	"meter_workspace_net_bytes_received",
 	"meter_workspace_pvc_bytes_total",
 	"meter_workspace_gpu_usage",
+	"meter_workspace_gpu_framebuffer_usage",
+	"meter_workspace_gpu_power_usage",
+	"meter_workspace_gpu_memory_usage",
 }
 
 var NamespaceMetrics = []string{
@@ -205,6 +211,9 @@ var NamespaceMetrics = []string{
 	"namespace_ingresses_extensions_count",
 	"namespace_s2ibuilder_count",
 	"namespace_gpu_usage",
+	"namespace_gpu_framebuffer_usage",
+	"namespace_gpu_power_usage",
+	"namespace_gpu_memory_usage",
 
 	// meter
 	"meter_namespace_cpu_usage",
@@ -213,6 +222,9 @@ var NamespaceMetrics = []string{
 	"meter_namespace_net_bytes_received",
 	"meter_namespace_pvc_bytes_total",
 	"meter_namespace_gpu_usage",
+	"meter_namespace_gpu_framebuffer_usage",
+	"meter_namespace_gpu_power_usage",
+	"meter_namespace_gpu_memory_usage",
 }
 
 var ApplicationMetrics = []string{

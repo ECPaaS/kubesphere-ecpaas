@@ -382,6 +382,60 @@ sum by (workspace) (
 	)
 ) or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
 
+	"meter_workspace_gpu_framebuffer_usage": `
+sum by (workspace) (
+	sum_over_time (
+		DCGM_FI_DEV_FB_USED{
+			exported_namespace!="",
+			exported_pod!=""
+		}[$step]
+	) * on (exported_namespace) group_left(workspace)(
+		label_replace(
+			kube_namespace_labels{$2},
+			"exported_namespace", 
+			"$1", 
+			"namespace", 
+			"(.*)"
+		)
+	)
+) or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+
+	"meter_workspace_gpu_power_usage": `
+sum by (workspace) (
+	sum_over_time (
+		DCGM_FI_DEV_POWER_USAGE{
+			exported_namespace!="",
+			exported_pod!=""
+		}[$step]
+	) * on (exported_namespace) group_left(workspace)(
+		label_replace(
+			kube_namespace_labels{$2},
+			"exported_namespace", 
+			"$1", 
+			"namespace", 
+			"(.*)"
+		)
+	)
+) or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+
+	"meter_workspace_gpu_memory_usage": `
+sum by (workspace) (
+	sum_over_time (
+		DCGM_FI_DEV_MEM_COPY_UTIL{
+			exported_namespace!="",
+			exported_pod!=""
+		}[$step]
+	) * on (exported_namespace) group_left(workspace)(
+		label_replace(
+			kube_namespace_labels{$2},
+			"exported_namespace", 
+			"$1", 
+			"namespace", 
+			"(.*)"
+		)
+	)
+) or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+
 	// namespace
 	"meter_namespace_cpu_usage": `
 round(
@@ -515,6 +569,60 @@ sum (
 sum by (exported_namespace) (
 	sum_over_time (
 		DCGM_FI_DEV_GPU_UTIL{
+			exported_namespace!="",
+			exported_pod!=""
+		}[$step]
+	) * on (exported_namespace) group_left(workspace)(
+		label_replace(
+			kube_namespace_labels{$2},
+			"exported_namespace", 
+			"$1", 
+			"namespace", 
+			"(.*)"
+		)
+	)
+) or on(exported_namespace) max by(exported_namespace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+
+	"meter_namespace_gpu_framebuffer_usage": `
+sum by (exported_namespace) (
+	sum_over_time (
+		DCGM_FI_DEV_FB_USED{
+			exported_namespace!="",
+			exported_pod!=""
+		}[$step]
+	) * on (exported_namespace) group_left(workspace)(
+		label_replace(
+			kube_namespace_labels{$2},
+			"exported_namespace", 
+			"$1", 
+			"namespace", 
+			"(.*)"
+		)
+	)
+) or on(exported_namespace) max by(exported_namespace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+
+	"meter_namespace_gpu_power_usage": `
+sum by (exported_namespace) (
+	sum_over_time (
+		DCGM_FI_DEV_POWER_USAGE{
+			exported_namespace!="",
+			exported_pod!=""
+		}[$step]
+	) * on (exported_namespace) group_left(workspace)(
+		label_replace(
+			kube_namespace_labels{$2},
+			"exported_namespace", 
+			"$1", 
+			"namespace", 
+			"(.*)"
+		)
+	)
+) or on(exported_namespace) max by(exported_namespace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+
+	"meter_namespace_gpu_memory_usage": `
+sum by (exported_namespace) (
+	sum_over_time (
+		DCGM_FI_DEV_MEM_COPY_UTIL{
 			exported_namespace!="",
 			exported_pod!=""
 		}[$step]
