@@ -49,7 +49,7 @@ var meterResourceUnitMap = map[int]string{
 	METER_RESOURCE_TYPE_NET_EGRESS:  "bytes",
 	METER_RESOURCE_TYPE_PVC:         "bytes",
 	METER_RESOURCE_TYPE_GPU:         "percentages",
-	METER_RESOURCE_TYPE_GPU_FB:      "megaabytes",
+	METER_RESOURCE_TYPE_GPU_FB:      "megabytes",
 	METER_RESOURCE_TYPE_GPU_POWER:   "watts",
 	METER_RESOURCE_TYPE_GPU_MEM:     "percentages",
 }
