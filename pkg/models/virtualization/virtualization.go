@@ -678,20 +678,25 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 			if listPodErr == nil {
 				pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]{5}", name)
 				matchExp, err := regexp.Compile(pattern)
-				for _, pod := range podList.Items {
-					if err == nil && matchExp.MatchString(pod.Name) {
-						for key := range vm.Labels {
-							// delete old labels from pod
-							delete(pod.Labels, key)
+				if err != nil {
+					klog.Error(err)
+				} else {
+					for _, pod := range podList.Items {
+						if matchExp.MatchString(pod.Name) {
+							for key := range vm.Labels {
+								// delete old labels from pod
+								delete(pod.Labels, key)
+							}
+							for _, label := range ui_vm.Labels {
+								// add new labels to pod
+								pod.Labels[label.Key] = label.Value
+							}
+							_, err := v.k8sclient.CoreV1().Pods(namespace).Update(context.Background(), &pod, metav1.UpdateOptions{})
+							if err != nil {
+								klog.Error(err)
+							}
+							break; // no need to iterate remaining pods
 						}
-						for _, label := range ui_vm.Labels {
-							// add new labels to pod
-							pod.Labels[label.Key] = label.Value
-						}
-						v.k8sclient.CoreV1().Pods(namespace).Update(context.Background(), &pod, metav1.UpdateOptions{})
-						break; // no need to iterate remaining pods
-					} else if err != nil {
-						klog.Error(err)
 					}
 				}
 			}
