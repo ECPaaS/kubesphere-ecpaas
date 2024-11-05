@@ -41,7 +41,7 @@ type Interface interface {
 	ListVpcSubnetWithinVpcNetwork(vpcnetwork string, queryParam *query.Query) (*[]VPCSubnetResponse, error)
 	ListVpcSubnetWithinNamespace(namespace string, queryParam *query.Query) (*[]VPCSubnetResponse, error)
 	CreateVpcSubnet(vpcsubnet *VPCSubnet) (*VPCSubnet, error)
-	UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnet, error)
+	UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnetPutResponse, error)
 	PatchVpcSubnet(vpcsubnet *VPCSubnetPatch, namespace string, vpcsubnetName string) (*VPCSubnetPatch, error)
 	DeleteVpcSubnet(namespace, vpcsubnet string) error
 }
@@ -379,7 +379,7 @@ func addVpcSubnetNameIntoNamespace(t *vpcOperator, vpcsubnet *VPCSubnet) (*VPCSu
 	return nil, nil
 }
 
-func (t *vpcOperator) UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnet, error) {
+func (t *vpcOperator) UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string, vpcsubnetName string) (*VPCSubnetPutResponse, error) {
 
 	obj, err := t.resourceGetter.Get(v1.ResourcePluralVpcSubnets, namespace, vpcsubnetName)
 	if err != nil {
@@ -398,10 +398,12 @@ func (t *vpcOperator) UpdateVpcSubnet(vpcsubnet *VPCSubnetBase, namespace string
 	rawVPCSubnet := convertToRawVPCSubnet(vpcsubnet, namespace, vpcsubnetName, vpc.ResourceVersion)
 	_, err = t.ksclient.K8sV1().VPCSubnets(namespace).Update(context.Background(), rawVPCSubnet, metav1.UpdateOptions{})
 
-	vpcSubnetResponse := VPCSubnet{
-		VPCSubnetBase: *vpcsubnet,
-		Name:          vpcsubnetName,
-		Namespace:     namespace,
+	vpcSubnetResponse := VPCSubnetPutResponse{
+		VPCSubnetPut: VPCSubnetPut{
+			CIDR: vpcsubnet.CIDR,
+		},
+		Name:      vpcsubnetName,
+		Namespace: namespace,
 	}
 	return &vpcSubnetResponse, err
 }
@@ -508,6 +510,7 @@ func convertToVPCNetworkBase(vpcResource *v1.VPCNetwork) VPCNetworkResponse {
 	vpc := VPCNetworkResponse{}
 	vpc.Name = vpcResource.Name
 	vpc.CIDR = vpcResource.Spec.CIDR
+	vpc.Workspace = vpcResource.Labels[tenantv1alpha1.WorkspaceLabel]
 
 	// Gateway Chassis
 	gatewayChassises := []GatewayChassisResponse{}
@@ -540,6 +543,7 @@ func convertToVPCNetwork(vpcResource *v1.VPCNetwork) VPCNetworkResponse {
 	vpc := VPCNetworkResponse{}
 	vpc.Name = vpcResource.Name
 	vpc.CIDR = vpcResource.Spec.CIDR
+	vpc.Workspace = vpcResource.Labels[tenantv1alpha1.WorkspaceLabel]
 
 	// Gateway Chassis
 	gatewayChassises := []GatewayChassisResponse{}
@@ -664,10 +668,6 @@ func convertToRawVPCSubnetPatch(vpcsubnet *VPCSubnetPatch) map[string]interface{
 
 	if vpcsubnet.CIDR != "" {
 		patchData["cidr"] = vpcsubnet.CIDR
-	}
-
-	if vpcsubnet.Vpc != "" {
-		patchData["vpc"] = vpcsubnet.Vpc
 	}
 
 	return patchData

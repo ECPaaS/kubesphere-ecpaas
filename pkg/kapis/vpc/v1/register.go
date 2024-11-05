@@ -140,9 +140,9 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		To(handler.UpdateVpcSubnet).
 		Param(webservice.PathParameter("namespace", "namespace name")).
 		Param(webservice.PathParameter("name", "vpcsubnet name")).
-		Reads(vpc.VPCSubnetBase{}).
+		Reads(vpc.VPCSubnetPut{}).
 		Doc("Update vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnet{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetPutResponse{}).
 		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))

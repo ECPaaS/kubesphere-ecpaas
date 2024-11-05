@@ -34,6 +34,8 @@ type VPCNetworkResponse struct {
 	// +kubebuilder:validation:Required
 	CIDR string `json:"cidr" description:"vpc network private segment address space with cidr format, e.g., 10.0.0.0/16"`
 	// +kubebuilder:validation:Required
+	Workspace string `json:"workspace" description:"workspace name"`
+	// +kubebuilder:validation:Required
 	GatewayChassis []GatewayChassisResponse `json:"gatewayChassises" description:"Gateway chassis information of vpc network"`
 	// +kubebuilder:validation:Required
 	L3Gateways []L3GatewayResponse `json:"l3gateways" description:"L3Gateway information of vpc network"`
@@ -88,11 +90,14 @@ type VPCSubnetBase struct {
 	Vpc string `json:"vpc,omitempty" description:"vpc network name"`
 }
 
+type VPCSubnetPut struct {
+	// +kubebuilder:validation:Optional
+	CIDR string `json:"cidr,omitempty" description:"vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24"`
+}
+
 type VPCSubnetPatch struct {
 	// +kubebuilder:validation:Optional
 	CIDR string `json:"cidr,omitempty" description:"vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24"`
-	// +kubebuilder:validation:Optional
-	Vpc string `json:"vpc,omitempty" description:"vpc network name"`
 }
 
 type VPCSubnetNameSpace struct {
@@ -107,6 +112,14 @@ type VPCSubnet struct {
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 	VPCSubnetBase
+}
+
+type VPCSubnetPutResponse struct {
+	// +kubebuilder:validation:Required
+	Name string `json:"name" maximum:"253" description:"must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character. Allowed characters: lowercase letters (a-z), numbers (0-9), and hyphens (-)"`
+	// +kubebuilder:validation:Required
+	Namespace string `json:"namespace"`
+	VPCSubnetPut
 }
 
 type VPCSubnetResponse struct {

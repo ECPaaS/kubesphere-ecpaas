@@ -351,7 +351,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/vpc.VPCSubnetBase"
+              "$ref": "#/definitions/vpc.VPCSubnetPut"
             }
           }
         ],
@@ -359,7 +359,7 @@
           "200": {
             "description": "ok",
             "schema": {
-              "$ref": "#/definitions/vpc.VPCSubnet"
+              "$ref": "#/definitions/vpc.VPCSubnetPutResponse"
             }
           },
           "400": {
@@ -2711,6 +2711,7 @@
       "required": [
         "name",
         "cidr",
+        "workspace",
         "gatewayChassises",
         "l3gateways"
       ],
@@ -2735,6 +2736,10 @@
         },
         "name": {
           "description": "VPC network name [unique key]",
+          "type": "string"
+        },
+        "workspace": {
+          "description": "workspace name",
           "type": "string"
         }
       }
@@ -2764,29 +2769,38 @@
         }
       }
     },
-    "vpc.VPCSubnetBase": {
+    "vpc.VPCSubnetPatch": {
+      "properties": {
+        "cidr": {
+          "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
+          "type": "string"
+        }
+      }
+    },
+    "vpc.VPCSubnetPut": {
+      "properties": {
+        "cidr": {
+          "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
+          "type": "string"
+        }
+      }
+    },
+    "vpc.VPCSubnetPutResponse": {
       "required": [
-        "cidr"
+        "name",
+        "namespace"
       ],
       "properties": {
         "cidr": {
           "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
           "type": "string"
         },
-        "vpc": {
-          "description": "vpc network name",
-          "type": "string"
-        }
-      }
-    },
-    "vpc.VPCSubnetPatch": {
-      "properties": {
-        "cidr": {
-          "description": "vpc subnet private segment address space with cidr format, e.g., 10.0.2.0/24",
-          "type": "string"
+        "name": {
+          "description": "must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character. Allowed characters: lowercase letters (a-z), numbers (0-9), and hyphens (-)",
+          "type": "string",
+          "maximum": 253
         },
-        "vpc": {
-          "description": "vpc network name",
+        "namespace": {
           "type": "string"
         }
       }
