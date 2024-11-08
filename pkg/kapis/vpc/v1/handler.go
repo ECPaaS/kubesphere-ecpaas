@@ -319,6 +319,11 @@ func (h *handler) CreateVpcSubnet(request *restful.Request, response *restful.Re
 
 func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Response) {
 
+	err := errors.NewBadRequest("VPC Subnet modifications are not allowed.")
+	api.HandleBadRequest(response, request, err)
+
+	/*   VPC Subnet doesn't support PUT method.
+
 	vpcsubnetName := request.PathParameter("name")
 	namespace := request.PathParameter("namespace")
 	var vpcsubnet vpc.VPCSubnetBase
@@ -349,9 +354,16 @@ func (h *handler) UpdateVpcSubnet(request *restful.Request, response *restful.Re
 	}
 
 	response.WriteEntity(updated)
+
+	*/
 }
 
 func (h *handler) PatchVpcSubnet(request *restful.Request, response *restful.Response) {
+
+	err := errors.NewBadRequest("VPC Subnet modifications are not allowed.")
+	api.HandleBadRequest(response, request, err)
+
+	/*   VPC Subnet doesn't support PATCH method.
 	vpcsubnetName := request.PathParameter("name")
 	namespace := request.PathParameter("namespace")
 	var vpcsubnet vpc.VPCSubnetPatch
@@ -382,6 +394,7 @@ func (h *handler) PatchVpcSubnet(request *restful.Request, response *restful.Res
 	}
 
 	response.WriteEntity(patched)
+	*/
 }
 
 func (h *handler) DeleteVpcSubnet(request *restful.Request, response *restful.Response) {
