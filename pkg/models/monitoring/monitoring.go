@@ -227,7 +227,7 @@ func (mo monitoringOperator) GetKubeSphereStats() Metrics {
 				MetricType: monitoring.MetricTypeVector,
 				MetricValues: []monitoring.MetricValue{
 					{
-						Sample: &monitoring.Point{now, float64(clusterTotal)},
+						Sample: &monitoring.Point{Timestamp: now, Value: float64(clusterTotal)},
 					},
 				},
 			},
@@ -247,7 +247,7 @@ func (mo monitoringOperator) GetKubeSphereStats() Metrics {
 				MetricType: monitoring.MetricTypeVector,
 				MetricValues: []monitoring.MetricValue{
 					{
-						Sample: &monitoring.Point{now, float64(len(wkList))},
+						Sample: &monitoring.Point{Timestamp: now, Value: float64(len(wkList))},
 					},
 				},
 			},
@@ -267,7 +267,7 @@ func (mo monitoringOperator) GetKubeSphereStats() Metrics {
 				MetricType: monitoring.MetricTypeVector,
 				MetricValues: []monitoring.MetricValue{
 					{
-						Sample: &monitoring.Point{now, float64(len(usrList))},
+						Sample: &monitoring.Point{Timestamp: now, Value: float64(len(usrList))},
 					},
 				},
 			},
@@ -294,7 +294,7 @@ func (mo monitoringOperator) GetKubeSphereStats() Metrics {
 					MetricType: monitoring.MetricTypeVector,
 					MetricValues: []monitoring.MetricValue{
 						{
-							Sample: &monitoring.Point{now, float64(tmpl.TotalCount)},
+							Sample: &monitoring.Point{Timestamp: now, Value: float64(tmpl.TotalCount)},
 						},
 					},
 				},
@@ -325,7 +325,7 @@ func (mo monitoringOperator) GetWorkspaceStats(workspace string) Metrics {
 				MetricType: monitoring.MetricTypeVector,
 				MetricValues: []monitoring.MetricValue{
 					{
-						Sample: &monitoring.Point{now, float64(len(nsList.Items))},
+						Sample: &monitoring.Point{Timestamp: now, Value: float64(len(nsList.Items))},
 					},
 				},
 			},
@@ -345,7 +345,7 @@ func (mo monitoringOperator) GetWorkspaceStats(workspace string) Metrics {
 				MetricType: monitoring.MetricTypeVector,
 				MetricValues: []monitoring.MetricValue{
 					{
-						Sample: &monitoring.Point{now, float64(len(devopsList))},
+						Sample: &monitoring.Point{Timestamp: now, Value: float64(len(devopsList))},
 					},
 				},
 			},
@@ -367,7 +367,7 @@ func (mo monitoringOperator) GetWorkspaceStats(workspace string) Metrics {
 				MetricType: monitoring.MetricTypeVector,
 				MetricValues: []monitoring.MetricValue{
 					{
-						Sample: &monitoring.Point{now, float64(len(memberList))},
+						Sample: &monitoring.Point{Timestamp: now, Value: float64(len(memberList))},
 					},
 				},
 			},
@@ -387,7 +387,7 @@ func (mo monitoringOperator) GetWorkspaceStats(workspace string) Metrics {
 				MetricType: monitoring.MetricTypeVector,
 				MetricValues: []monitoring.MetricValue{
 					{
-						Sample: &monitoring.Point{now, float64(len(roleList))},
+						Sample: &monitoring.Point{Timestamp: now, Value: float64(len(roleList))},
 					},
 				},
 			},

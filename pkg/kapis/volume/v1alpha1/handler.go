@@ -25,6 +25,7 @@ import (
 )
 
 var bucketName = "ecpaas-images"
+var bucektPolicy = `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::` + bucketName + `"]},{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:AbortMultipartUpload","s3:DeleteObject","s3:GetObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::` + bucketName + `/*"]}]}`
 
 type handler struct {
 	minioClient *minio.Client
@@ -98,6 +99,8 @@ func (h *handler) ListMinioObjects(request *restful.Request, response *restful.R
 			api.HandleInternalError(response, request, err)
 			return
 		}
+		err = h.minioClient.SetBucketPolicy(context.Background(), bucketName, bucektPolicy)
+		klog.Warning("Cannot set bucket policy", err)
 	}
 
 	objectCh := h.minioClient.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
@@ -165,6 +168,8 @@ func (h *handler) UploadMinioObject(request *restful.Request, response *restful.
 			api.HandleInternalError(response, request, err)
 			return
 		}
+		err = h.minioClient.SetBucketPolicy(context.Background(), bucketName, bucektPolicy)
+		klog.Warning("Cannot set bucket policy", err)
 	}
 
 	err = request.Request.ParseMultipartForm(0)

@@ -543,6 +543,263 @@
         }
       }
     },
+    "/kapis/metering.kubesphere.io/v1alpha2/workspaces/{workspace}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Workspace Meters"
+        ],
+        "summary": "Get workspace-level meter data of a specific workspace.",
+        "operationId": "HandleWorkspaceMeterQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "default": "query",
+            "description": "Metering operation.",
+            "name": "operation",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Workspace name.",
+            "name": "workspace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_cpu_usage|meter_workspace_memory_usage`.",
+            "name": "metrics_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The name of the storageclass.",
+            "name": "storageclass",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The PVC filter consists of a regexp pattern. It specifies which PVC data to return.",
+            "name": "pvc_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
+            "name": "time",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Additional operations. Currently available types is statistics. It retrieves the total number of namespaces, devops projects, members and roles in this workspace at the moment.",
+            "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/monitoring.Metrics"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/tenant.kubesphere.io/v1alpha4/metering": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Workspace Meters"
+        ],
+        "summary": "Get meterings against the cluster.",
+        "operationId": "QueryMetering",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Metering level.",
+            "name": "level",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Node name.",
+            "name": "node",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Workspace name.",
+            "name": "workspace",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Namespace name.",
+            "name": "namespace",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Workload kind. One of deployment, daemonset, statefulset.",
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Workload name.",
+            "name": "workload",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Pod name.",
+            "name": "pod",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Appliction names, format app_name[:app_version](such as nginx:v1, nignx) which are joined by \"|\" ",
+            "name": "applications",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Services which are joined by \"|\".",
+            "name": "services",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The metric name filter consists of a regexp pattern. It specifies which metric data to return. For example, the following filter matches both workspace CPU usage and memory usage: `meter_workspace_cpu_usage|meter_workspace_memory_usage`.",
+            "name": "metrics_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The workspace filter consists of a regexp pattern. It specifies which workspace data to return.",
+            "name": "resources_filter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Start time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1559347200. ",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "End time of query. Use **start** and **end** to retrieve metric data over a time span. It is a string with Unix time format, eg. 1561939200. ",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "description": "Time interval. Retrieve metric data at a fixed interval within the time range of start and end. It requires both **start** and **end** are provided. The format is [0-9]+[smhdwy]. Defaults to 10m (i.e. 10 min).",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A timestamp in Unix time format. Retrieve metric data at a single point in time. Defaults to now. Time and the combination of start, end, step are mutually exclusive.",
+            "name": "time",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Sort workspaces by the specified metric. Not applicable if **start** and **end** are provided.",
+            "name": "sort_metric",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "desc.",
+            "description": "Sort order. One of asc, desc.",
+            "name": "sort_type",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "The page number. This field paginates result data of each metric, then returns a specific page. For example, setting **page** to 2 returns the second page. It only applies to sorted metric data.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 5,
+            "description": "Page size, the maximum number of results in a single page. Defaults to 5.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The name of the storageclass.",
+            "name": "storageclass",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The PVC filter consists of a regexp pattern. It specifies which PVC data to return.",
+            "name": "pvc_filter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/monitoring.Metrics"
+            }
+          }
+        }
+      }
+    },
+    "/kapis/tenant.kubesphere.io/v1alpha4/metering/price": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Workspace Meters"
+        ],
+        "summary": "Get resource price.",
+        "operationId": "HandlePriceInfoQuery",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/metering.PriceResponse"
+            }
+          }
+        }
+      }
+    },
     "/kapis/virtualization.ecpaas.io/v1/disks": {
       "get": {
         "produces": [
@@ -1662,7 +1919,224 @@
         }
       }
     },
-    "v1.BadRequestError": {
+    "metering.PriceResponse": {
+      "required": [
+        "retention_day",
+        "cpu_per_core_per_hour",
+        "mem_per_gigabytes_per_hour",
+        "ingress_network_traffic_per_megabytes_per_hour",
+        "egress_network_traffic_per_megabytes_per_hour",
+        "pvc_per_gigabytes_per_hour",
+        "gpu_per_percentage_per_hour",
+        "currency"
+      ],
+      "properties": {
+        "cpu_per_core_per_hour": {
+          "description": "cpu price",
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "currency": {
+          "description": "currency",
+          "type": "string"
+        },
+        "egress_network_traffic_per_megabytes_per_hour": {
+          "description": "egress price",
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "gpu_per_percentage_per_hour": {
+          "description": "gpu price",
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "ingress_network_traffic_per_megabytes_per_hour": {
+          "description": "ingress price",
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "mem_per_gigabytes_per_hour": {
+          "description": "mem price",
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "pvc_per_gigabytes_per_hour": {
+          "description": "pvc price",
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "retention_day": {
+          "type": "string",
+          "default": "7d"
+        }
+      }
+    },
+    "monitoring.ExportPoint": {
+      "required": [
+        "TimestampExportPoint",
+        "ValueExportPoint"
+      ],
+      "properties": {
+        "TimestampExportPoint": {
+          "type": "number",
+          "format": "double"
+        },
+        "ValueExportPoint": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "monitoring.Metric": {
+      "properties": {
+        "data": {
+          "description": "actual metric result",
+          "$ref": "#/definitions/monitoring.MetricData"
+        },
+        "error": {
+          "type": "string"
+        },
+        "metric_name": {
+          "description": "metric name, eg. scheduler_up_sum",
+          "type": "string"
+        }
+      }
+    },
+    "monitoring.MetricData": {
+      "properties": {
+        "result": {
+          "description": "metric data including labels, time series and values",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/monitoring.MetricValue"
+          }
+        },
+        "resultType": {
+          "description": "result type, one of matrix, vector",
+          "type": "string"
+        }
+      }
+    },
+    "monitoring.MetricValue": {
+      "required": [
+        "min_value",
+        "max_value",
+        "avg_value",
+        "sum_value",
+        "fee",
+        "resource_unit",
+        "currency_unit"
+      ],
+      "properties": {
+        "avg_value": {
+          "description": "average value from monitor points",
+          "type": "string"
+        },
+        "currency_unit": {
+          "type": "string"
+        },
+        "exported_value": {
+          "description": "exported time series, values of vector type",
+          "$ref": "#/definitions/monitoring.ExportPoint"
+        },
+        "exported_values": {
+          "description": "exported time series, values of matrix type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/monitoring.ExportPoint"
+          }
+        },
+        "fee": {
+          "description": "resource fee",
+          "type": "string"
+        },
+        "max_value": {
+          "description": "maximum value from monitor points",
+          "type": "string"
+        },
+        "metric": {
+          "description": "time series labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "min_value": {
+          "description": "minimum value from monitor points",
+          "type": "string"
+        },
+        "resource_unit": {
+          "type": "string"
+        },
+        "sum_value": {
+          "description": "sum value from monitor points",
+          "type": "string"
+        },
+        "value": {
+          "description": "time series, values of vector type",
+          "type": "string"
+        },
+        "values": {
+          "description": "time series, values of matrix type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/monitoring.Point"
+          }
+        }
+      }
+    },
+    "monitoring.Metrics": {
+      "required": [
+        "results"
+      ],
+      "properties": {
+        "page": {
+          "description": "current page returned",
+          "type": "integer",
+          "format": "int32"
+        },
+        "results": {
+          "description": "actual array of results",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/monitoring.Metric"
+          }
+        },
+        "total_item": {
+          "description": "page size",
+          "type": "integer",
+          "format": "int32"
+        },
+        "total_page": {
+          "description": "total number of pages",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "monitoring.Point": {
+      "required": [
+        "Timestamp",
+        "Value"
+      ],
+      "properties": {
+        "Timestamp": {
+          "type": "number",
+          "format": "double"
+        },
+        "Value": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "v1.ClusterRouterPolicy": {
       "required": [
         "reason"
       ],
@@ -2109,12 +2583,17 @@
     },
     "virtualization.ImageStatus": {
       "required": [
-        "ready"
+        "ready",
+        "state"
       ],
       "properties": {
         "ready": {
           "description": "Image is ready or not",
           "type": "boolean"
+        },
+        "state": {
+          "description": "Image operation state",
+          "type": "string"
         }
       }
     },
@@ -2390,7 +2869,8 @@
         "image",
         "disks",
         "status",
-        "node_name"
+        "node_name",
+        "pod_name"
       ],
       "properties": {
         "cpu_cores": {
@@ -2432,6 +2912,10 @@
         },
         "node_name": {
           "description": "Virtual machine node",
+          "type": "string"
+        },
+        "pod_name": {
+          "description": "Virtual machine pod",
           "type": "string"
         },
         "status": {
