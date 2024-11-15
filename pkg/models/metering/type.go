@@ -18,21 +18,21 @@ type PriceInfo struct {
 	// currency unit, currently support CNY and USD
 	Currency string `json:"currency" description:"currency"`
 	// cpu cost with above currency unit for per core per hour
-	CpuPerCorePerHour float64 `json:"cpu_per_core_per_hour,omitempty" description:"cpu price"`
+	CpuPerCorePerHour float64 `json:"cpu_per_core_per_hour" description:"cpu price" default:"0"`
 	// mem cost with above currency unit for per GB per hour
-	MemPerGigabytesPerHour float64 `json:"mem_per_gigabytes_per_hour,omitempty" description:"mem price"`
+	MemPerGigabytesPerHour float64 `json:"mem_per_gigabytes_per_hour" description:"mem price" default:"0"`
 	// ingress network traffic cost with above currency unit for per MB per hour
-	IngressNetworkTrafficPerMegabytesPerHour float64 `json:"ingress_network_traffic_per_megabytes_per_hour,omitempty" description:"ingress price"`
+	IngressNetworkTrafficPerMegabytesPerHour float64 `json:"ingress_network_traffic_per_megabytes_per_hour" description:"ingress price" default:"0"`
 	// egress network traffice cost with above currency unit for per MB per hour
-	EgressNetworkTrafficPerMegabytesPerHour float64 `json:"egress_network_traffic_per_megabytes_per_hour,omitempty" description:"egress price"`
+	EgressNetworkTrafficPerMegabytesPerHour float64 `json:"egress_network_traffic_per_megabytes_per_hour" description:"egress price" default:"0"`
 	// pvc cost with above currency unit for per GB per hour
-	PvcPerGigabytesPerHour float64 `json:"pvc_per_gigabytes_per_hour,omitempty" description:"pvc price"`
+	PvcPerGigabytesPerHour float64 `json:"pvc_per_gigabytes_per_hour" description:"pvc price" default:"0"`
 	// gpu cost with above currency unit for per percentage per hour
-	GpuPerPercentagePerHour float64 `json:"gpu_per_percentage_per_hour,omitempty" description:"gpu price"`
+	GpuPerPercentagePerHour float64 `json:"gpu_per_percentage_per_hour" description:"gpu price" default:"0"`
 }
 
 type PriceResponse struct {
-	RetentionDay string `json:"retention_day"`
+	RetentionDay string `json:"retention_day" default:"7d"`
 	PriceInfo    `json:",inline"`
 }
 

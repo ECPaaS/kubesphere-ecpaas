@@ -328,20 +328,23 @@ func isValidImageType(imageType string, resp *restful.Response) bool {
 }
 
 func isValidMinioImageSize(minioClient *minio.Client, minioImageName string, resp *restful.Response) bool {
-	objectInfo, err := minioClient.StatObject(context.Background(), bucketName, minioImageName, minio.StatObjectOptions{})
-	if err != nil {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Minio image does not exist",
-		})
-		return false
+	if minioClient != nil {
+		objectInfo, err := minioClient.StatObject(context.Background(), bucketName, minioImageName, minio.StatObjectOptions{})
+		if err != nil {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				Reason: "Minio image does not exist",
+			})
+			return false
+		}
+
+		if objectInfo.Size <= 0 {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				Reason: "Minio image '" + minioImageName + "' size should be larger than 0",
+			})
+			return false
+		}
 	}
 
-	if objectInfo.Size <= 0 {
-		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Minio image '" + minioImageName + "' size should be larger than 0",
-		})
-		return false
-	}
 	return true
 }
 

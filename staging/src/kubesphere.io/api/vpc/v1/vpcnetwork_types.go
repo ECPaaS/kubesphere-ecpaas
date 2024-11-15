@@ -51,37 +51,36 @@ type VPCNetwork struct {
 // Describes the gateway information of the vpc network
 type GatewayChassis struct {
 	// +kubebuilder:validation:Optional
-	// Name of the k8s node where the gateway is located
-	Node string `json:"node,omitempty"` /// 网关所在节点
+	Node string `json:"node,omitempty" description:"Name of the k8s node where the gateway is located"` /// 网关所在节点
 	// +kubebuilder:validation:Required
-	// Gateway IP address
-	IP string `json:"ip"` /// 网关地址
+	IP string `json:"ip" description:"Gateway IP address"` /// 网关地址
+}
+
+type GatewayChassisNode struct {
+	// Name of the k8s node where the gateway is located
+	Node []string `json:"node"`
 }
 
 type L3Gateway struct {
 	// +kubebuilder:validation:Required
-	// L3 gateway address
-	Network string `json:"network"`
+	Network string `json:"network" description:"L3 gateway address"`
 
 	// +kubebuilder:validation:Optional
-	// route DST
 	// +optional
-	Destination string `json:"destination,omitempty"`
+	Destination string `json:"destination,omitempty" description:"route DST"`
 
 	// +kubebuilder:validation:Required
 	// Next hop address
 	NextHop string `json:"nexthop"`
 
 	// +kubebuilder:validation:Optional
-	// VLAN id for external network
 	// +optional
-	VLANId int32 `json:"vlanid,omitempty"`
+	VLANId int32 `json:"vlanid,omitempty" description:"VLAN id for external network" minimum:"1" maximum:"4094"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=default
-	// outgoingnat
 	// +optional
-	OutBoundNat string `json:"outboundNat,omitempty"`
+	OutBoundNat string `json:"outboundNat,omitempty" default:"default" description:"outgoingnat"`
 }
 
 // Peer cluster connection information
@@ -127,35 +126,27 @@ type ClusterRouterPolicy struct {
 // Configuration information of virtual k8s network
 type VPCNetworkSpec struct {
 	// +kubebuilder:validation:Required
-	// vpc network private segment address space
-	CIDR string `json:"cidr"` /// 网络CIDR
+	CIDR string `json:"cidr" description:"vpc network private segment address space"` /// 网络CIDR
+	// +kubebuilder:validation:Required
+	SubnetLength int `json:"subnetLength" description:"Length of vpc subnet managed by vpc network" minimum:"0" maximum:"32"` /// VPC网络子网长度
 
-	// Length of vpc subnet managed by vpc network
-	SubnetLength int `json:"subnetLength"` /// VPC网络子网长度
-
-	// Gateway chassis information of vpc network
 	// +optional
-	GatewayChassis []GatewayChassis `json:"gatewayChassises,omitempty"` /// VPC网关配置
+	GatewayChassis []GatewayChassis `json:"gatewayChassises,omitempty" description:"Gateway chassis information of vpc network"` /// VPC网关配置
 
-	// L3Gateway information of vpc network
 	// +optional
-	L3Gateways []L3Gateway `json:"l3gateways,omitempty"` /// VPC外网网关配置
+	L3Gateways []L3Gateway `json:"l3gateways,omitempty" description:"L3Gateway information of vpc network"` /// VPC外网网关配置
 
-	// Interconnected peer cluster information
 	// +optional
-	Peers []Peer `json:"peers,omitempty"` /// VPC集群互联配置
+	Peers []Peer `json:"peers,omitempty" description:"Interconnected peer cluster information"` /// VPC集群互联配置
 
-	// ClusterRouter specify which T0 router to connect with
 	// +optional
-	ClusterRouter string `json:"clusterRouter,omitempty"`
+	ClusterRouter string `json:"clusterRouter,omitempty" description:"ClusterRouter specify which T0 router to connect with"`
 
-	// CluterRouterPolcies specify the traffic policy
 	// +optional
-	ClusterRouterPolicies []ClusterRouterPolicy `json:"clusterRouterPolicy,omitempty"`
+	ClusterRouterPolicies []ClusterRouterPolicy `json:"clusterRouterPolicy,omitempty" description:"CluterRouterPolcies specify the traffic policy"`
 
-	// Nat rules which applied to vpc t1 router
 	// +optional
-	Nats []NATRule `json:"nat,omitempty"`
+	Nats []NATRule `json:"nat,omitempty" description:"Nat rules which applied to vpc t1 router"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
