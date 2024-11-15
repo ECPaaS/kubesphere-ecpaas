@@ -17,7 +17,6 @@ import (
 	urlruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/informers"
-	meteringv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/metering/v1alpha2"
 	schedulerv1 "kubesphere.io/kubesphere/pkg/kapis/scheduler/v1"
 	tenantv1alpha4 "kubesphere.io/kubesphere/pkg/kapis/tenant/v1alpha4"
 	virtualizationv1 "kubesphere.io/kubesphere/pkg/kapis/virtualization/v1"

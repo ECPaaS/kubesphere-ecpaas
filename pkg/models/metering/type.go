@@ -29,6 +29,12 @@ type PriceInfo struct {
 	PvcPerGigabytesPerHour float64 `json:"pvc_per_gigabytes_per_hour" description:"PVC usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
 	// gpu cost with above currency unit for per percentage per hour
 	GpuPerPercentagePerHour float64 `json:"gpu_per_percentage_per_hour" description:"GPU usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
+	// gpu framebuffer cost with above currency unit for per MB per hour
+	GpuFbPerMegabytesPerHour float64 `json:"gpu_fb_per_megabytes_per_hour" description:"GPU Framebuffer usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
+	// gpu power cost with above currency unit for per watt per hour
+	GpuPowerPerWattPerHour float64 `json:"gpu_power_per_watt_per_hour" description:"GPU Power watt price. If manager define or omitted and shall Multiples of 3" default:"0"`
+	// gpu memory cost with above currency unit for per percentage per hour
+	GpuMemPerPercentagePerHour float64 `json:"gpu_mem_per_percentage_per_hour" description:"GPU Memory usage price. If manager define or omitted and shall Multiples of 3" default:"0"`
 }
 
 type PriceResponse struct {

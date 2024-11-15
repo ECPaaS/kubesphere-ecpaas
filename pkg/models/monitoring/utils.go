@@ -31,6 +31,9 @@ const (
 	METER_RESOURCE_TYPE_NET_EGRESS
 	METER_RESOURCE_TYPE_PVC
 	METER_RESOURCE_TYPE_GPU
+	METER_RESOURCE_TYPE_GPU_FB
+	METER_RESOURCE_TYPE_GPU_POWER
+	METER_RESOURCE_TYPE_GPU_MEM
 
 	meteringConfigDir  = "/etc/kubesphere/metering/"
 	meteringConfigName = "ks-metering.yaml"
@@ -46,6 +49,9 @@ var meterResourceUnitMap = map[int]string{
 	METER_RESOURCE_TYPE_NET_EGRESS:  "bytes",
 	METER_RESOURCE_TYPE_PVC:         "bytes",
 	METER_RESOURCE_TYPE_GPU:         "percentages",
+	METER_RESOURCE_TYPE_GPU_FB:      "megabytes",
+	METER_RESOURCE_TYPE_GPU_POWER:   "watts",
+	METER_RESOURCE_TYPE_GPU_MEM:     "percentages",
 }
 
 var MeterResourceMap = map[string]int{
@@ -65,12 +71,18 @@ var MeterResourceMap = map[string]int{
 	"meter_workspace_net_bytes_received":         METER_RESOURCE_TYPE_NET_INGRESS,
 	"meter_workspace_pvc_bytes_total":            METER_RESOURCE_TYPE_PVC,
 	"meter_workspace_gpu_usage":                  METER_RESOURCE_TYPE_GPU,
+	"meter_workspace_gpu_framebuffer_usage":      METER_RESOURCE_TYPE_GPU_FB,
+	"meter_workspace_gpu_power_usage":            METER_RESOURCE_TYPE_GPU_POWER,
+	"meter_workspace_gpu_memory_usage":           METER_RESOURCE_TYPE_GPU_MEM,
 	"meter_namespace_cpu_usage":                  METER_RESOURCE_TYPE_CPU,
 	"meter_namespace_memory_usage_wo_cache":      METER_RESOURCE_TYPE_MEM,
 	"meter_namespace_net_bytes_transmitted":      METER_RESOURCE_TYPE_NET_EGRESS,
 	"meter_namespace_net_bytes_received":         METER_RESOURCE_TYPE_NET_INGRESS,
 	"meter_namespace_pvc_bytes_total":            METER_RESOURCE_TYPE_PVC,
 	"meter_namespace_gpu_usage":                  METER_RESOURCE_TYPE_GPU,
+	"meter_namespace_gpu_framebuffer_usage":      METER_RESOURCE_TYPE_GPU_FB,
+	"meter_namespace_gpu_power_usage":            METER_RESOURCE_TYPE_GPU_POWER,
+	"meter_namespace_gpu_memory_usage":           METER_RESOURCE_TYPE_GPU_MEM,
 	"meter_application_cpu_usage":                METER_RESOURCE_TYPE_CPU,
 	"meter_application_memory_usage_wo_cache":    METER_RESOURCE_TYPE_MEM,
 	"meter_application_net_bytes_transmitted":    METER_RESOURCE_TYPE_NET_EGRESS,
@@ -218,6 +230,21 @@ func getFeeWithMeterName(meterName string, sum string, priceInfo meteringclient.
 		case METER_RESOURCE_TYPE_GPU:
 			GpuPerPercentagePerHour := new(big.Float).SetFloat64(priceInfo.GpuPerPercentagePerHour)
 			tmp := s.Mul(s, GpuPerPercentagePerHour)
+
+			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
+		case METER_RESOURCE_TYPE_GPU_FB:
+			GpuFbPerMegabytesPerHour := new(big.Float).SetFloat64(priceInfo.GpuFbPerMegabytesPerHour)
+			tmp := s.Mul(s, GpuFbPerMegabytesPerHour)
+
+			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
+		case METER_RESOURCE_TYPE_GPU_POWER:
+			GpuPowerPerWattPerHour := new(big.Float).SetFloat64(priceInfo.GpuPowerPerWattPerHour)
+			tmp := s.Mul(s, GpuPowerPerWattPerHour)
+
+			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
+		case METER_RESOURCE_TYPE_GPU_MEM:
+			GpuMemPerPercentagePerHour := new(big.Float).SetFloat64(priceInfo.GpuMemPerPercentagePerHour)
+			tmp := s.Mul(s, GpuMemPerPercentagePerHour)
 
 			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
 		}

@@ -275,6 +275,9 @@ func TestGetFeeWithMeterName(t *testing.T) {
 		PvcPerGigabytesPerHour:                   5,
 		CurrencyUnit:                             "CNY",
 		GpuPerPercentagePerHour:                  6,
+		GpuFbPerMegabytesPerHour:                 7,
+		GpuPowerPerWattPerHour:                   8,
+		GpuMemPerPercentagePerHour:               9,
 	}
 
 	if getFeeWithMeterName("meter_cluster_cpu_usage", "1", priceInfo) != "3.000" {
@@ -301,6 +304,18 @@ func TestGetFeeWithMeterName(t *testing.T) {
 		t.Error("failed to get fee with meter_workspace_gpu_usage")
 		return
 	}
+	if getFeeWithMeterName("meter_workspace_gpu_framebuffer_usage", "1", priceInfo) != "7.000" {
+		t.Error("failed to get fee with meter_workspace_gpu_framebuffer_usage")
+		return
+	}
+	if getFeeWithMeterName("meter_workspace_gpu_power_usage", "1", priceInfo) != "8.000" {
+		t.Error("failed to get fee with meter_workspace_gpu_power_usage")
+		return
+	}
+	if getFeeWithMeterName("meter_workspace_gpu_memory_usage", "1", priceInfo) != "9.000" {
+		t.Error("failed to get fee with meter_workspace_gpu_memory_usage")
+		return
+	}
 }
 
 func TestUpdateMetricStatData(t *testing.T) {
@@ -313,6 +328,9 @@ func TestUpdateMetricStatData(t *testing.T) {
 		PvcPerGigabytesPerHour:                   5,
 		CurrencyUnit:                             "CNY",
 		GpuPerPercentagePerHour:                  6,
+		GpuFbPerMegabytesPerHour:                 7,
+		GpuPowerPerWattPerHour:                   8,
+		GpuMemPerPercentagePerHour:               9,
 	}
 
 	tests := []struct {
