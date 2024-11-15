@@ -11,13 +11,12 @@ import (
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
-	v1 "kubesphere.io/api/vpc/v1"
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 	"kubesphere.io/kubesphere/pkg/constants"
 	"kubesphere.io/kubesphere/pkg/informers"
-	"kubesphere.io/kubesphere/pkg/server/errors"
+	vpc "kubesphere.io/kubesphere/pkg/models/vpc"
 )
 
 const (
@@ -31,108 +30,143 @@ func Resource(resource string) schema.GroupResource {
 	return GroupVersion.WithResource(resource).GroupResource()
 }
 
+type BadRequestError struct {
+	Reason string `json:"reason"`
+}
+
 func AddToContainer(container *restful.Container, factory informers.InformerFactory, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) error {
 	webservice := runtime.NewWebService(GroupVersion)
 	handler := newHandler(factory, k8sclient, ksclient)
 
 	webservice.Route(webservice.GET("/vpcnetworks").
 		To(handler.ListVpcNetwork).
-		Doc("List all vpcnetowkrs resources").
-		Returns(http.StatusOK, api.StatusOK, api.ListResult{}).
+		Doc("List all vpcnetwork resources").
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCNetworkResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
-	webservice.Route(webservice.GET("/vpcnetwork/{vpcnetwork}").
+	webservice.Route(webservice.GET("/vpcnetwork/{name}").
 		To(handler.GetVpcNetwork).
-		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
-		Doc("Get vpcnetowkrs resources").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCNetwork{}).
+		Param(webservice.PathParameter("name", "vpcnetwork name")).
+		Doc("Get vpcnetwork resources").
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetworkResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
+
+	webservice.Route(webservice.GET("/vpcnetwork/gatewayChassisNode").
+		To(handler.GetGatewayChassisNode).
+		Doc("List available gateway chassis nodes").
+		Returns(http.StatusOK, api.StatusOK, vpc.ListGatewayChassisNodeResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
 	webservice.Route(webservice.POST("/vpcnetwork/{workspace}").
 		To(handler.CreateVpcNetwork).
 		Param(webservice.PathParameter("workspace", "workspace name")).
-		Reads(v1.VPCNetwork{}).
+		Reads(vpc.VPCNetwork{}).
 		Doc("Create vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCNetwork{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetwork{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
-	webservice.Route(webservice.PUT("/vpcnetwork/{workspace}/{vpcnetwork}").
+	webservice.Route(webservice.PUT("/vpcnetwork/{name}").
 		To(handler.UpdateVpcNetwork).
-		Param(webservice.PathParameter("workspace", "workspace name")).
-		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
-		Reads(v1.VPCNetwork{}).
+		Param(webservice.PathParameter("name", "vpcnetwork name")).
+		Reads(vpc.VPCNetworkBase{}).
 		Doc("Update vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCNetwork{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetwork{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
-	webservice.Route(webservice.PATCH("/vpcnetwork/{vpcnetwork}").
+	webservice.Route(webservice.PATCH("/vpcnetwork/{name}").
 		To(handler.PatchVpcNetwork).
-		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
-		Reads(v1.VPCNetwork{}).
+		Param(webservice.PathParameter("name", "vpcnetwork name")).
+		Reads(vpc.VPCNetworkPatch{}).
 		Doc("Patch vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCNetwork{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetworkPatch{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
-	webservice.Route(webservice.DELETE("/vpcnetwork/{vpcnetwork}").
+	webservice.Route(webservice.DELETE("/vpcnetwork/{name}").
 		To(handler.DeleteVpcNetwork).
-		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
+		Param(webservice.PathParameter("name", "vpcnetwork name")).
 		Doc("Delete vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
 	// VPC Subnet
 	webservice.Route(webservice.GET("/vpcsubnets").
 		To(handler.ListVpcSubnet).
 		Doc("List all vpcsubnet resources").
-		Returns(http.StatusOK, api.StatusOK, api.ListResult{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCSubnetResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
-	webservice.Route(webservice.GET("/vpcnetwork/{vpcnetwork}/vpcsubnets").
+	webservice.Route(webservice.GET("/vpcsubnets/vpcnetwork/{name}").
 		To(handler.ListVpcSubnetWithinVpcNetwork).
-		Param(webservice.PathParameter("vpcnetwork", "vpcnetwork name")).
+		Param(webservice.PathParameter("name", "vpcnetwork name")).
 		Doc("List all vpcsubnet resource within vpcnetwork").
-		Returns(http.StatusOK, api.StatusOK, api.ListResult{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCSubnetResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
-	webservice.Route(webservice.GET("/vpcsubnet/{namespace}/{vpcsubnet}").
+	webservice.Route(webservice.GET("/vpcsubnets/{namespace}").
+		To(handler.ListVpcSubnetWithinNamespace).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Doc("List all vpcsubnet within the same namespace.").
+		Returns(http.StatusOK, api.StatusOK, vpc.ListVPCSubnetResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
+
+	webservice.Route(webservice.GET("/vpcsubnet/{namespace}/{name}").
 		To(handler.GetVpcSubnet).
 		Param(webservice.PathParameter("namespace", "namespace name")).
-		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
+		Param(webservice.PathParameter("name", "vpcsubnet name")).
 		Doc("Get vpcsubnet resources").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
 	webservice.Route(webservice.POST("/vpcsubnet").
 		To(handler.CreateVpcSubnet).
-		Reads(v1.VPCSubnet{}).
+		Reads(vpc.VPCSubnet{}).
 		Doc("Create vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnet{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
-	webservice.Route(webservice.PUT("/vpcsubnet/{vpcsubnet}").
+	webservice.Route(webservice.PUT("/vpcsubnet/{namespace}/{name}").
 		To(handler.UpdateVpcSubnet).
-		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
-		Reads(v1.VPCSubnet{}).
+		Param(webservice.PathParameter("namespace", "namespace name")).
+		Param(webservice.PathParameter("name", "vpcsubnet name")).
+		Reads(vpc.VPCSubnetPut{}).
 		Doc("Update vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetPutResponse{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
-	webservice.Route(webservice.PATCH("/vpcsubnet/{namespace}/{vpcsubnet}").
+	webservice.Route(webservice.PATCH("/vpcsubnet/{namespace}/{name}").
 		To(handler.PatchVpcSubnet).
 		Param(webservice.PathParameter("namespace", "namespace name")).
-		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
-		Reads(v1.VPCSubnet{}).
+		Param(webservice.PathParameter("name", "vpcsubnet name")).
+		Reads(vpc.VPCSubnetPatch{}).
 		Doc("Patch vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, v1.VPCSubnet{}).
+		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetPatch{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
-	webservice.Route(webservice.DELETE("/vpcsubnet/{namespace}/{vpcsubnet}").
+	webservice.Route(webservice.DELETE("/vpcsubnet/{namespace}/{name}").
 		To(handler.DeleteVpcSubnet).
 		Param(webservice.PathParameter("namespace", "namespace name")).
-		Param(webservice.PathParameter("vpcsubnet", "vpcsubnet name")).
+		Param(webservice.PathParameter("name", "vpcsubnet name")).
 		Doc("Delete vpcsubnet").
-		Returns(http.StatusOK, api.StatusOK, errors.None).
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
+
 	container.Add(webservice)
 
 	return nil

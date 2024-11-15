@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/klog"
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/informers"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 	"kubesphere.io/kubesphere/pkg/models/quotas"
 	"kubevirt.io/client-go/kubecli"
 
@@ -36,10 +38,6 @@ type virtzhandler struct {
 	minioClient         *minio.Client
 	k8sClient           kubernetes.Interface
 	kubevirtClient      kubecli.KubevirtClient
-}
-
-type BadRequestError struct {
-	Reason string `json:"reason"`
 }
 
 func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface, factory informers.InformerFactory, minioClient *minio.Client, virtClient kubecli.KubevirtClient) virtzhandler {
@@ -67,6 +65,16 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 	}
 
 	if !isValidDiskDuplicated(ui_vm.Disk, resp) {
+		return
+	}
+
+	validateType := reflect.TypeOf(ui_vm.Labels).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.Labels), ui_virtz.ConvertLabelToMap(ui_vm.Labels), resp) {
+		return
+	}
+
+	validateType = reflect.TypeOf(ui_vm.NodeSelector).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.NodeSelector), ui_virtz.ConvertLabelToMap(ui_vm.NodeSelector), resp) {
 		return
 	}
 
@@ -98,6 +106,16 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 	}
 
 	if !isValidDiskDuplicated(ui_vm.Disk, resp) {
+		return
+	}
+
+	validateType := reflect.TypeOf(ui_vm.Labels).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.Labels), ui_virtz.ConvertLabelToMap(ui_vm.Labels), resp) {
+		return
+	}
+
+	validateType = reflect.TypeOf(ui_vm.NodeSelector).Elem()
+	if !util.IsValidLabels(validateType, len(ui_vm.NodeSelector), ui_virtz.ConvertLabelToMap(ui_vm.NodeSelector), resp) {
 		return
 	}
 
@@ -190,17 +208,19 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 
 	memory, _ := strconv.ParseUint(strings.Replace(vm.Spec.Hardware.Domain.Resources.Requests.Memory().String(), "Gi", "", -1), 10, 32)
 	return ui_virtz.VirtualMachineResponse{
-		Name:        vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
-		ID:          vm.Name,
-		Namespace:   vm.Namespace,
-		Description: vm.Annotations[virtzv1alpha1.VirtualizationDescription],
-		CpuCores:    uint(vm.Spec.Hardware.Domain.CPU.Cores),
-		Memory:      uint(memory),
-		Image:       &ui_image_spec,
-		Disks:       h.getUIDisksResponse(vm),
-		Status:      ui_vm_status,
-		NodeName:    h.getVirtualMachineNode(vm.Namespace, vm.Name),
-		PodName:     h.getVirtualMachinePod(vm.Namespace, vm.Name),
+		Name:         vm.Annotations[virtzv1alpha1.VirtualizationAliasName],
+		ID:           vm.Name,
+		Namespace:    vm.Namespace,
+		Description:  vm.Annotations[virtzv1alpha1.VirtualizationDescription],
+		CpuCores:     uint(vm.Spec.Hardware.Domain.CPU.Cores),
+		Memory:       uint(memory),
+		Image:        &ui_image_spec,
+		Disks:        h.getUIDisksResponse(vm),
+		Status:       ui_vm_status,
+		NodeName:     h.getVirtualMachineNode(vm.Namespace, vm.Name),
+		PodName:      h.getVirtualMachinePod(vm.Namespace, vm.Name),
+		Labels:       getLabelResponse(vm.Labels),
+		NodeSelector: getNodeSelectorResponse(vm.Spec.NodeSelector),
 	}
 }
 
@@ -234,6 +254,32 @@ func (h *virtzhandler) getVirtualMachinePod(namespace, vmName string) string {
 		}
 	}
 	return "Not Established"
+}
+
+// Converts map[string]string to []Label.
+func getLabelResponse(incomingMap map[string]string) []ui_virtz.Label {
+	returnArray := make([]ui_virtz.Label, 0)
+	for key, value := range incomingMap {
+		newLabel := &ui_virtz.Label{
+			Key:   key,
+			Value: value,
+		}
+		returnArray = append(returnArray, *newLabel)
+	}
+	return returnArray
+}
+
+// Converts map[string]string to []NodeSelector.
+func getNodeSelectorResponse(incomingMap map[string]string) []ui_virtz.NodeSelector {
+	returnArray := make([]ui_virtz.NodeSelector, 0)
+	for key, value := range incomingMap {
+		newNodeSelector := &ui_virtz.NodeSelector{
+			Key:   key,
+			Value: value,
+		}
+		returnArray = append(returnArray, *newNodeSelector)
+	}
+	return returnArray
 }
 
 func (h *virtzhandler) getUIImageInfoResponse(vm *virtzv1alpha1.VirtualMachine) ui_virtz.ImageInfoResponse {
