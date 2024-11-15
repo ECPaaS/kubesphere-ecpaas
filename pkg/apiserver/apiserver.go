@@ -89,6 +89,7 @@ import (
 	operationsv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/operations/v1alpha2"
 	resourcesv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha2"
 	resourcev1alpha3 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha3"
+	schedulerv1 "kubesphere.io/kubesphere/pkg/kapis/scheduler/v1"
 	servicemeshv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/servicemesh/metrics/v1alpha2"
 	tenantv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/tenant/v1alpha2"
 	tenantv1alpha3 "kubesphere.io/kubesphere/pkg/kapis/tenant/v1alpha3"
@@ -284,6 +285,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 	urlruntime.Must(gatewayv1alpha1.AddToContainer(s.container, s.Config.GatewayOptions, s.RuntimeCache, s.RuntimeClient, s.InformerFactory, s.KubernetesClient.Kubernetes(), s.LoggingClient))
 	// accton extension
 	urlruntime.Must(vpcv1.AddToContainer(s.container, s.InformerFactory, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
+	urlruntime.Must(schedulerv1.AddToContainer(s.container, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
 	urlruntime.Must(volumev1alpha1.AddToContainer(s.container, s.MinioClient, s.KubernetesClient.Kubernetes(), s.KubernetesClient.KubeSphere()))
 	urlruntime.Must(virtualizationv1.AddToContainer(s.container, s.MinioClient, s.KubevirtClient, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.InformerFactory))
 	urlruntime.Must(meteringv1alpha2.AddToContainer(s.container, s.KubernetesClient.Kubernetes(), s.MonitoringClient, s.InformerFactory, s.RuntimeCache, s.Config.MeteringOptions, s.OpenpitrixClient, s.RuntimeClient))
