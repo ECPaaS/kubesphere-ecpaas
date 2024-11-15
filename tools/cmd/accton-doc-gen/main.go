@@ -85,7 +85,6 @@ func generateSwaggerJson() []byte {
 	urlruntime.Must(vpcv1.AddToContainer(container, informerFactory, nil, nil))
 	urlruntime.Must(volumev1alpha1.AddToContainer(container, nil, nil, nil))
 	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, nil, nil, nil, informerFactory))
-	urlruntime.Must(meteringv1alpha2.AddToContainer(container, nil, nil, informerFactory, nil, nil, nil, nil))
 	urlruntime.Must(tenantv1alpha4.AddToContainer(container, informerFactory, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil))
 	urlruntime.Must(schedulerv1.AddToContainer(container, nil, nil))
 

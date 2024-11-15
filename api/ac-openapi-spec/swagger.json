@@ -1970,51 +1970,51 @@
     "metering.PriceResponse": {
       "required": [
         "retention_day",
-        "cpu_per_core_per_hour",
-        "mem_per_gigabytes_per_hour",
-        "ingress_network_traffic_per_megabytes_per_hour",
         "egress_network_traffic_per_megabytes_per_hour",
         "pvc_per_gigabytes_per_hour",
         "gpu_per_percentage_per_hour",
-        "currency"
+        "currency",
+        "cpu_per_core_per_hour",
+        "mem_per_gigabytes_per_hour",
+        "ingress_network_traffic_per_megabytes_per_hour"
       ],
       "properties": {
         "cpu_per_core_per_hour": {
-          "description": "cpu price",
+          "description": "CPU usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
         },
         "currency": {
-          "description": "currency",
+          "description": "currency code ref https://www.iban.com/currency-codes",
           "type": "string"
         },
         "egress_network_traffic_per_megabytes_per_hour": {
-          "description": "egress price",
+          "description": "Egress traffic count price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
         },
         "gpu_per_percentage_per_hour": {
-          "description": "gpu price",
+          "description": "GPU usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
         },
         "ingress_network_traffic_per_megabytes_per_hour": {
-          "description": "ingress price",
+          "description": "Ingress traffic count price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
         },
         "mem_per_gigabytes_per_hour": {
-          "description": "mem price",
+          "description": "Memory usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
         },
         "pvc_per_gigabytes_per_hour": {
-          "description": "pvc price",
+          "description": "PVC usage price. If manager define or omitted and shall Multiples of 3",
           "type": "number",
           "format": "double",
           "default": 0
@@ -2025,166 +2025,7 @@
         }
       }
     },
-    "monitoring.ExportPoint": {
-      "required": [
-        "TimestampExportPoint",
-        "ValueExportPoint"
-      ],
-      "properties": {
-        "TimestampExportPoint": {
-          "type": "number",
-          "format": "double"
-        },
-        "ValueExportPoint": {
-          "type": "number",
-          "format": "double"
-        }
-      }
-    },
-    "monitoring.Metric": {
-      "properties": {
-        "data": {
-          "description": "actual metric result",
-          "$ref": "#/definitions/monitoring.MetricData"
-        },
-        "error": {
-          "type": "string"
-        },
-        "metric_name": {
-          "description": "metric name, eg. scheduler_up_sum",
-          "type": "string"
-        }
-      }
-    },
-    "monitoring.MetricData": {
-      "properties": {
-        "result": {
-          "description": "metric data including labels, time series and values",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/monitoring.MetricValue"
-          }
-        },
-        "resultType": {
-          "description": "result type, one of matrix, vector",
-          "type": "string"
-        }
-      }
-    },
-    "monitoring.MetricValue": {
-      "required": [
-        "min_value",
-        "max_value",
-        "avg_value",
-        "sum_value",
-        "fee",
-        "resource_unit",
-        "currency_unit"
-      ],
-      "properties": {
-        "avg_value": {
-          "description": "average value from monitor points",
-          "type": "string"
-        },
-        "currency_unit": {
-          "type": "string"
-        },
-        "exported_value": {
-          "description": "exported time series, values of vector type",
-          "$ref": "#/definitions/monitoring.ExportPoint"
-        },
-        "exported_values": {
-          "description": "exported time series, values of matrix type",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/monitoring.ExportPoint"
-          }
-        },
-        "fee": {
-          "description": "resource fee",
-          "type": "string"
-        },
-        "max_value": {
-          "description": "maximum value from monitor points",
-          "type": "string"
-        },
-        "metric": {
-          "description": "time series labels",
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "min_value": {
-          "description": "minimum value from monitor points",
-          "type": "string"
-        },
-        "resource_unit": {
-          "type": "string"
-        },
-        "sum_value": {
-          "description": "sum value from monitor points",
-          "type": "string"
-        },
-        "value": {
-          "description": "time series, values of vector type",
-          "type": "string"
-        },
-        "values": {
-          "description": "time series, values of matrix type",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/monitoring.Point"
-          }
-        }
-      }
-    },
-    "monitoring.Metrics": {
-      "required": [
-        "results"
-      ],
-      "properties": {
-        "page": {
-          "description": "current page returned",
-          "type": "integer",
-          "format": "int32"
-        },
-        "results": {
-          "description": "actual array of results",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/monitoring.Metric"
-          }
-        },
-        "total_item": {
-          "description": "page size",
-          "type": "integer",
-          "format": "int32"
-        },
-        "total_page": {
-          "description": "total number of pages",
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
-    "monitoring.Point": {
-      "required": [
-        "Timestamp",
-        "Value"
-      ],
-      "properties": {
-        "Timestamp": {
-          "type": "number",
-          "format": "double"
-        },
-        "Value": {
-          "type": "number",
-          "format": "double"
-        }
-      }
-    },
-    "util.BadRequestError": {
+    "v1.ClusterRouterPolicy": {
       "required": [
         "reason"
       ],
