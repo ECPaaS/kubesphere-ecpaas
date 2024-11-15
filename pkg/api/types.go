@@ -76,6 +76,7 @@ const (
 
 	StatusOK                  = "ok"
 	StatusNotFound            = "Not Found"
+	StatusBadRequest          = "Bad Request"
 	StatusInternalServerError = "Internal Server Error"
 )
 

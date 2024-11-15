@@ -9,6 +9,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -72,6 +74,14 @@ func (v *virtualizationOperator) CreateVirtualMachine(namespace string, ui_vm *V
 	vm.Namespace = namespace
 
 	ApplyVMSpec(ui_vm, &vm, vm_uuid)
+
+	if ui_vm.Labels != nil && len(ui_vm.Labels) > 0 {
+		vm.Labels = ConvertLabelToMap(ui_vm.Labels) // copy labels to ksvm
+	}
+
+	if ui_vm.NodeSelector != nil && len(ui_vm.NodeSelector) > 0 {
+		vm.Spec.NodeSelector = ConvertLabelToMap(ui_vm.NodeSelector) // copy node selector to ksvm
+	}
 
 	if ui_vm.Image != nil {
 		imagetemplate, err := v.ksclient.VirtualizationV1alpha1().ImageTemplates(ui_vm.Image.Namespace).Get(context.Background(), ui_vm.Image.ID, metav1.GetOptions{})
@@ -590,6 +600,21 @@ func ConvertModifyDiskSpecToDiskSpec(modifyDiskSpec *ModifyDiskSpec) *DiskSpec {
 	return &diskSpec
 }
 
+// Converts []Label or []NodeSelector to map[string]string.
+func ConvertLabelToMap(array interface{}) map[string]string {
+	returnMap := make(map[string]string, 0)
+	if labels, ok := array.([]Label); ok {
+		for _, label := range labels {
+			returnMap[label.Key] = label.Value
+		}
+	} else if nodeSelector, ok := array.([]NodeSelector); ok {
+		for _, selector := range nodeSelector {
+			returnMap[selector.Key] = selector.Value
+		}
+	}
+	return returnMap
+}
+
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -645,12 +670,75 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 		}
 	}
 
+	if ui_vm.Labels != nil && isUpdatingLabels(ConvertLabelToMap(ui_vm.Labels), vm.Labels) {
+		// Check if VM is started, then change labels on VM pod
+		if vm.Status.PrintableStatus != kvapi.VirtualMachineStatusStopped { // "Stopped"
+			// try to update virt-launcher pod's metadata.labels directly
+			podList, listPodErr := v.k8sclient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+			if listPodErr == nil {
+				pattern := fmt.Sprintf("virt-launcher-%s-[0-9A-Za-z]{5}", name)
+				matchExp, err := regexp.Compile(pattern)
+				if err != nil {
+					klog.Error(err)
+				} else {
+					for _, pod := range podList.Items {
+						if matchExp.MatchString(pod.Name) {
+							for key := range vm.Labels {
+								// delete old labels from pod
+								delete(pod.Labels, key)
+							}
+							for _, label := range ui_vm.Labels {
+								// add new labels to pod
+								pod.Labels[label.Key] = label.Value
+							}
+							_, err := v.k8sclient.CoreV1().Pods(namespace).Update(context.Background(), &pod, metav1.UpdateOptions{})
+							if err != nil {
+								klog.Error(err)
+							}
+							break; // no need to iterate remaining pods
+						}
+					}
+				}
+			}
+		}
+
+		if len(ui_vm.Labels) == 0 {
+			// if ui_vm.Labels is empty map, clear ksvm.Labels
+			vm.Labels = nil
+		} else {
+			// if ui_vm.Labels is NOT empty map, copy labels to ksvm.Labels
+			vm.Labels = ConvertLabelToMap(ui_vm.Labels)
+		}
+	}
+
+	if ui_vm.NodeSelector != nil {
+		if len(ui_vm.NodeSelector) == 0 {
+			// if ui_vm.NodeSelector is empty map, clear ksvm.spec.nodeSelector
+			vm.Spec.NodeSelector = nil
+		} else {
+			// if ui_vm.NodeSelector is NOT empty map, copy nodeSelector to ksvm.spec.nodeSelector
+			vm.Spec.NodeSelector = ConvertLabelToMap(ui_vm.NodeSelector)
+		}
+	}
+
 	updated_vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	return updated_vm, nil
+}
+
+// Check if newLabels is really a modify to oldLabels.
+// Also false if trying to clear an empty map of labels.
+func isUpdatingLabels(newLabels, oldLabels map[string]string) bool {
+	if reflect.DeepEqual(newLabels, oldLabels) {
+		return false
+	} else if len(newLabels) == 0 && oldLabels == nil {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (v *virtualizationOperator) StartVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error) {
