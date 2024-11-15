@@ -961,7 +961,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -1052,7 +1052,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -1168,7 +1168,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -1215,7 +1215,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -1306,7 +1306,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -1422,7 +1422,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -1513,7 +1513,7 @@
           "403": {
             "description": "Invalid format",
             "schema": {
-              "$ref": "#/definitions/virtualization.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "500": {
@@ -2181,6 +2181,16 @@
         "Value": {
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "util.BadRequestError": {
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string"
         }
       }
     },
@@ -2853,6 +2863,25 @@
         }
       }
     },
+    "virtualization.Label": {
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "description": "Label key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash).",
+          "type": "string",
+          "maximum": 316,
+          "minimum": 1
+        },
+        "value": {
+          "description": "Label value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string.",
+          "type": "string",
+          "maximum": 63
+        }
+      }
+    },
     "virtualization.ListDiskResponse": {
       "required": [
         "total_count",
@@ -3020,6 +3049,13 @@
             "$ref": "#/definitions/virtualization.ModifyDiskSpec"
           }
         },
+        "labels": {
+          "description": "Virtual machine labels. Can be empty array.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.Label"
+          }
+        },
         "memory": {
           "description": "Virtual machine memory size, unit is GB.",
           "type": "integer",
@@ -3032,6 +3068,32 @@
           "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
           "type": "string",
           "maximum": 16
+        },
+        "node_selector": {
+          "description": "Virtual machine node selector. Can be empty array.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.NodeSelector"
+          }
+        }
+      }
+    },
+    "virtualization.NodeSelector": {
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "description": "NodeSelector key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash).",
+          "type": "string",
+          "maximum": 316,
+          "minimum": 1
+        },
+        "value": {
+          "description": "NodeSelector value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string.",
+          "type": "string",
+          "maximum": 63
         }
       }
     },
@@ -3099,6 +3161,13 @@
           "description": "Virtual machine image source",
           "$ref": "#/definitions/virtualization.ImageInfoResponse"
         },
+        "labels": {
+          "description": "Virtual machine labels",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.Label"
+          }
+        },
         "memory": {
           "description": "Virtual machine memory size, unit is GB",
           "type": "integer",
@@ -3111,6 +3180,13 @@
           "description": "Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
           "type": "string",
           "maximum": 16
+        },
+        "node_selector": {
+          "description": "Virtual machine node selector",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.NodeSelector"
+          }
         }
       }
     },
@@ -3126,7 +3202,9 @@
         "disks",
         "status",
         "node_name",
-        "pod_name"
+        "pod_name",
+        "labels",
+        "node_selector"
       ],
       "properties": {
         "cpu_cores": {
@@ -3153,6 +3231,13 @@
           "description": "Virtual machine image source",
           "$ref": "#/definitions/virtualization.ImageInfoResponse"
         },
+        "labels": {
+          "description": "Virtual machine labels",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.Label"
+          }
+        },
         "memory": {
           "description": "Virtual machine memory size",
           "type": "integer",
@@ -3169,6 +3254,13 @@
         "node_name": {
           "description": "Virtual machine node",
           "type": "string"
+        },
+        "node_selector": {
+          "description": "Virtual machine node selector",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.NodeSelector"
+          }
         },
         "pod_name": {
           "description": "Virtual machine pod",
