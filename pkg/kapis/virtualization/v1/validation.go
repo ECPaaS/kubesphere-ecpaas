@@ -54,7 +54,7 @@ func isValidLength(validateType reflect.Type, valueToValidate string, fieldName 
 	if found {
 		maximum, _ := strconv.Atoi(field.Tag.Get("maximum"))
 		if len(valueToValidate) > int(maximum) {
-			resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 				Reason: fieldName + " length should be less than " + field.Tag.Get("maximum"),
 			})
 			return false
@@ -332,14 +332,14 @@ func isValidMinioImageSize(minioClient *minio.Client, minioImageName string, res
 	if minioClient != nil {
 		objectInfo, err := minioClient.StatObject(context.Background(), bucketName, minioImageName, minio.StatObjectOptions{})
 		if err != nil {
-			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 				Reason: "Minio image does not exist",
 			})
 			return false
 		}
 
 		if objectInfo.Size <= 0 {
-			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 				Reason: "Minio image '" + minioImageName + "' size should be larger than 0",
 			})
 			return false
