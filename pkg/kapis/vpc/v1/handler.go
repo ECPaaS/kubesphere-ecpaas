@@ -17,7 +17,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/apiserver/query"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 	"kubesphere.io/kubesphere/pkg/informers"
-	"kubesphere.io/kubesphere/pkg/kapis/validation"
+	validation "kubesphere.io/kubesphere/pkg/kapis/util"
 	"kubesphere.io/kubesphere/pkg/models/vpc"
 
 	"k8s.io/client-go/kubernetes"
