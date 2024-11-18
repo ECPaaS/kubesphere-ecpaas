@@ -16,6 +16,7 @@ import (
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 	"kubesphere.io/kubesphere/pkg/constants"
 	"kubesphere.io/kubesphere/pkg/informers"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 	vpc "kubesphere.io/kubesphere/pkg/models/vpc"
 )
 
@@ -28,10 +29,6 @@ var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
 func Resource(resource string) schema.GroupResource {
 	return GroupVersion.WithResource(resource).GroupResource()
-}
-
-type BadRequestError struct {
-	Reason string `json:"reason"`
 }
 
 func AddToContainer(container *restful.Container, factory informers.InformerFactory, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) error {
@@ -64,7 +61,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		Reads(vpc.VPCNetwork{}).
 		Doc("Create vpcnetwork").
 		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetwork{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
@@ -74,7 +71,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		Reads(vpc.VPCNetworkBase{}).
 		Doc("Update vpcnetwork").
 		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetwork{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
@@ -84,7 +81,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		Reads(vpc.VPCNetworkPatch{}).
 		Doc("Patch vpcnetwork").
 		Returns(http.StatusOK, api.StatusOK, vpc.VPCNetworkPatch{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcNetworkTag}))
 
@@ -133,7 +130,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		Reads(vpc.VPCSubnet{}).
 		Doc("Create vpcsubnet").
 		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnet{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
 	webservice.Route(webservice.PUT("/vpcsubnet/{namespace}/{name}").
@@ -143,7 +140,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		Reads(vpc.VPCSubnetPut{}).
 		Doc("Update vpcsubnet").
 		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetPutResponse{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 
@@ -154,7 +151,7 @@ func AddToContainer(container *restful.Container, factory informers.InformerFact
 		Reads(vpc.VPCSubnetPatch{}).
 		Doc("Patch vpcsubnet").
 		Returns(http.StatusOK, api.StatusOK, vpc.VPCSubnetPatch{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, BadRequestError{}).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VpcSubnetTag}))
 

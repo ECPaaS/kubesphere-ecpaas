@@ -102,7 +102,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -173,7 +173,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -219,7 +219,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -278,7 +278,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           }
         }
@@ -365,7 +365,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -450,7 +450,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -1711,16 +1711,6 @@
       }
     },
     "util.BadRequestError": {
-      "required": [
-        "reason"
-      ],
-      "properties": {
-        "reason": {
-          "type": "string"
-        }
-      }
-    },
-    "v1.BadRequestError": {
       "required": [
         "reason"
       ],
