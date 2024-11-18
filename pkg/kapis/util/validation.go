@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/emicklei/go-restful"
 )
@@ -69,10 +70,43 @@ func IsValidLabelEntry(validateType reflect.Type, key string, value string, resp
 }
 
 func IsValidLabelKeyString(valueToValidate string, resp *restful.Response) bool {
-	validRegex := regexp.MustCompile("^[A-Za-z0-9-_./]+$")
-	if !validRegex.MatchString(valueToValidate) {
+	validNameRegex := regexp.MustCompile("^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$")
+
+	parts := strings.Split(valueToValidate, "/")
+	var name string
+	
+	switch len(parts) {
+	case 1:
+		name = parts[0]
+	case 2:
+		validPrefixRegex := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`)
+		var prefix string
+		prefix, name = parts[0], parts[1]
+		if len(prefix) > 253 {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				Reason: "Invalid key. The prefix in label key must be no more then 253 charactors",
+			})
+			return false
+		} else if !validPrefixRegex.MatchString(prefix) {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				Reason: "Invalid key. The prefix in label key must consist of lower case alphanumeric characters,"+
+				" '-' or '.', and must start and end with an alphanumeric character",
+			})
+			return false
+		}
+	default:
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Invalid key. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)",
+			Reason: "Invalid key. A valid label key must consist of alphanumeric characters, '-', '_' or '.',"+
+			" and must start and end with an alphanumeric character (e.g. 'MyName', or 'my.name', or '123-abc')"+
+			" with an optional DNS subdomain prefix and '/' (e.g. 'example.com/MyName')",
+		})
+		return false
+	}
+
+	if !validNameRegex.MatchString(name) {
+		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+			Reason: "Invalid key. A valid label key must consist of alphanumeric characters, '-', '_' or '.',"+
+			" and must start and end with an alphanumeric character (e.g. 'MyName', or 'my.name', or '123-abc')",
 		})
 		return false
 	}
@@ -80,10 +114,11 @@ func IsValidLabelKeyString(valueToValidate string, resp *restful.Response) bool 
 }
 
 func IsValidLabelValueString(valueToValidate string, resp *restful.Response) bool {
-	validRegex := regexp.MustCompile("^[A-Za-z0-9-_.]*$") // Also match "", so use '*'
+	validRegex := regexp.MustCompile("^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$")
 	if !validRegex.MatchString(valueToValidate) {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Invalid value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot)",
+			Reason: "Invalid value. A valid label value must be an empty string or consist of alphanumeric characters, '-', '_' or '.',"+
+			" and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345')",
 		})
 		return false
 	}

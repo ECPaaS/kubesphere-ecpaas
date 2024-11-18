@@ -102,7 +102,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -173,7 +173,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -219,7 +219,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -278,7 +278,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           }
         }
@@ -365,7 +365,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -450,7 +450,7 @@
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/v1.BadRequestError"
+              "$ref": "#/definitions/util.BadRequestError"
             }
           },
           "404": {
@@ -1809,7 +1809,7 @@
         }
       }
     },
-    "v1.ClusterRouterPolicy": {
+    "util.BadRequestError": {
       "required": [
         "reason"
       ],
@@ -2085,16 +2085,6 @@
           "items": {
             "type": "string"
           }
-        }
-      }
-    },
-    "virtualization.BadRequestError": {
-      "required": [
-        "reason"
-      ],
-      "properties": {
-        "reason": {
-          "type": "string"
         }
       }
     },
@@ -2495,13 +2485,13 @@
       ],
       "properties": {
         "key": {
-          "description": "Label key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash).",
+          "description": "Label key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash). Must start and end with a letter or number. The maximum length of each key is 63 characters (if the key contains a domain name, the maximum domain name length is 253 characters plus 1 for seperation(/)).",
           "type": "string",
-          "maximum": 316,
+          "maximum": 317,
           "minimum": 1
         },
         "value": {
-          "description": "Label value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string.",
+          "description": "Label value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Must start and end with an alphanumeric charactor. Can be empty string.",
           "type": "string",
           "maximum": 63
         }
@@ -2710,13 +2700,13 @@
       ],
       "properties": {
         "key": {
-          "description": "NodeSelector key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash).",
+          "description": "NodeSelector key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash). Must start and end with a letter or number. The maximum length of each key is 63 characters (if the key contains a domain name, the maximum domain name length is 253 characters plus 1 for seperation(/)).",
           "type": "string",
-          "maximum": 316,
+          "maximum": 317,
           "minimum": 1
         },
         "value": {
-          "description": "NodeSelector value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string.",
+          "description": "NodeSelector value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Must start and end with an alphanumeric charactor. Can be empty string.",
           "type": "string",
           "maximum": 63
         }
