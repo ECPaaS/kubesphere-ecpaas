@@ -5,6 +5,7 @@ Copyright(c) 2024-present Accton. All rights reserved. www.accton.com
 package util
 
 import (
+	"net"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -84,6 +85,45 @@ func IsValidLabelValueString(valueToValidate string, resp *restful.Response) boo
 	if !validRegex.MatchString(valueToValidate) {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
 			Reason: "Invalid value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot)",
+		})
+		return false
+	}
+	return true
+}
+
+func IsValidWithinRange(validateType reflect.Type, valueToValidate int, fieldName string, resp *restful.Response) bool {
+	field, found := validateType.FieldByName(fieldName)
+	if found {
+		minimum, _ := strconv.Atoi(field.Tag.Get("minimum"))
+		maximum, _ := strconv.Atoi(field.Tag.Get("maximum"))
+		if valueToValidate > maximum || valueToValidate < minimum {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+				Reason: fieldName + " should be in the range of " + field.Tag.Get("minimum") + " to " + field.Tag.Get("maximum"),
+			})
+			return false
+		}
+	}
+	return true
+
+}
+
+func IsValidString(valueToValidate string, resp *restful.Response) bool {
+	validRegex := regexp.MustCompile("[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*")
+	if !validRegex.MatchString(valueToValidate) {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+			Reason: "Allowed characters: lowercase letters (a-z), numbers (0-9), and hyphens (-)",
+		})
+		return false
+	}
+	return true
+
+}
+
+func IsValidCIDR(cidr string, resp *restful.Response) bool {
+	_, _, err := net.ParseCIDR(cidr)
+	if err != nil {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+			Reason: "Invalid CIDR address: " + cidr,
 		})
 		return false
 	}
