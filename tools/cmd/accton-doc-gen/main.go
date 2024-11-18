@@ -18,7 +18,6 @@ import (
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/informers"
 	schedulerv1 "kubesphere.io/kubesphere/pkg/kapis/scheduler/v1"
-	tenantv1alpha4 "kubesphere.io/kubesphere/pkg/kapis/tenant/v1alpha4"
 	virtualizationv1 "kubesphere.io/kubesphere/pkg/kapis/virtualization/v1"
 	volumev1alpha1 "kubesphere.io/kubesphere/pkg/kapis/volume/v1alpha1"
 	vpcv1 "kubesphere.io/kubesphere/pkg/kapis/vpc/v1"
@@ -84,7 +83,6 @@ func generateSwaggerJson() []byte {
 	urlruntime.Must(vpcv1.AddToContainer(container, informerFactory, nil, nil))
 	urlruntime.Must(volumev1alpha1.AddToContainer(container, nil, nil, nil))
 	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, nil, nil, nil, informerFactory))
-	urlruntime.Must(tenantv1alpha4.AddToContainer(container, informerFactory, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil))
 	urlruntime.Must(schedulerv1.AddToContainer(container, nil, nil))
 
 	config := restfulspec.Config{
