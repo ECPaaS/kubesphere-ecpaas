@@ -17,8 +17,8 @@ type PriceInfo struct {
 	GpuPerPercentagePerHour float64 `json:"gpuPerPercentagePerHour" yaml:"gpuPerPercentagePerHour"`
 	// gpu framebuffer cost with above currency unit for per MB per hour
 	GpuFbPerMegabytesPerHour float64 `json:"gpuFbPerMegabytesPerHour" yaml:"gpuFbPerMegabytesPerHour"`
-	// gpu power cost with above currency unit for per watt per hour
-	GpuPowerPerWattPerHour float64 `json:"gpuPowerPerWattPerHour" yaml:"gpuPowerPerWattPerHour"`
+	// gpu power cost with above currency unit for per kilowatt per hour
+	GpuPowerPerKilowattPerHour float64 `json:"gpuPowerPerKilowattPerHour" yaml:"gpuPowerPerKilowattPerHour"`
 	// gpu memory cost with above currency unit for per percentage per hour
 	GpuMemPerPercentagePerHour float64 `json:"gpuMemPerPercentagePerHour" yaml:"gpuMemPerPercentagePerHour"`
 }
@@ -44,7 +44,7 @@ var DefaultMeteringOption = Options{
 			CurrencyUnit:                             "",
 			GpuPerPercentagePerHour:                  0,
 			GpuFbPerMegabytesPerHour:                 0,
-			GpuPowerPerWattPerHour:                   0,
+			GpuPowerPerKilowattPerHour:               0,
 			GpuMemPerPercentagePerHour:               0,
 		},
 	},

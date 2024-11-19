@@ -238,10 +238,13 @@ func getFeeWithMeterName(meterName string, sum string, priceInfo meteringclient.
 
 			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
 		case METER_RESOURCE_TYPE_GPU_POWER:
-			GpuPowerPerWattPerHour := new(big.Float).SetFloat64(priceInfo.GpuPowerPerWattPerHour)
-			tmp := s.Mul(s, GpuPowerPerWattPerHour)
+			oneThousand := new(big.Float).SetInt64(1000)
+			GpuPowerPerKilowattPerHour := new(big.Float).SetFloat64(priceInfo.GpuPowerPerKilowattPerHour)
 
-			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
+			// transform unit from watts to Kilowatts
+			s.Quo(s, oneThousand)
+
+			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), s.Mul(s, GpuPowerPerKilowattPerHour))
 		case METER_RESOURCE_TYPE_GPU_MEM:
 			GpuMemPerPercentagePerHour := new(big.Float).SetFloat64(priceInfo.GpuMemPerPercentagePerHour)
 			tmp := s.Mul(s, GpuMemPerPercentagePerHour)

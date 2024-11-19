@@ -366,7 +366,7 @@ sum (
 
 	"meter_workspace_gpu_usage": `
 sum by (workspace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_GPU_UTIL{
 			exported_namespace!="",
 			exported_pod!=""
@@ -384,7 +384,7 @@ sum by (workspace) (
 
 	"meter_workspace_gpu_framebuffer_usage": `
 sum by (workspace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_FB_USED{
 			exported_namespace!="",
 			exported_pod!=""
@@ -402,7 +402,7 @@ sum by (workspace) (
 
 	"meter_workspace_gpu_power_usage": `
 sum by (workspace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_POWER_USAGE{
 			exported_namespace!="",
 			exported_pod!=""
@@ -420,7 +420,7 @@ sum by (workspace) (
 
 	"meter_workspace_gpu_memory_usage": `
 sum by (workspace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_MEM_COPY_UTIL{
 			exported_namespace!="",
 			exported_pod!=""
@@ -567,7 +567,7 @@ sum (
 
 	"meter_namespace_gpu_usage": `
 sum by (exported_namespace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_GPU_UTIL{
 			exported_namespace!="",
 			exported_pod!=""
@@ -585,7 +585,7 @@ sum by (exported_namespace) (
 
 	"meter_namespace_gpu_framebuffer_usage": `
 sum by (exported_namespace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_FB_USED{
 			exported_namespace!="",
 			exported_pod!=""
@@ -603,7 +603,7 @@ sum by (exported_namespace) (
 
 	"meter_namespace_gpu_power_usage": `
 sum by (exported_namespace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_POWER_USAGE{
 			exported_namespace!="",
 			exported_pod!=""
@@ -621,7 +621,7 @@ sum by (exported_namespace) (
 
 	"meter_namespace_gpu_memory_usage": `
 sum by (exported_namespace) (
-	sum_over_time (
+	avg_over_time (
 		DCGM_FI_DEV_MEM_COPY_UTIL{
 			exported_namespace!="",
 			exported_pod!=""
