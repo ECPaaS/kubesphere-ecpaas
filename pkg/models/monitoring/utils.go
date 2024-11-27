@@ -50,7 +50,7 @@ var meterResourceUnitMap = map[int]string{
 	METER_RESOURCE_TYPE_PVC:         "bytes",
 	METER_RESOURCE_TYPE_GPU:         "percentages",
 	METER_RESOURCE_TYPE_GPU_FB:      "megabytes",
-	METER_RESOURCE_TYPE_GPU_POWER:   "watts",
+	METER_RESOURCE_TYPE_GPU_POWER:   "kilowatts",
 	METER_RESOURCE_TYPE_GPU_MEM:     "percentages",
 }
 
@@ -238,13 +238,10 @@ func getFeeWithMeterName(meterName string, sum string, priceInfo meteringclient.
 
 			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
 		case METER_RESOURCE_TYPE_GPU_POWER:
-			oneThousand := new(big.Float).SetInt64(1000)
 			GpuPowerPerKilowattPerHour := new(big.Float).SetFloat64(priceInfo.GpuPowerPerKilowattPerHour)
+			tmp := s.Mul(s, GpuPowerPerKilowattPerHour)
 
-			// transform unit from watts to Kilowatts
-			s.Quo(s, oneThousand)
-
-			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), s.Mul(s, GpuPowerPerKilowattPerHour))
+			return fmt.Sprintf(generateFloatFormat(meteringFeePrecision), tmp)
 		case METER_RESOURCE_TYPE_GPU_MEM:
 			GpuMemPerPercentagePerHour := new(big.Float).SetFloat64(priceInfo.GpuMemPerPercentagePerHour)
 			tmp := s.Mul(s, GpuMemPerPercentagePerHour)

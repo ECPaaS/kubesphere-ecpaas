@@ -308,7 +308,7 @@ func TestGetFeeWithMeterName(t *testing.T) {
 		t.Error("failed to get fee with meter_workspace_gpu_framebuffer_usage")
 		return
 	}
-	if getFeeWithMeterName("meter_workspace_gpu_power_usage", "1000", priceInfo) != "8.000" {
+	if getFeeWithMeterName("meter_workspace_gpu_power_usage", "1", priceInfo) != "8.000" {
 		t.Error("failed to get fee with meter_workspace_gpu_power_usage")
 		return
 	}

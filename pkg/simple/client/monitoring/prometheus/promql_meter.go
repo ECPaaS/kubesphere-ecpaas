@@ -416,7 +416,7 @@ sum by (workspace) (
 			"(.*)"
 		)
 	)
-) or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+)/1000 or on(workspace) max by(workspace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
 
 	"meter_workspace_gpu_memory_usage": `
 sum by (workspace) (
@@ -617,7 +617,7 @@ sum by (exported_namespace) (
 			"(.*)"
 		)
 	)
-) or on(exported_namespace) max by(exported_namespace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
+)/1000 or on(exported_namespace) max by(exported_namespace) (label_replace(kube_namespace_labels{$2}, "exported_namespace", "$1", "namespace", "(.*)") * 0)`,
 
 	"meter_namespace_gpu_memory_usage": `
 sum by (exported_namespace) (
