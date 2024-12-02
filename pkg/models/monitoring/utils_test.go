@@ -276,7 +276,7 @@ func TestGetFeeWithMeterName(t *testing.T) {
 		CurrencyUnit:                             "CNY",
 		GpuPerPercentagePerHour:                  6,
 		GpuFbPerMegabytesPerHour:                 7,
-		GpuPowerPerWattPerHour:                   8,
+		GpuPowerPerKilowattPerHour:               8,
 		GpuMemPerPercentagePerHour:               9,
 	}
 
@@ -329,7 +329,7 @@ func TestUpdateMetricStatData(t *testing.T) {
 		CurrencyUnit:                             "CNY",
 		GpuPerPercentagePerHour:                  6,
 		GpuFbPerMegabytesPerHour:                 7,
-		GpuPowerPerWattPerHour:                   8,
+		GpuPowerPerKilowattPerHour:               8,
 		GpuMemPerPercentagePerHour:               9,
 	}
 

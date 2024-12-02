@@ -24,7 +24,7 @@ func (h *tenantHandler) HandlePriceInfoQuery(req *restful.Request, resp *restful
 	priceResponse.PvcPerGigabytesPerHour = priceInfo.PvcPerGigabytesPerHour
 	priceResponse.GpuPerPercentagePerHour = priceInfo.GpuPerPercentagePerHour
 	priceResponse.GpuFbPerMegabytesPerHour = priceInfo.GpuFbPerMegabytesPerHour
-	priceResponse.GpuPowerPerWattPerHour = priceInfo.GpuPowerPerWattPerHour
+	priceResponse.GpuPowerPerKilowattPerHour = priceInfo.GpuPowerPerKilowattPerHour
 	priceResponse.GpuMemPerPercentagePerHour = priceInfo.GpuMemPerPercentagePerHour
 
 	resp.WriteAsJson(priceResponse)
