@@ -44,13 +44,13 @@ type GuestSpec struct {
 }
 
 type Label struct {
-	Key   string `json:"key" description:"Label key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)." minimum:"1" maximum:"316"`
-	Value string `json:"value" description:"Label value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string." maximum:"63"`
+	Key   string `json:"key" description:"Label key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash). Must start and end with a letter or number. The maximum length of each key is 63 characters (if the key contains a domain name, the maximum domain name length is 253 characters plus 1 for seperation(/))." minimum:"1" maximum:"317"`
+	Value string `json:"value" description:"Label value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Must start and end with an alphanumeric charactor. Can be empty string." maximum:"63"`
 }
 
 type NodeSelector struct {
-	Key   string `json:"key" description:"NodeSelector key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)." minimum:"1" maximum:"316"`
-	Value string `json:"value" description:"NodeSelector value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Can be empty string." maximum:"63"`
+	Key   string `json:"key" description:"NodeSelector key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash). Must start and end with a letter or number. The maximum length of each key is 63 characters (if the key contains a domain name, the maximum domain name length is 253 characters plus 1 for seperation(/))." minimum:"1" maximum:"317"`
+	Value string `json:"value" description:"NodeSelector value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Must start and end with an alphanumeric charactor. Can be empty string." maximum:"63"`
 }
 
 type ModifyVirtualMachineRequest struct {

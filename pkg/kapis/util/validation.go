@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/emicklei/go-restful"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 )
 
 type BadRequestError struct {
@@ -50,44 +51,30 @@ func IsValidLabels(validateType reflect.Type, size int, labels map[string]string
 }
 
 func IsValidLabelEntry(validateType reflect.Type, key string, value string, resp *restful.Response) bool {
-	if !IsValidLength(validateType, key, "Key", resp) {
-		return false
-	}
-
-	if !IsValidLabelKeyString(key, resp) {
-		return false
-	}
-
-	if !IsValidLength(validateType, value, "Value", resp) {
-		return false
-	}
-
-	if !IsValidLabelValueString(value, resp) {
-		return false
-	}
-
-	return true
-}
-
-func IsValidLabelKeyString(valueToValidate string, resp *restful.Response) bool {
-	validRegex := regexp.MustCompile("^[A-Za-z0-9-_./]+$")
-	if !validRegex.MatchString(valueToValidate) {
+	errMsg := k8svalidation.IsQualifiedName(key) // Has built-in length check
+	if len(errMsg) > 0 {
+		errorReason := "Invalid key: '" + key + "'"
+		for _, msg := range errMsg {
+			errorReason += ", " + msg
+		}
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Invalid key. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash)",
+			Reason: errorReason,
 		})
 		return false
 	}
-	return true
-}
 
-func IsValidLabelValueString(valueToValidate string, resp *restful.Response) bool {
-	validRegex := regexp.MustCompile("^[A-Za-z0-9-_.]*$") // Also match "", so use '*'
-	if !validRegex.MatchString(valueToValidate) {
+	errMsg = k8svalidation.IsValidLabelValue(value) // Has built-in length check
+	if len(errMsg) > 0 {
+		errorReason := "Invalid value: '" + value + "'"
+		for _, msg := range errMsg {
+			errorReason += ", " + msg
+		}
 		resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
-			Reason: "Invalid value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot)",
+			Reason: errorReason,
 		})
 		return false
 	}
+
 	return true
 }
 
