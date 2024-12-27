@@ -430,7 +430,9 @@ func (cs *clusterSyncOperator) ListBackup() (*ListBackupResponse, error) {
 	backupConfigs := config.Spec.BackupConfigs
 	responseSlice := make([]BackupResponse, 0)
 	for _, backupConfig := range backupConfigs {
-		responseSlice = append(responseSlice, *makeBackupResponse(&backupConfig.BackupSpec, backupConfig.BackupName))
+		if !*backupConfig.IsOneTime {
+			responseSlice = append(responseSlice, *makeBackupResponse(&backupConfig.BackupSpec, backupConfig.BackupName))
+		}
 	}
 
 	return &ListBackupResponse{TotalCount: len(responseSlice), Items: responseSlice}, nil
@@ -466,7 +468,7 @@ func (cs *clusterSyncOperator) DeleteBackup(name string) error {
 
 func getBackupConfig(configs []clustersyncv1.BackupConfig, newConfigName string) *clustersyncv1.BackupConfig {
 	for _, config := range configs {
-		if config.BackupName == newConfigName {
+		if config.BackupName == newConfigName && !*config.IsOneTime {
 			 return &config
 		}
 	}
@@ -482,7 +484,7 @@ func makeBackpSpec(request *BackupRequest) (*clustersyncv1.BackupSpec, error) {
 		VolumeSnapshotLocations: request.VolumeSnapshotLocations,
 		SnapshotMoveData: request.SnapshotMoveData,
 	}
-	if request.TTL != "" { // TODO test this
+	if request.TTL != "" {
 		if duration, err := time.ParseDuration(request.TTL); err != nil {
 			return nil, err
 		} else {
@@ -561,6 +563,7 @@ func (cs *clusterSyncOperator) CreateRestore(ui_restore *RestoreRequest) (*Resto
 				BackupName: ui_restore.BackupName,
 				IncludedNamespaces: ui_restore.IncludedNamespaces,
 				ExcludedNamespaces: ui_restore.ExcludedNamespaces,
+				IsOneTime: ui_restore.IsOneTime,
 			},
 		}
 		config.Spec.RestoreConfigs = append(config.Spec.RestoreConfigs, newRestoreConfig)
@@ -649,7 +652,9 @@ func (cs *clusterSyncOperator) ListRestore() (*ListRestoreResponse, error) {
 	restoreConfigs := config.Spec.RestoreConfigs
 	responseSlice := make([]RestoreResponse, 0)
 	for _, restoreConfig := range restoreConfigs {
-		responseSlice = append(responseSlice, *makeRestoreResponse(&restoreConfig.RestoreSpec, restoreConfig.RestoreName))
+		if !*restoreConfig.IsOneTime {
+			responseSlice = append(responseSlice, *makeRestoreResponse(&restoreConfig.RestoreSpec, restoreConfig.RestoreName))
+		}
 	}
 
 	return &ListRestoreResponse{TotalCount: len(responseSlice), Items: responseSlice}, nil
@@ -685,7 +690,7 @@ func (cs *clusterSyncOperator) DeleteRestore(name string) error {
 
 func getRestoreConfig(configs []clustersyncv1.RestoreConfig, newConfigName string) *clustersyncv1.RestoreConfig {
 	for _, config := range configs {
-		if config.RestoreName == newConfigName {
+		if config.RestoreName == newConfigName && !*config.IsOneTime {
 			 return &config
 		}
 	}

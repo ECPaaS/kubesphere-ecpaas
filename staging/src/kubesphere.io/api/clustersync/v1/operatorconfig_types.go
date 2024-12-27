@@ -38,6 +38,7 @@ type StorageConfig struct {
 type BackupConfig struct {
 	BackupName string     `json:"backupName,omitempty"`
 	BackupSpec BackupSpec `json:"backupSpec,omitempty"`
+	IsOneTime  *bool      `json:"isOneTime,omitempty"`
 }
 
 type BackupSpec struct {
@@ -54,6 +55,7 @@ type BackupSpec struct {
 type RestoreConfig struct {
 	RestoreName string      `json:"restoreName,omitempty"`
 	RestoreSpec RestoreSpec `json:"restoreSpec,omitempty"`
+	IsOneTime   *bool       `json:"isOneTime,omitempty"`
 }
 
 

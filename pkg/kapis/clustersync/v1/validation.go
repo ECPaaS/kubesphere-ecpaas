@@ -139,6 +139,13 @@ func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.R
 	if !isValidVolumeLocations(request.SnapshotMoveData, request.VolumeSnapshotLocations, resp) {
 		return false
 	}
+	// IsOneTime *bool
+	if request.IsOneTime == nil {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "IsOneTime must be set.",
+		})
+		return false
+	}
 
 	return true
 }
@@ -192,6 +199,13 @@ func isValidRestoreRequest(request *ui_clustersync.RestoreRequest, resp *restful
 	// IncludedNamespaces []string
 	// ExcludedNamespaces []string
 	if !isValidNamespaceRange(request.IncludedNamespaces, request.ExcludedNamespaces, resp) {
+		return false
+	}
+	// IsOneTime *bool
+	if request.IsOneTime == nil {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "IsOneTime must be set.",
+		})
 		return false
 	}
 

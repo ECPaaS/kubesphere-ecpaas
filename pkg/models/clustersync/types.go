@@ -62,6 +62,7 @@ type BackupRequest struct {
 	DefaultVolumesToFsBackup *bool    `json:"defaultVolumesToFsBackup,omitempty" default:"false" description:"DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default."`
 	VolumeSnapshotLocations  []string `json:"volumeSnapshotLocations,omitempty" description:"VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided."`
 	SnapshotMoveData         *bool    `json:"snapshotMoveData,omitempty" default:"false" description:"SnapshotMoveData specifies whether snapshot data should be moved."`
+	IsOneTime                *bool    `json:"isOneTime,omitempty" description:"Whether this config is for one time backup or cluster sync."`
 }
 
 type BackupNameResponse struct {
@@ -100,6 +101,7 @@ type RestoreRequest struct {
 	BackupName               string   `json:"backupName" description:"BackupName is the unique name of the Velero backup to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"32"`
 	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included."`
 	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup."`
+	IsOneTime                *bool    `json:"isOneTime,omitempty" description:"Whether this config is for one time restore or cluster sync."`
 }
 
 type RestoreNameResponse struct {
