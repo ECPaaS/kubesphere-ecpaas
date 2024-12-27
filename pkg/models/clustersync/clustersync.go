@@ -168,14 +168,19 @@ func (cs *clusterSyncOperator) UpdateStorage(name string, ui_storage *ModifyStor
 
 		newSlice := make([]clustersyncv1.StorageConfig, 0)
 		for _, config := range config.Spec.StorageConfigs {
-			if config.StorageName == name {
-				newSlice = append(newSlice, *storageConfig)
-			} else {
+			if config.StorageName != name {
 				newSlice = append(newSlice, config)
 			}
 		}
 		config.Spec.StorageConfigs = newSlice
-		_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
+		newConfig, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("updating StorageConfig \"%s\" failed", name)
+		}
+
+		newSlice = append(newSlice, *storageConfig)
+		newConfig.Spec.StorageConfigs = newSlice
+		_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), newConfig, metav1.UpdateOptions{})
 		if err != nil {
 			return nil, err
 		} else {
@@ -796,14 +801,19 @@ func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifySc
 
 		newSlice := make([]clustersyncv1.ScheduleConfig, 0)
 		for _, config := range config.Spec.ScheduleConfigs {
-			if config.ScheduleName == name {
-				newSlice = append(newSlice, *scheduleConfig)
-			} else {
+			if config.ScheduleName != name {
 				newSlice = append(newSlice, config)
 			}
 		}
 		config.Spec.ScheduleConfigs = newSlice
-		_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
+		newConfig, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("updating ScheduleConfig \"%s\" failed", name)
+		}
+
+		newSlice = append(newSlice, *scheduleConfig)
+		newConfig.Spec.ScheduleConfigs = newSlice
+		_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), newConfig, metav1.UpdateOptions{})
 		if err != nil {
 			return nil, err
 		} else {
