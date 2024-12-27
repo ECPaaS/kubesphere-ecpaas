@@ -152,6 +152,11 @@ const (
 	ImageTag          = "Virtualization Image"
 	ResourceQuotasTag = "Resources Quotas"
 
+	ClusterSyncStorageTag  = "Cluster Sync Storage"
+	ClusterSyncBackupTag   = "Cluster Sync Backup"
+	ClusterSyncRestoreTag  = "Cluster Sync Restore"
+	ClusterSyncScheduleTag = "Cluster Sync Schedule"
+
 	MinioImageTag = "Minio Images"
 )
 
