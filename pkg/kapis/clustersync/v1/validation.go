@@ -106,10 +106,10 @@ func isValidStorageModifyRequest(request *ui_clustersync.ModifyStorageRequest, r
 
 // BackupConfig
 
-func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.Response) bool {
+func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.Response, isBackup bool) bool {
 	reflectType := reflect.TypeOf(*request)
 	// BackupName string
-	if request.BackupName == "" {
+	if request.BackupName == "" && isBackup {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "BackupName must not be empty.",
 		})
@@ -140,7 +140,7 @@ func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.R
 		return false
 	}
 	// IsOneTime *bool
-	if request.IsOneTime == nil {
+	if request.IsOneTime == nil && isBackup {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "IsOneTime must be set.",
 		})
@@ -251,7 +251,7 @@ func isValidScheduleRequest(request *ui_clustersync.ScheduleRequest, resp *restf
 		return false
 	}
 	// Template struct
-	if !isValidBackupRequest(&request.Template, resp) {
+	if !isValidBackupRequest(&request.Template, resp, false) {
 		return false
 	}
 
@@ -264,7 +264,7 @@ func isValidScheduleModifyRequest(request *ui_clustersync.ModifyScheduleRequest,
 		return false
 	}
 	// Template *struct
-	if request.Template != nil && !isValidBackupRequest(request.Template, resp) {
+	if request.Template != nil && !isValidBackupRequest(request.Template, resp, false) {
 		return false
 	}
 

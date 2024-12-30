@@ -65,12 +65,16 @@ spec:
                             type: string
                           type: array
                       type: object
+                    isOneTime:
+                      type: boolean
                   type: object
                 type: array
               restoreConfigs:
                 items:
                   description: RestoreConfig defines the restore configurations.
                   properties:
+                    isOneTime:
+                      type: boolean
                     restoreName:
                       type: string
                     restoreSpec:

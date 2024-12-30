@@ -29,6 +29,11 @@ import (
 func (in *BackupConfig) DeepCopyInto(out *BackupConfig) {
 	*out = *in
 	in.BackupSpec.DeepCopyInto(&out.BackupSpec)
+	if in.IsOneTime != nil {
+		in, out := &in.IsOneTime, &out.IsOneTime
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
@@ -219,6 +224,11 @@ func (in *OperatorConfigStatus) DeepCopy() *OperatorConfigStatus {
 func (in *RestoreConfig) DeepCopyInto(out *RestoreConfig) {
 	*out = *in
 	in.RestoreSpec.DeepCopyInto(&out.RestoreSpec)
+	if in.IsOneTime != nil {
+		in, out := &in.IsOneTime, &out.IsOneTime
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

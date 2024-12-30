@@ -326,6 +326,7 @@ func (cs *clusterSyncOperator) CreateBackup(ui_backup *BackupRequest) (*BackupNa
 		newBackupConfig := clustersyncv1.BackupConfig{
 			BackupName: ui_backup.BackupName,
 			BackupSpec: *backupSpec,
+			IsOneTime: ui_backup.IsOneTime,
 		}
 
 		config.Spec.BackupConfigs = append(config.Spec.BackupConfigs, newBackupConfig)
@@ -430,7 +431,7 @@ func (cs *clusterSyncOperator) ListBackup() (*ListBackupResponse, error) {
 	backupConfigs := config.Spec.BackupConfigs
 	responseSlice := make([]BackupResponse, 0)
 	for _, backupConfig := range backupConfigs {
-		if !*backupConfig.IsOneTime {
+		if backupConfig.IsOneTime != nil && !*backupConfig.IsOneTime {
 			responseSlice = append(responseSlice, *makeBackupResponse(&backupConfig.BackupSpec, backupConfig.BackupName))
 		}
 	}
@@ -563,8 +564,8 @@ func (cs *clusterSyncOperator) CreateRestore(ui_restore *RestoreRequest) (*Resto
 				BackupName: ui_restore.BackupName,
 				IncludedNamespaces: ui_restore.IncludedNamespaces,
 				ExcludedNamespaces: ui_restore.ExcludedNamespaces,
-				IsOneTime: ui_restore.IsOneTime,
 			},
+			IsOneTime: ui_restore.IsOneTime,
 		}
 		config.Spec.RestoreConfigs = append(config.Spec.RestoreConfigs, newRestoreConfig)
 		if createFlag {
@@ -652,7 +653,7 @@ func (cs *clusterSyncOperator) ListRestore() (*ListRestoreResponse, error) {
 	restoreConfigs := config.Spec.RestoreConfigs
 	responseSlice := make([]RestoreResponse, 0)
 	for _, restoreConfig := range restoreConfigs {
-		if !*restoreConfig.IsOneTime {
+		if restoreConfig.IsOneTime != nil && !*restoreConfig.IsOneTime {
 			responseSlice = append(responseSlice, *makeRestoreResponse(&restoreConfig.RestoreSpec, restoreConfig.RestoreName))
 		}
 	}
