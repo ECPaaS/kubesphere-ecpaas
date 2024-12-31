@@ -7,6 +7,7 @@ package clustersync
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -111,6 +112,7 @@ func (cs *clusterSyncOperator) CreateStorage(ui_storage *StorageRequest) (*Stora
 			AccessKey:   ui_storage.AccessKey,
 			SecretKey:   ui_storage.SecretKey,
 			IsDefault:   ui_storage.IsDefault,
+			LastModified: time.Now().String(),
 		}
 		config.Spec.StorageConfigs = append(config.Spec.StorageConfigs, newStorageConfig)
 		if createFlag {
@@ -138,54 +140,55 @@ func (cs *clusterSyncOperator) UpdateStorage(name string, ui_storage *ModifyStor
 	}
 	if storageConfig := getStorageConfig(config.Spec.StorageConfigs, name); storageConfig != nil {
 		// Duplicated, update the StorageConfig
+		newConfig := *storageConfig.DeepCopy()
 		if ui_storage.Provider != "" {
-			storageConfig.Provider = ui_storage.Provider
+			newConfig.Provider = ui_storage.Provider
 		}
 		if ui_storage.Bucket != "" {
-			storageConfig.Bucket = ui_storage.Bucket
+			newConfig.Bucket = ui_storage.Bucket
 		}
 		if ui_storage.Prefix != "" {
-			storageConfig.Prefix = ui_storage.Prefix
+			newConfig.Prefix = ui_storage.Prefix
 		}
 		if ui_storage.Region != "" {
-			storageConfig.Region = ui_storage.Region
+			newConfig.Region = ui_storage.Region
 		}
 		if ui_storage.Ip != "" {
-			storageConfig.Ip = ui_storage.Ip
+			newConfig.Ip = ui_storage.Ip
 		}
 		if ui_storage.Port != nil {
-			storageConfig.Port = ui_storage.Port
+			newConfig.Port = ui_storage.Port
 		}
 		if ui_storage.AccessKey != "" {
-			storageConfig.AccessKey = ui_storage.AccessKey
+			newConfig.AccessKey = ui_storage.AccessKey
 		}
 		if ui_storage.SecretKey != "" {
-			storageConfig.SecretKey = ui_storage.SecretKey
+			newConfig.SecretKey = ui_storage.SecretKey
 		}
 		if ui_storage.IsDefault != nil {
-			storageConfig.IsDefault = ui_storage.IsDefault
+			newConfig.IsDefault = ui_storage.IsDefault
 		}
+		if !reflect.DeepEqual(*storageConfig, newConfig) {
+			klog.Infof("StorageConfig updated: \"%s\"", name)
+			newConfig.LastModified = time.Now().String()
+			klog.Infof("Modified time: \"%s\"", newConfig.LastModified)
 
-		newSlice := make([]clustersyncv1.StorageConfig, 0)
-		for _, config := range config.Spec.StorageConfigs {
-			if config.StorageName != name {
-				newSlice = append(newSlice, config)
+			newSlice := make([]clustersyncv1.StorageConfig, 0)
+			for _, config := range config.Spec.StorageConfigs {
+				if config.StorageName != name {
+					newSlice = append(newSlice, config)
+				}
+			}
+			newSlice = append(newSlice, newConfig)
+			config.Spec.StorageConfigs = newSlice
+			_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
+			if err != nil {
+				return nil, err
+			} else {
+				return makeStorageResponse(storageConfig, name), nil
 			}
 		}
-		config.Spec.StorageConfigs = newSlice
-		newConfig, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("updating StorageConfig \"%s\" failed", name)
-		}
-
-		newSlice = append(newSlice, *storageConfig)
-		newConfig.Spec.StorageConfigs = newSlice
-		_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), newConfig, metav1.UpdateOptions{})
-		if err != nil {
-			return nil, err
-		} else {
-			return makeStorageResponse(storageConfig, name), nil
-		}
+		return nil, nil // No update
 	} else {
 		return nil, fmt.Errorf("StorageConfig \"%s\" is not created", name)
 	}
@@ -760,6 +763,7 @@ func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*Sc
 				Schedule: ui_schedule.Schedule,
 				Template: *backupSpec,
 			},
+			LastModified: time.Now().String(),
 		}
 		if ui_schedule.Paused != nil {
 			newScheduleConfig.ScheduleSpec.Paused = *ui_schedule.Paused
@@ -791,40 +795,41 @@ func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifySc
 	}
 	if scheduleConfig := getScheduleConfig(config.Spec.ScheduleConfigs, name); scheduleConfig != nil {
 		// Duplicated, update the RestoreConfig
+		newConfig := *scheduleConfig.DeepCopy()
 		if ui_schedule.Schedule != "" {
-			scheduleConfig.ScheduleSpec.Schedule = ui_schedule.Schedule
+			newConfig.ScheduleSpec.Schedule = ui_schedule.Schedule
 		}
 		if ui_schedule.Paused != nil {
-			scheduleConfig.ScheduleSpec.Paused = *ui_schedule.Paused
+			newConfig.ScheduleSpec.Paused = *ui_schedule.Paused
 		}
 		if ui_schedule.Template != nil {
 			backupSpec, err := makeBackpSpec(ui_schedule.Template)
 			if err != nil {
 				return nil, err
 			}
-			scheduleConfig.ScheduleSpec.Template = *backupSpec
+			newConfig.ScheduleSpec.Template = *backupSpec
 		}
+		if !reflect.DeepEqual(scheduleConfig.ScheduleSpec, newConfig.ScheduleSpec) {
+			klog.Infof("ScheduleConfig updated: \"%s\"", name)
+			newConfig.LastModified = time.Now().String()
+			klog.Infof("Modified time: \"%s\"", newConfig.LastModified)
 
-		newSlice := make([]clustersyncv1.ScheduleConfig, 0)
-		for _, config := range config.Spec.ScheduleConfigs {
-			if config.ScheduleName != name {
-				newSlice = append(newSlice, config)
+			newSlice := make([]clustersyncv1.ScheduleConfig, 0)
+			for _, config := range config.Spec.ScheduleConfigs {
+				if config.ScheduleName != name {
+					newSlice = append(newSlice, config)
+				}
+			}
+			newSlice = append(newSlice, newConfig)
+			config.Spec.ScheduleConfigs = newSlice
+			_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
+			if err != nil {
+				return nil, err
+			} else {
+				return makeScheduleResponse(scheduleConfig, name), nil
 			}
 		}
-		config.Spec.ScheduleConfigs = newSlice
-		newConfig, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), config, metav1.UpdateOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("updating ScheduleConfig \"%s\" failed", name)
-		}
-
-		newSlice = append(newSlice, *scheduleConfig)
-		newConfig.Spec.ScheduleConfigs = newSlice
-		_, err = cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Update(context.Background(), newConfig, metav1.UpdateOptions{})
-		if err != nil {
-			return nil, err
-		} else {
-			return makeScheduleResponse(scheduleConfig, name), nil
-		}
+		return nil, nil // No update
 	} else {
 		return nil, fmt.Errorf("ScheduleConfig \"%s\" is not created", name)
 	}

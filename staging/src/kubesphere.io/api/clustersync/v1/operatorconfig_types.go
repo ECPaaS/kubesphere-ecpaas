@@ -22,16 +22,17 @@ type OperatorConfigSpec struct {
 
 // StorageConfig defines the storage location.
 type StorageConfig struct {
-	StorageName string `json:"storageName,omitempty"`
-	Provider    string `json:"provider,omitempty"`
-	Bucket      string `json:"bucket,omitempty"`
-	Prefix      string `json:"prefix,omitempty"`
-	Region      string `json:"region,omitempty"`
-	Ip          string `json:"ip,omitempty"`
-	Port        *int   `json:"port,omitempty"`
-	AccessKey   string `json:"accessKey,omitempty"`
-	SecretKey   string `json:"secretKey,omitempty"`
-	IsDefault   *bool  `json:"isDefault,omitempty"`
+	StorageName  string `json:"storageName,omitempty"`
+	Provider     string `json:"provider,omitempty"`
+	Bucket       string `json:"bucket,omitempty"`
+	Prefix       string `json:"prefix,omitempty"`
+	Region       string `json:"region,omitempty"`
+	Ip           string `json:"ip,omitempty"`
+	Port         *int   `json:"port,omitempty"`
+	AccessKey    string `json:"accessKey,omitempty"`
+	SecretKey    string `json:"secretKey,omitempty"`
+	IsDefault    *bool  `json:"isDefault,omitempty"`
+	LastModified string `json:"lastModified,omitempty"`
 }
 
 // BackupConfig defines the backup configurations.
@@ -69,6 +70,7 @@ type RestoreSpec struct {
 type ScheduleConfig struct {
 	ScheduleName string       `json:"scheduleName,omitempty"`
 	ScheduleSpec ScheduleSpec `json:"scheduleSpec,omitempty"`
+	LastModified string       `json:"lastModified,omitempty"`
 }
 
 type ScheduleSpec struct {
@@ -79,9 +81,14 @@ type ScheduleSpec struct {
 
 // OperatorConfigStatus defines the observed state of OperatorConfig.
 type OperatorConfigStatus struct {
-	ConfigInitialized  bool     `json:"configInitialized,omitempty"`
-	StorageConfigured  []string `json:"storageConfigured,omitempty"`
-	ScheduleConfigured []string `json:"scheduleConfigured,omitempty"`
+	ConfigInitialized  bool               `json:"configInitialized,omitempty"`
+	StorageConfigured  []ModificationInfo `json:"storageConfigured,omitempty"`
+	ScheduleConfigured []ModificationInfo `json:"scheduleConfigured,omitempty"`
+}
+
+type ModificationInfo struct {
+	Name         string `json:"name,omitempty"`
+	LastModified string `json:"lastModified,omitempty"`
 }
 
 // +kubebuilder:subresource:status
