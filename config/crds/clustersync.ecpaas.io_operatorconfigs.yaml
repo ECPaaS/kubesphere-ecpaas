@@ -96,6 +96,8 @@ spec:
                 items:
                   description: ScheduleConfig defines the schedule configurations.
                   properties:
+                    lastModified:
+                      type: string
                     scheduleName:
                       type: string
                     scheduleSpec:
@@ -145,6 +147,8 @@ spec:
                       type: string
                     isDefault:
                       type: boolean
+                    lastModified:
+                      type: string
                     port:
                       type: integer
                     prefix:
@@ -167,11 +171,21 @@ spec:
                 type: boolean
               scheduleConfigured:
                 items:
-                  type: string
+                  properties:
+                    lastModified:
+                      type: string
+                    name:
+                      type: string
+                  type: object
                 type: array
               storageConfigured:
                 items:
-                  type: string
+                  properties:
+                    lastModified:
+                      type: string
+                    name:
+                      type: string
+                  type: object
                 type: array
             type: object
         type: object

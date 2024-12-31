@@ -13,8 +13,8 @@ type StorageRequest struct {
 	Region      string `json:"region,omitempty" description:"Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"32"`
 	Ip          string `json:"ip,omitempty" description:"Storage IP."`
 	Port        *int   `json:"port,omitempty" description:"Storage port." minimum:"1" maximum:"65535"`
-	AccessKey   string `json:"accessKey,omitempty" description:"Storage access key." maximum:"32"`
-	SecretKey   string `json:"secretKey,omitempty" description:"Storage secret key." maximum:"32"`
+	AccessKey   string `json:"accessKey,omitempty" description:"Storage access key." maximum:"128"`
+	SecretKey   string `json:"secretKey,omitempty" description:"Storage secret key." maximum:"128"`
 	IsDefault   *bool  `json:"isDefault,omitempty" default:"false" description:"Whether to set this storage as default."`
 }
 
@@ -29,8 +29,8 @@ type ModifyStorageRequest struct {
 	Region      string `json:"region,omitempty" description:"Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"32"`
 	Ip          string `json:"ip,omitempty" description:"Storage IP."`
 	Port        *int   `json:"port,omitempty" description:"Storage port." minimum:"1" maximum:"65535"`
-	AccessKey   string `json:"accessKey,omitempty" description:"Storage access key." maximum:"32"`
-	SecretKey   string `json:"secretKey,omitempty" description:"Storage secret key." maximum:"32"`
+	AccessKey   string `json:"accessKey,omitempty" description:"Storage access key." maximum:"128"`
+	SecretKey   string `json:"secretKey,omitempty" description:"Storage secret key." maximum:"128"`
 	IsDefault   *bool  `json:"isDefault,omitempty" description:"Whether to set this storage as default."`
 }
 

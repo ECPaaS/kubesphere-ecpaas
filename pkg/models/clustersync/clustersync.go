@@ -70,7 +70,7 @@ func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interfac
 // Storage
 
 func (cs *clusterSyncOperator) CreateStorage(ui_storage *StorageRequest) (*StorageNameResponse, error) {
-	klog.Infof("Creating StorageConfig: \"%s\"", ui_storage.StorageName)
+	klog.V(2).Infof("Creating StorageConfig: \"%s\"", ui_storage.StorageName)
 	// Get OperatorConfig
 	createFlag := false
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
@@ -130,7 +130,7 @@ func (cs *clusterSyncOperator) CreateStorage(ui_storage *StorageRequest) (*Stora
 }
 
 func (cs *clusterSyncOperator) UpdateStorage(name string, ui_storage *ModifyStorageRequest) (*StorageResponse, error) {
-	klog.Infof("Updating StorageConfig: \"%s\"", name)
+	klog.V(2).Infof("Updating StorageConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -169,10 +169,7 @@ func (cs *clusterSyncOperator) UpdateStorage(name string, ui_storage *ModifyStor
 			newConfig.IsDefault = ui_storage.IsDefault
 		}
 		if !reflect.DeepEqual(*storageConfig, newConfig) {
-			klog.Infof("StorageConfig updated: \"%s\"", name)
 			newConfig.LastModified = time.Now().String()
-			klog.Infof("Modified time: \"%s\"", newConfig.LastModified)
-
 			newSlice := make([]clustersyncv1.StorageConfig, 0)
 			for _, config := range config.Spec.StorageConfigs {
 				if config.StorageName != name {
@@ -195,7 +192,7 @@ func (cs *clusterSyncOperator) UpdateStorage(name string, ui_storage *ModifyStor
 }
 
 func (cs *clusterSyncOperator) GetStorage(name string) (*StorageResponse, error) {
-	klog.Infof("Getting StorageConfig: \"%s\"", name)
+	klog.V(2).Infof("Getting StorageConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -212,7 +209,7 @@ func (cs *clusterSyncOperator) GetStorage(name string) (*StorageResponse, error)
 }
 
 func (cs *clusterSyncOperator) ListStorage() (*ListStorageResponse, error) {
-	klog.Infof("Listing StorageConfigs")
+	klog.V(2).Infof("Listing StorageConfigs")
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -231,7 +228,7 @@ func (cs *clusterSyncOperator) ListStorage() (*ListStorageResponse, error) {
 }
 
 func (cs *clusterSyncOperator) DeleteStorage(name string) error {
-	klog.Infof("Deleting StorageConfig: \"%s\"", name)
+	klog.V(2).Infof("Deleting StorageConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -291,7 +288,7 @@ func makeStorageResponse(config *clustersyncv1.StorageConfig, name string) *Stor
 // Backup
 
 func (cs *clusterSyncOperator) CreateBackup(ui_backup *BackupRequest) (*BackupNameResponse, error) {
-	klog.Infof("Creating BackupConfig: \"%s\"", ui_backup.BackupName)
+	klog.V(2).Infof("Creating BackupConfig: \"%s\"", ui_backup.BackupName)
 	// Get OperatorConfig
 	createFlag := false
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
@@ -348,7 +345,7 @@ func (cs *clusterSyncOperator) CreateBackup(ui_backup *BackupRequest) (*BackupNa
 }
 
 func (cs *clusterSyncOperator) UpdateBackup(name string, ui_backup *ModifyBackupRequest) (*BackupResponse, error) {
-	klog.Infof("Updating BackupConfig: \"%s\"", name)
+	klog.V(2).Infof("Updating BackupConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -405,7 +402,7 @@ func (cs *clusterSyncOperator) UpdateBackup(name string, ui_backup *ModifyBackup
 }
 
 func (cs *clusterSyncOperator) GetBackup(name string) (*BackupResponse, error) {
-	klog.Infof("Getting BackupConfig: \"%s\"", name)
+	klog.V(2).Infof("Getting BackupConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -422,7 +419,7 @@ func (cs *clusterSyncOperator) GetBackup(name string) (*BackupResponse, error) {
 }
 
 func (cs *clusterSyncOperator) ListBackup() (*ListBackupResponse, error) {
-	klog.Infof("Listing BackupConfigs")
+	klog.V(2).Infof("Listing BackupConfigs")
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -443,7 +440,7 @@ func (cs *clusterSyncOperator) ListBackup() (*ListBackupResponse, error) {
 }
 
 func (cs *clusterSyncOperator) DeleteBackup(name string) error {
-	klog.Infof("Deleting BackupConfig: \"%s\"", name)
+	klog.V(2).Infof("Deleting BackupConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -530,7 +527,7 @@ func makeBackupResponse(backupSpec *clustersyncv1.BackupSpec, name string) *Back
 // Restore
 
 func (cs *clusterSyncOperator) CreateRestore(ui_restore *RestoreRequest) (*RestoreNameResponse, error) {
-	klog.Infof("Creating RestoreConfig: \"%s\"", ui_restore.RestoreName)
+	klog.V(2).Infof("Creating RestoreConfig: \"%s\"", ui_restore.RestoreName)
 	// Get OperatorConfig
 	createFlag := false
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
@@ -586,7 +583,7 @@ func (cs *clusterSyncOperator) CreateRestore(ui_restore *RestoreRequest) (*Resto
 }
 
 func (cs *clusterSyncOperator) UpdateRestore(name string, ui_restore *ModifyRestoreRequest) (*RestoreResponse, error) {
-	klog.Infof("Updating RestoreConfig: \"%s\"", name)
+	klog.V(2).Infof("Updating RestoreConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -627,7 +624,7 @@ func (cs *clusterSyncOperator) UpdateRestore(name string, ui_restore *ModifyRest
 }
 
 func (cs *clusterSyncOperator) GetRestore(name string) (*RestoreResponse, error) {
-	klog.Infof("Getting RestoreConfig: \"%s\"", name)
+	klog.V(2).Infof("Getting RestoreConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -644,7 +641,7 @@ func (cs *clusterSyncOperator) GetRestore(name string) (*RestoreResponse, error)
 }
 
 func (cs *clusterSyncOperator) ListRestore() (*ListRestoreResponse, error) {
-	klog.Infof("Listing RestoreConfigs")
+	klog.V(2).Infof("Listing RestoreConfigs")
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -665,7 +662,7 @@ func (cs *clusterSyncOperator) ListRestore() (*ListRestoreResponse, error) {
 }
 
 func (cs *clusterSyncOperator) DeleteRestore(name string) error {
-	klog.Infof("Deleting RestoreConfig: \"%s\"", name)
+	klog.V(2).Infof("Deleting RestoreConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -722,7 +719,7 @@ func makeRestoreResponse(restoreSpec *clustersyncv1.RestoreSpec, name string) *R
 // Schedule
 
 func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*ScheduleNameResponse, error) {
-	klog.Infof("Creating ScheduleConfig: \"%s\"", ui_schedule.ScheduleName)
+	klog.V(2).Infof("Creating ScheduleConfig: \"%s\"", ui_schedule.ScheduleName)
 	// Get OperatorConfig
 	createFlag := false
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
@@ -785,7 +782,7 @@ func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*Sc
 }
 
 func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifyScheduleRequest) (*ScheduleResponse, error) {
-	klog.Infof("Updating ScheduleConfig: \"%s\"", name)
+	klog.V(2).Infof("Updating ScheduleConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -810,9 +807,7 @@ func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifySc
 			newConfig.ScheduleSpec.Template = *backupSpec
 		}
 		if !reflect.DeepEqual(scheduleConfig.ScheduleSpec, newConfig.ScheduleSpec) {
-			klog.Infof("ScheduleConfig updated: \"%s\"", name)
 			newConfig.LastModified = time.Now().String()
-			klog.Infof("Modified time: \"%s\"", newConfig.LastModified)
 
 			newSlice := make([]clustersyncv1.ScheduleConfig, 0)
 			for _, config := range config.Spec.ScheduleConfigs {
@@ -836,7 +831,7 @@ func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifySc
 }
 
 func (cs *clusterSyncOperator) GetSchedule(name string) (*ScheduleResponse, error) {
-	klog.Infof("Getting ScheduleConfig: \"%s\"", name)
+	klog.V(2).Infof("Getting ScheduleConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -853,7 +848,7 @@ func (cs *clusterSyncOperator) GetSchedule(name string) (*ScheduleResponse, erro
 }
 
 func (cs *clusterSyncOperator) ListSchedule() (*ListScheduleResponse, error) {
-	klog.Infof("Listing ScheduleConfigs")
+	klog.V(2).Infof("Listing ScheduleConfigs")
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -872,7 +867,7 @@ func (cs *clusterSyncOperator) ListSchedule() (*ListScheduleResponse, error) {
 }
 
 func (cs *clusterSyncOperator) DeleteSchedule(name string) error {
-	klog.Infof("Deleting ScheduleConfig: \"%s\"", name)
+	klog.V(2).Infof("Deleting ScheduleConfig: \"%s\"", name)
 	config, err := cs.ksclient.ClustersyncV1().OperatorConfigs(OperatorConfigNamespace).Get(context.Background(), OperatorConfigName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -914,16 +909,6 @@ func makeScheduleResponse(config *clustersyncv1.ScheduleConfig, name string) *Sc
 		Schedule:     config.ScheduleSpec.Schedule,
 		Paused:       config.ScheduleSpec.Paused,
 		Template:     *makeBackupResponse(&config.ScheduleSpec.Template, ""),
-		//{
-		//	BackupName: "", // make this field be omitted
-		//	IncludedNamespaces: config.ScheduleSpec.Template.IncludedNamespaces,
-		//	ExcludedNamespaces: config.ScheduleSpec.Template.ExcludedNamespaces,
-		//	TTL: config.ScheduleSpec.Template.TTL.String(),
-		//	StorageLocation: config.ScheduleSpec.Template.StorageLocation,
-		//	DefaultVolumesToFsBackup: *config.ScheduleSpec.Template.DefaultVolumesToFsBackup,
-		//	VolumeSnapshotLocations: config.ScheduleSpec.Template.VolumeSnapshotLocations,
-		//	SnapshotMoveData: *config.ScheduleSpec.Template.SnapshotMoveData,
-		//},
 	}
 
 	return response

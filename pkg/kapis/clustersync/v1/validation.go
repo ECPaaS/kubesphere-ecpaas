@@ -54,11 +54,11 @@ func isValidStorageRequest(request *ui_clustersync.StorageRequest, resp *restful
 		return false
 	}
 	// AccessKey string
-	if !isValidOptionalStringField(reflectType, request.AccessKey, "AccessKey", resp) {
+	if !util.IsValidLength(reflectType, request.AccessKey, "AccessKey", resp) {
 		return false
 	}
 	// SecretKey string
-	if !isValidOptionalStringField(reflectType, request.SecretKey, "SecretKey", resp) {
+	if !util.IsValidLength(reflectType, request.SecretKey, "SecretKey", resp) {
 		return false
 	}
 
@@ -92,11 +92,11 @@ func isValidStorageModifyRequest(request *ui_clustersync.ModifyStorageRequest, r
 		return false
 	}
 	// AccessKey string
-	if !isValidOptionalStringField(reflectType, request.AccessKey, "AccessKey", resp) {
+	if !util.IsValidLength(reflectType, request.AccessKey, "AccessKey", resp) {
 		return false
 	}
 	// SecretKey string
-	if !isValidOptionalStringField(reflectType, request.SecretKey, "SecretKey", resp) {
+	if !util.IsValidLength(reflectType, request.SecretKey, "SecretKey", resp) {
 		return false
 	}
 

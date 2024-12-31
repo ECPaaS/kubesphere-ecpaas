@@ -11,7 +11,6 @@ import (
 	"github.com/emicklei/go-restful"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 
@@ -64,7 +63,6 @@ func (h *clustersyncHandler) UpdateStorage(req *restful.Request, resp *restful.R
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
-	klog.Info(ui_storage)
 
 	// Validation of ModifyStorageRequest
 	if !isValidStorageModifyRequest(&ui_storage , resp) {
