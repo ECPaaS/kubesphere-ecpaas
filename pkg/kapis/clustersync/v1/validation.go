@@ -106,10 +106,10 @@ func isValidStorageModifyRequest(request *ui_clustersync.ModifyStorageRequest, r
 
 // BackupConfig
 
-func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.Response, isBackup bool) bool {
+func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
 	// BackupName string
-	if request.BackupName == "" && isBackup {
+	if request.BackupName == "" {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "BackupName must not be empty.",
 		})
@@ -127,12 +127,7 @@ func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.R
 		return false
 	}
 	// StorageLocation string
-	if request.StorageLocation == "" {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "StorageLocation must not be empty.",
-		})
-		return false
-	} else if !isValidOptionalStringField(reflectType, request.StorageLocation, "StorageLocation", resp) {
+	if !isValidOptionalStringField(reflectType, request.StorageLocation, "StorageLocation", resp) {
 		return false
 	}
 	// VolumeSnapshotLocations []string
@@ -140,7 +135,7 @@ func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.R
 		return false
 	}
 	// IsOneTime *bool
-	if request.IsOneTime == nil && isBackup {
+	if request.IsOneTime == nil {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "IsOneTime must be set.",
 		})
@@ -251,7 +246,7 @@ func isValidScheduleRequest(request *ui_clustersync.ScheduleRequest, resp *restf
 		return false
 	}
 	// Template struct
-	if !isValidBackupRequest(&request.Template, resp, false) {
+	if !isValidScheduleTemplate(reflectType, &request.Template, resp) {
 		return false
 	}
 
@@ -259,12 +254,35 @@ func isValidScheduleRequest(request *ui_clustersync.ScheduleRequest, resp *restf
 }
 
 func isValidScheduleModifyRequest(request *ui_clustersync.ModifyScheduleRequest, resp *restful.Response) bool {
+	reflectType := reflect.TypeOf(*request)
 	// Schedule string
 	if request.Schedule != "" && !isValidCronString(request.Schedule, resp) {
 		return false
 	}
 	// Template *struct
-	if request.Template != nil && !isValidBackupRequest(request.Template, resp, false) {
+	if request.Template != nil && !isValidScheduleTemplate(reflectType, request.Template, resp) {
+		return false
+	}
+
+	return true
+}
+
+func isValidScheduleTemplate(validateType reflect.Type, template *ui_clustersync.Template, resp *restful.Response) bool {
+	// IncludedNamespaces []string
+	// ExcludedNamespaces []string
+	if !isValidNamespaceRange(template.IncludedNamespaces, template.ExcludedNamespaces, resp) {
+		return false
+	}
+	// TTL string
+	if !isValidTTL(&template.TTL, resp) {
+		return false
+	}
+	// StorageLocation string
+	if !isValidOptionalStringField(validateType, template.StorageLocation, "StorageLocation", resp) {
+		return false
+	}
+	// VolumeSnapshotLocations []string
+	if !isValidVolumeLocations(template.SnapshotMoveData, template.VolumeSnapshotLocations, resp) {
 		return false
 	}
 

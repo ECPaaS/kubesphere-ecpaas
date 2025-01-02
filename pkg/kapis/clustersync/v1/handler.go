@@ -142,7 +142,7 @@ func (h *clustersyncHandler) CreateBackup(req *restful.Request, resp *restful.Re
 		return
 	}
 
-	if !isValidBackupRequest(&ui_backup , resp, true) {
+	if !isValidBackupRequest(&ui_backup , resp) {
 		return
 	}
 

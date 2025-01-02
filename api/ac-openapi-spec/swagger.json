@@ -2368,11 +2368,12 @@
     },
     "clustersync.BackupRequest": {
       "required": [
-        "backupName"
+        "backupName",
+        "isOneTime"
       ],
       "properties": {
         "backupName": {
-          "description": "Backup name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Backup name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2405,7 +2406,7 @@
           "default": false
         },
         "storageLocation": {
-          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2416,7 +2417,7 @@
           "maximum": 32
         },
         "volumeSnapshotLocations": {
-          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided.",
+          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "array",
           "items": {
             "type": "string"
@@ -2426,6 +2427,7 @@
     },
     "clustersync.BackupResponse": {
       "required": [
+        "backupName",
         "includedNamespaces",
         "excludedNamespaces",
         "ttl",
@@ -2583,7 +2585,7 @@
           "type": "boolean"
         },
         "storageLocation": {
-          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2593,7 +2595,7 @@
           "maximum": 32
         },
         "volumeSnapshotLocations": {
-          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided.",
+          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "array",
           "items": {
             "type": "string"
@@ -2602,12 +2604,9 @@
       }
     },
     "clustersync.ModifyRestoreRequest": {
-      "required": [
-        "backupName"
-      ],
       "properties": {
         "backupName": {
-          "description": "BackupName is the unique name of the Velero backup to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "BackupName is the unique name of the Velero backup to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2639,7 +2638,7 @@
         },
         "template": {
           "description": "Template is the definition of the Backup to be run on the provided schedule.",
-          "$ref": "#/definitions/clustersync.BackupRequest"
+          "$ref": "#/definitions/clustersync.Template"
         }
       }
     },
@@ -2651,7 +2650,7 @@
           "maximum": 128
         },
         "bucket": {
-          "description": "Storage bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2671,17 +2670,17 @@
           "minimum": 1
         },
         "prefix": {
-          "description": "Storage prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
         "provider": {
-          "description": "Storage provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
         "region": {
-          "description": "Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2706,11 +2705,12 @@
     "clustersync.RestoreRequest": {
       "required": [
         "restoreName",
-        "backupName"
+        "backupName",
+        "isOneTime"
       ],
       "properties": {
         "backupName": {
-          "description": "BackupName is the unique name of the Velero backup to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "BackupName is the unique name of the Velero backup to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2733,7 +2733,7 @@
           "type": "boolean"
         },
         "restoreName": {
-          "description": "Restore name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Restore name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         }
@@ -2784,7 +2784,8 @@
     },
     "clustersync.ScheduleRequest": {
       "required": [
-        "scheduleName"
+        "scheduleName",
+        "schedule"
       ],
       "properties": {
         "paused": {
@@ -2797,13 +2798,13 @@
           "type": "string"
         },
         "scheduleName": {
-          "description": "Schedule name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Schedule name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
         "template": {
           "description": "Template is the definition of the Backup to be run on the provided schedule.",
-          "$ref": "#/definitions/clustersync.BackupRequest"
+          "$ref": "#/definitions/clustersync.Template"
         }
       }
     },
@@ -2829,7 +2830,7 @@
         },
         "template": {
           "description": "Template is the definition of the Backup to be run on the provided schedule.",
-          "$ref": "#/definitions/clustersync.BackupResponse"
+          "$ref": "#/definitions/clustersync.TemplateResponse"
         }
       }
     },
@@ -2855,7 +2856,7 @@
           "maximum": 128
         },
         "bucket": {
-          "description": "Storage bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2876,18 +2877,18 @@
           "minimum": 1
         },
         "prefix": {
-          "description": "Storage prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
         "provider": {
-          "description": "Storage provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "default": "aws",
           "maximum": 32
         },
         "region": {
-          "description": "Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         },
@@ -2897,7 +2898,7 @@
           "maximum": 128
         },
         "storageName": {
-          "description": "Storage name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "description": "Storage name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
           "type": "string",
           "maximum": 32
         }
@@ -2957,6 +2958,102 @@
         "storageName": {
           "description": "Storage name(unique key).",
           "type": "string"
+        }
+      }
+    },
+    "clustersync.Template": {
+      "properties": {
+        "defaultVolumesToFsBackup": {
+          "description": "DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default.",
+          "type": "boolean",
+          "default": false
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "snapshotMoveData": {
+          "description": "SnapshotMoveData specifies whether snapshot data should be moved.",
+          "type": "boolean",
+          "default": false
+        },
+        "storageLocation": {
+          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
+          "type": "string",
+          "maximum": 32
+        },
+        "ttl": {
+          "description": "TTL is a time.Duration-parseable string describing how long the Backup should be retained for. Default is 720 hours(30 Days).",
+          "type": "string",
+          "default": "720h",
+          "maximum": 32
+        },
+        "volumeSnapshotLocations": {
+          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric charactor.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "clustersync.TemplateResponse": {
+      "required": [
+        "includedNamespaces",
+        "excludedNamespaces",
+        "ttl",
+        "storageLocation",
+        "defaultVolumesToFsBackup",
+        "volumeSnapshotLocations",
+        "snapshotMoveData"
+      ],
+      "properties": {
+        "defaultVolumesToFsBackup": {
+          "description": "DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default.",
+          "type": "boolean"
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "snapshotMoveData": {
+          "description": "SnapshotMoveData specifies whether snapshot data should be moved.",
+          "type": "boolean"
+        },
+        "storageLocation": {
+          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored.",
+          "type": "string"
+        },
+        "ttl": {
+          "description": "TTL is a time.Duration-parseable string describing how long the Backup should be retained for.",
+          "type": "string"
+        },
+        "volumeSnapshotLocations": {
+          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

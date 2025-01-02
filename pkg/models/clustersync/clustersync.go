@@ -750,20 +750,30 @@ func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*Sc
 		return nil, fmt.Errorf("ScheduleConfig \"%s\" duplicated", ui_schedule.ScheduleName)
 	} else {
 		// New, create config
-		backupSpec, err := makeBackpSpec(&ui_schedule.Template)
-		if err != nil {
-			return nil, err
-		}
 		newScheduleConfig := clustersyncv1.ScheduleConfig{
 			ScheduleName: ui_schedule.ScheduleName,
 			ScheduleSpec: clustersyncv1.ScheduleSpec{
 				Schedule: ui_schedule.Schedule,
-				Template: *backupSpec,
+				Template: clustersyncv1.BackupSpec{
+					IncludedNamespaces: ui_schedule.Template.IncludedNamespaces,
+					ExcludedNamespaces: ui_schedule.Template.ExcludedNamespaces,
+					StorageLocation: ui_schedule.Template.StorageLocation,
+					DefaultVolumesToFsBackup: ui_schedule.Template.DefaultVolumesToFsBackup,
+					VolumeSnapshotLocations: ui_schedule.Template.VolumeSnapshotLocations,
+					SnapshotMoveData: ui_schedule.Template.SnapshotMoveData,
+				},
 			},
 			LastModified: time.Now().String(),
 		}
 		if ui_schedule.Paused != nil {
 			newScheduleConfig.ScheduleSpec.Paused = *ui_schedule.Paused
+		}
+		if ui_schedule.Template.TTL != "" {
+			if duration, err := time.ParseDuration(ui_schedule.Template.TTL); err != nil {
+				return nil, err
+			} else {
+				newScheduleConfig.ScheduleSpec.Template.TTL = metav1.Duration{Duration: duration}
+			}
 		}
 
 		config.Spec.ScheduleConfigs = append(config.Spec.ScheduleConfigs, newScheduleConfig)
@@ -800,11 +810,21 @@ func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifySc
 			newConfig.ScheduleSpec.Paused = *ui_schedule.Paused
 		}
 		if ui_schedule.Template != nil {
-			backupSpec, err := makeBackpSpec(ui_schedule.Template)
-			if err != nil {
-				return nil, err
+			newConfig.ScheduleSpec.Template = clustersyncv1.BackupSpec{
+				IncludedNamespaces: ui_schedule.Template.IncludedNamespaces,
+				ExcludedNamespaces: ui_schedule.Template.ExcludedNamespaces,
+				StorageLocation: ui_schedule.Template.StorageLocation,
+				DefaultVolumesToFsBackup: ui_schedule.Template.DefaultVolumesToFsBackup,
+				VolumeSnapshotLocations: ui_schedule.Template.VolumeSnapshotLocations,
+				SnapshotMoveData: ui_schedule.Template.SnapshotMoveData,
 			}
-			newConfig.ScheduleSpec.Template = *backupSpec
+			if ui_schedule.Template.TTL != "" {
+				if duration, err := time.ParseDuration(ui_schedule.Template.TTL); err != nil {
+					return nil, err
+				} else {
+					newConfig.ScheduleSpec.Template.TTL = metav1.Duration{Duration: duration}
+				}
+			}
 		}
 		if !reflect.DeepEqual(scheduleConfig.ScheduleSpec, newConfig.ScheduleSpec) {
 			newConfig.LastModified = time.Now().String()
@@ -908,7 +928,34 @@ func makeScheduleResponse(config *clustersyncv1.ScheduleConfig, name string) *Sc
 		ScheduleName: name,
 		Schedule:     config.ScheduleSpec.Schedule,
 		Paused:       config.ScheduleSpec.Paused,
-		Template:     *makeBackupResponse(&config.ScheduleSpec.Template, ""),
+		Template:     *makeTemplateResponse(&config.ScheduleSpec.Template),
+	}
+
+	return response
+}
+
+func makeTemplateResponse(backupSpec *clustersyncv1.BackupSpec) *TemplateResponse {
+	response := &TemplateResponse{
+		IncludedNamespaces:      backupSpec.IncludedNamespaces,
+		ExcludedNamespaces:      backupSpec.ExcludedNamespaces,
+		TTL:                     backupSpec.TTL.Duration.String(),
+		StorageLocation:         backupSpec.StorageLocation,
+		VolumeSnapshotLocations: backupSpec.VolumeSnapshotLocations,
+	}
+	if response.IncludedNamespaces == nil {
+		response.IncludedNamespaces = make([]string, 0)
+	}
+	if response.ExcludedNamespaces == nil {
+		response.ExcludedNamespaces = make([]string, 0)
+	}
+	if response.VolumeSnapshotLocations == nil {
+		response.VolumeSnapshotLocations = make([]string, 0)
+	}
+	if backupSpec.DefaultVolumesToFsBackup != nil {
+		response.DefaultVolumesToFsBackup = *backupSpec.DefaultVolumesToFsBackup
+	}
+	if backupSpec.SnapshotMoveData != nil {
+		response.SnapshotMoveData = *backupSpec.SnapshotMoveData
 	}
 
 	return response
