@@ -15,6 +15,662 @@
     "version": "v0.0.0"
   },
   "paths": {
+    "/kapis/clustersync.ecpaas.io/v1/backupconfigs": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Backup"
+        ],
+        "summary": "List all backups",
+        "operationId": "ListBackup",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.ListBackupResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Backup"
+        ],
+        "summary": "Create backup",
+        "operationId": "CreateBackup",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.BackupRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.BackupNameResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/clustersync.ecpaas.io/v1/backupconfigs/{name}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Backup"
+        ],
+        "summary": "Get backup",
+        "operationId": "GetBackup",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "backup name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.BackupResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provided will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Backup"
+        ],
+        "summary": "Update backup",
+        "operationId": "UpdateBackup",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "backup name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.ModifyBackupRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Backup"
+        ],
+        "summary": "Delete backup",
+        "operationId": "DeleteBackup",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "backup name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/clustersync.ecpaas.io/v1/restoreconfigs": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Restore"
+        ],
+        "summary": "List all restores",
+        "operationId": "ListRestore",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.ListRestoreResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Restore"
+        ],
+        "summary": "Create restore",
+        "operationId": "CreateRestore",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.RestoreRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.RestoreNameResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/clustersync.ecpaas.io/v1/restoreconfigs/{name}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Restore"
+        ],
+        "summary": "Get restore",
+        "operationId": "GetRestore",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "restore name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.RestoreResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provided will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Restore"
+        ],
+        "summary": "Update restore",
+        "operationId": "UpdateRestore",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "restore name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.ModifyRestoreRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Restore"
+        ],
+        "summary": "Delete restore",
+        "operationId": "DeleteRestore",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "restore name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/clustersync.ecpaas.io/v1/scheduleconfigs": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Schedule"
+        ],
+        "summary": "List all schedules",
+        "operationId": "ListSchedule",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.ListScheduleResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Schedule"
+        ],
+        "summary": "Create schedule",
+        "operationId": "CreateSchedule",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.ScheduleRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.ScheduleNameResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/clustersync.ecpaas.io/v1/scheduleconfigs/{name}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Schedule"
+        ],
+        "summary": "Get schedule",
+        "operationId": "GetSchedule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "schedule name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.ScheduleResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provided will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Schedule"
+        ],
+        "summary": "Update schedule",
+        "operationId": "UpdateSchedule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "schedule name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.ModifyScheduleRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Schedule"
+        ],
+        "summary": "Delete schedule",
+        "operationId": "DeleteSchedule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "schedule name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/clustersync.ecpaas.io/v1/storageconfigs": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Storage"
+        ],
+        "summary": "List all storages",
+        "operationId": "ListStorage",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.ListStorageResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Storage"
+        ],
+        "summary": "Create storage",
+        "operationId": "CreateStorage",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.StorageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.StorageNameResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/clustersync.ecpaas.io/v1/storageconfigs/{name}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Storage"
+        ],
+        "summary": "Get storage",
+        "operationId": "GetStorage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "storage name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/clustersync.StorageResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provided will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Storage"
+        ],
+        "summary": "Update Storage",
+        "operationId": "UpdateStorage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "storage name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/clustersync.ModifyStorageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Cluster Sync Storage"
+        ],
+        "summary": "Delete storage",
+        "operationId": "DeleteStorage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "storage name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/k8s.ovn.org/v1/vpcnetwork/gatewayChassisNode": {
       "get": {
         "produces": [
@@ -1699,6 +2355,611 @@
     }
   },
   "definitions": {
+    "clustersync.BackupNameResponse": {
+      "required": [
+        "backupName"
+      ],
+      "properties": {
+        "backupName": {
+          "description": "Backup name.",
+          "type": "string"
+        }
+      }
+    },
+    "clustersync.BackupRequest": {
+      "required": [
+        "backupName"
+      ],
+      "properties": {
+        "backupName": {
+          "description": "Backup name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "defaultVolumesToFsBackup": {
+          "description": "DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default.",
+          "type": "boolean",
+          "default": false
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isOneTime": {
+          "description": "Whether this config is for one time backup or cluster sync.",
+          "type": "boolean"
+        },
+        "snapshotMoveData": {
+          "description": "SnapshotMoveData specifies whether snapshot data should be moved.",
+          "type": "boolean",
+          "default": false
+        },
+        "storageLocation": {
+          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "ttl": {
+          "description": "TTL is a time.Duration-parseable string describing how long the Backup should be retained for. Default is 720 hours(30 Days).",
+          "type": "string",
+          "default": "720h",
+          "maximum": 32
+        },
+        "volumeSnapshotLocations": {
+          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "clustersync.BackupResponse": {
+      "required": [
+        "includedNamespaces",
+        "excludedNamespaces",
+        "ttl",
+        "storageLocation",
+        "defaultVolumesToFsBackup",
+        "volumeSnapshotLocations",
+        "snapshotMoveData"
+      ],
+      "properties": {
+        "backupName": {
+          "description": "Backup name(unique key).",
+          "type": "string"
+        },
+        "defaultVolumesToFsBackup": {
+          "description": "DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default.",
+          "type": "boolean"
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "snapshotMoveData": {
+          "description": "SnapshotMoveData specifies whether snapshot data should be moved.",
+          "type": "boolean"
+        },
+        "storageLocation": {
+          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored.",
+          "type": "string"
+        },
+        "ttl": {
+          "description": "TTL is a time.Duration-parseable string describing how long the Backup should be retained for.",
+          "type": "string"
+        },
+        "volumeSnapshotLocations": {
+          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "clustersync.ListBackupResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of backups.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clustersync.BackupResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of backups.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "clustersync.ListRestoreResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of Restores.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clustersync.RestoreResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of Restores.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "clustersync.ListScheduleResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of schedules.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clustersync.ScheduleResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of schedules.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "clustersync.ListStorageResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of storages.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clustersync.StorageResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of storages.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "clustersync.ModifyBackupRequest": {
+      "properties": {
+        "defaultVolumesToFsBackup": {
+          "description": "DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default.",
+          "type": "boolean"
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "snapshotMoveData": {
+          "description": "SnapshotMoveData specifies whether snapshot data should be moved.",
+          "type": "boolean"
+        },
+        "storageLocation": {
+          "description": "StorageLocation is a string containing the name of a storage location where the backup should be stored. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "ttl": {
+          "description": "TTL is a time.Duration-parseable string describing how long the Backup should be retained for.",
+          "type": "string",
+          "maximum": 32
+        },
+        "volumeSnapshotLocations": {
+          "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup. If SnapshotMoveData is enabled, at least one location shall be provided.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "clustersync.ModifyRestoreRequest": {
+      "required": [
+        "backupName"
+      ],
+      "properties": {
+        "backupName": {
+          "description": "BackupName is the unique name of the Velero backup to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "clustersync.ModifyScheduleRequest": {
+      "properties": {
+        "paused": {
+          "description": "Paused specifies whether the schedule is paused or not.",
+          "type": "boolean"
+        },
+        "schedule": {
+          "description": "Schedule is a Cron expression defining when to run.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Template is the definition of the Backup to be run on the provided schedule.",
+          "$ref": "#/definitions/clustersync.BackupRequest"
+        }
+      }
+    },
+    "clustersync.ModifyStorageRequest": {
+      "properties": {
+        "accessKey": {
+          "description": "Storage access key.",
+          "type": "string",
+          "maximum": 128
+        },
+        "bucket": {
+          "description": "Storage bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "ip": {
+          "description": "Storage IP.",
+          "type": "string"
+        },
+        "isDefault": {
+          "description": "Whether to set this storage as default.",
+          "type": "boolean"
+        },
+        "port": {
+          "description": "Storage port.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 65535,
+          "minimum": 1
+        },
+        "prefix": {
+          "description": "Storage prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "provider": {
+          "description": "Storage provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "region": {
+          "description": "Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "secretKey": {
+          "description": "Storage secret key.",
+          "type": "string",
+          "maximum": 128
+        }
+      }
+    },
+    "clustersync.RestoreNameResponse": {
+      "required": [
+        "restoreName"
+      ],
+      "properties": {
+        "restoreName": {
+          "description": "Restore name.",
+          "type": "string"
+        }
+      }
+    },
+    "clustersync.RestoreRequest": {
+      "required": [
+        "restoreName",
+        "backupName"
+      ],
+      "properties": {
+        "backupName": {
+          "description": "BackupName is the unique name of the Velero backup to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isOneTime": {
+          "description": "Whether this config is for one time restore or cluster sync.",
+          "type": "boolean"
+        },
+        "restoreName": {
+          "description": "Restore name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        }
+      }
+    },
+    "clustersync.RestoreResponse": {
+      "required": [
+        "restoreName",
+        "backupName",
+        "includedNamespaces",
+        "excludedNamespaces"
+      ],
+      "properties": {
+        "backupName": {
+          "description": "BackupName is the unique name of the Velero backup to restore from.",
+          "type": "string"
+        },
+        "excludedNamespaces": {
+          "description": "ExcludedNamespaces contains a list of namespaces that are not included in the backup.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includedNamespaces": {
+          "description": "IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "restoreName": {
+          "description": "Restore name(unique key).",
+          "type": "string"
+        }
+      }
+    },
+    "clustersync.ScheduleNameResponse": {
+      "required": [
+        "scheduleName"
+      ],
+      "properties": {
+        "scheduleName": {
+          "description": "Schedule name.",
+          "type": "string"
+        }
+      }
+    },
+    "clustersync.ScheduleRequest": {
+      "required": [
+        "scheduleName"
+      ],
+      "properties": {
+        "paused": {
+          "description": "Paused specifies whether the schedule is paused or not.",
+          "type": "boolean",
+          "default": false
+        },
+        "schedule": {
+          "description": "Schedule is a Cron expression defining when to run.",
+          "type": "string"
+        },
+        "scheduleName": {
+          "description": "Schedule name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "template": {
+          "description": "Template is the definition of the Backup to be run on the provided schedule.",
+          "$ref": "#/definitions/clustersync.BackupRequest"
+        }
+      }
+    },
+    "clustersync.ScheduleResponse": {
+      "required": [
+        "scheduleName",
+        "schedule",
+        "paused",
+        "template"
+      ],
+      "properties": {
+        "paused": {
+          "description": "Paused specifies whether the schedule is paused or not.",
+          "type": "boolean"
+        },
+        "schedule": {
+          "description": "Schedule is a Cron expression defining when to run.",
+          "type": "string"
+        },
+        "scheduleName": {
+          "description": "Schedule name(unique key).",
+          "type": "string"
+        },
+        "template": {
+          "description": "Template is the definition of the Backup to be run on the provided schedule.",
+          "$ref": "#/definitions/clustersync.BackupResponse"
+        }
+      }
+    },
+    "clustersync.StorageNameResponse": {
+      "required": [
+        "storageName"
+      ],
+      "properties": {
+        "storageName": {
+          "description": "Storage name.",
+          "type": "string"
+        }
+      }
+    },
+    "clustersync.StorageRequest": {
+      "required": [
+        "storageName"
+      ],
+      "properties": {
+        "accessKey": {
+          "description": "Storage access key.",
+          "type": "string",
+          "maximum": 128
+        },
+        "bucket": {
+          "description": "Storage bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "ip": {
+          "description": "Storage IP.",
+          "type": "string"
+        },
+        "isDefault": {
+          "description": "Whether to set this storage as default.",
+          "type": "boolean",
+          "default": false
+        },
+        "port": {
+          "description": "Storage port.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 65535,
+          "minimum": 1
+        },
+        "prefix": {
+          "description": "Storage prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "provider": {
+          "description": "Storage provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "default": "aws",
+          "maximum": 32
+        },
+        "region": {
+          "description": "Storage region. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        },
+        "secretKey": {
+          "description": "Storage secret key.",
+          "type": "string",
+          "maximum": 128
+        },
+        "storageName": {
+          "description": "Storage name. Valid characters: A-Z, a-z, 0-9, and -(hyphen).",
+          "type": "string",
+          "maximum": 32
+        }
+      }
+    },
+    "clustersync.StorageResponse": {
+      "required": [
+        "storageName",
+        "provider",
+        "bucket",
+        "prefix",
+        "region",
+        "ip",
+        "port",
+        "accessKey",
+        "secretKey",
+        "isDefault"
+      ],
+      "properties": {
+        "accessKey": {
+          "description": "Storage access key.",
+          "type": "string"
+        },
+        "bucket": {
+          "description": "Storage bucket name.",
+          "type": "string"
+        },
+        "ip": {
+          "description": "Storage IP.",
+          "type": "string"
+        },
+        "isDefault": {
+          "description": "Whether to set this storage as default.",
+          "type": "boolean"
+        },
+        "port": {
+          "description": "Storage port.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "prefix": {
+          "description": "Storage prefix name.",
+          "type": "string"
+        },
+        "provider": {
+          "description": "Storage provider name.",
+          "type": "string"
+        },
+        "region": {
+          "description": "Storage region.",
+          "type": "string"
+        },
+        "secretKey": {
+          "description": "Storage secret key.",
+          "type": "string"
+        },
+        "storageName": {
+          "description": "Storage name(unique key).",
+          "type": "string"
+        }
+      }
+    },
     "errors.Error": {
       "required": [
         "message"
