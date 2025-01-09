@@ -30,48 +30,48 @@ func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) c
 }
 
 
-// Storage
+// Repository
 
-// Create new storageConfig in OperatorConfig.spec.storageConfigs
-func (h *clustersyncHandler) CreateStorage(req *restful.Request, resp *restful.Response) {
-	var ui_storage ui_clustersync.StorageRequest
-	err := req.ReadEntity(&ui_storage)
+// Create new repositoryConfig in OperatorConfig.spec.repositoryConfigs
+func (h *clustersyncHandler) CreateRepository(req *restful.Request, resp *restful.Response) {
+	var ui_repository ui_clustersync.RepositoryRequest
+	err := req.ReadEntity(&ui_repository)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if !isValidStorageRequest(&ui_storage , resp) {
+	if !isValidRepositoryRequest(&ui_repository , resp) {
 		return
 	}
 
-	// Create storageConfig into OperatorConfig
-	ui_storageName, err := h.clustersync.CreateStorage(&ui_storage)
+	// Create repositoryConfig into OperatorConfig
+	ui_repositoryName, err := h.clustersync.CreateRepository(&ui_repository)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	resp.WriteEntity(ui_storageName)
+	resp.WriteEntity(ui_repositoryName)
 }
 
-// Update existed storageConfig in OperatorConfig.spec.storageConfigs
-func (h *clustersyncHandler) UpdateStorage(req *restful.Request, resp *restful.Response) {
-	var ui_storage ui_clustersync.ModifyStorageRequest
-	err := req.ReadEntity(&ui_storage)
+// Update existed repositoryConfig in OperatorConfig.spec.repositoryConfigs
+func (h *clustersyncHandler) UpdateRepository(req *restful.Request, resp *restful.Response) {
+	var ui_repository ui_clustersync.ModifyRepositoryRequest
+	err := req.ReadEntity(&ui_repository)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	// Validation of ModifyStorageRequest
-	if !isValidStorageModifyRequest(&ui_storage , resp) {
+	// Validation of ModifyRepositoryRequest
+	if !isValidRepositoryModifyRequest(&ui_repository , resp) {
 		return
 	}
 
-	// Update storageConfig in OperatorConfig
-	storageConfigName := req.PathParameter("name")
-	_, err = h.clustersync.UpdateStorage(storageConfigName, &ui_storage)
+	// Update repositoryConfig in OperatorConfig
+	repositoryConfigName := req.PathParameter("name")
+	_, err = h.clustersync.UpdateRepository(repositoryConfigName, &ui_repository)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
@@ -81,11 +81,11 @@ func (h *clustersyncHandler) UpdateStorage(req *restful.Request, resp *restful.R
 	resp.WriteEntity(http.StatusOK)
 }
 
-// Get existed storageConfig in OperatorConfig.spec.storageConfigs
-func (h *clustersyncHandler) GetStorage(req *restful.Request, resp *restful.Response) {
-	storageConfigName := req.PathParameter("name")
+// Get existed repositoryConfig in OperatorConfig.spec.repositoryConfigs
+func (h *clustersyncHandler) GetRepository(req *restful.Request, resp *restful.Response) {
+	repositoryConfigName := req.PathParameter("name")
 
-	storageResponse, err := h.clustersync.GetStorage(storageConfigName)
+	repositoryResponse, err := h.clustersync.GetRepository(repositoryConfigName)
 	if err != nil {
 		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
 			resp.WriteError(http.StatusNotFound, err)
@@ -95,12 +95,12 @@ func (h *clustersyncHandler) GetStorage(req *restful.Request, resp *restful.Resp
 		return
 	}
 
-	resp.WriteEntity(storageResponse)
+	resp.WriteEntity(repositoryResponse)
 }
 
-// List all storageConfigs in OperatorConfig.spec.storageConfigs
-func (h *clustersyncHandler) ListStorage(req *restful.Request, resp *restful.Response) {
-	listStorageResponse, err := h.clustersync.ListStorage()
+// List all repositoryConfigs in OperatorConfig.spec.repositoryConfigs
+func (h *clustersyncHandler) ListRepository(req *restful.Request, resp *restful.Response) {
+	listRepositoryResponse, err := h.clustersync.ListRepository()
 	if err != nil {
 		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
 			resp.WriteError(http.StatusNotFound, err)
@@ -110,14 +110,14 @@ func (h *clustersyncHandler) ListStorage(req *restful.Request, resp *restful.Res
 		return
 	}
 
-	resp.WriteEntity(listStorageResponse)
+	resp.WriteEntity(listRepositoryResponse)
 }
 
-// Delete existed storageConfig in OperatorConfig.spec.storageConfigs
-func (h *clustersyncHandler) DeleteStorage(req *restful.Request, resp *restful.Response) {
-	storageConfigName := req.PathParameter("name")
+// Delete existed repositoryConfig in OperatorConfig.spec.repositoryConfigs
+func (h *clustersyncHandler) DeleteRepository(req *restful.Request, resp *restful.Response) {
+	repositoryConfigName := req.PathParameter("name")
 
-	err := h.clustersync.DeleteStorage(storageConfigName)
+	err := h.clustersync.DeleteRepository(repositoryConfigName)
 	if err != nil {
 		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
 			resp.WriteError(http.StatusNotFound, err)

@@ -16,56 +16,96 @@ import (
 	ui_clustersync "kubesphere.io/kubesphere/pkg/models/clustersync"
 )
 
-// StorageConfig
+// RepositoryConfig
 
-func isValidStorageRequest(request *ui_clustersync.StorageRequest, resp *restful.Response) bool {
+func isValidRepositoryRequest(request *ui_clustersync.RepositoryRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
-	// StorageName string
-	if request.StorageName == "" {
+	// RepositoryName string
+	if request.RepositoryName == "" {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "StorageName must not be empty.",
+			Reason: "RepositoryName must not be empty.",
 		})
 		return false
-	} else if !isValidOptionalStringField(reflectType, request.StorageName, "StorageName", resp) {
+	} else if !isValidOptionalStringField(reflectType, request.RepositoryName, "RepositoryName", resp) {
 		return false
 	}
 	// Provider string
-	if !isValidOptionalStringField(reflectType, request.Provider, "Provider", resp) {
+	if request.Provider == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Provider must not be empty.",
+		})
+		return false
+	} else if !isValidOptionalStringField(reflectType, request.Provider, "Provider", resp) {
 		return false
 	}
 	// Bucket string
-	if !isValidOptionalStringField(reflectType, request.Bucket, "Bucket", resp) {
+	if request.Bucket == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Bucket must not be empty.",
+		})
+		return false
+	} else if !isValidOptionalStringField(reflectType, request.Bucket, "Bucket", resp) {
 		return false
 	}
 	// Prefix string
-	if !isValidOptionalStringField(reflectType, request.Prefix, "Prefix", resp) {
+	if request.Prefix == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Prefix must not be empty.",
+		})
+		return false
+	} else if !isValidOptionalStringField(reflectType, request.Prefix, "Prefix", resp) {
 		return false
 	}
 	// Region string
-	if !isValidOptionalStringField(reflectType, request.Region, "Region", resp) {
+	if request.Region == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Region must not be empty.",
+		})
+		return false
+	} else if !isValidOptionalStringField(reflectType, request.Region, "Region", resp) {
 		return false
 	}
 	// Ip string
-	if !isValidOptionalIpAddress(request.Ip, resp) {
+	if request.Ip == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Ip must not be empty.",
+		})
+		return false
+	} else if !isValidOptionalIpAddress(request.Ip, resp) {
 		return false
 	}
 	// Port *int
-	if !isValidOptionalPortNumber(reflectType, request.Port, "Port", resp) {
+	if request.Port == nil {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Port must not be empty.",
+		})
+		return false
+	} else if !isValidOptionalPortNumber(reflectType, request.Port, "Port", resp) {
 		return false
 	}
 	// AccessKey string
-	if !util.IsValidLength(reflectType, request.AccessKey, "AccessKey", resp) {
+	if request.AccessKey == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "AccessKey must not be empty.",
+		})
+		return false
+	} else if !util.IsValidLength(reflectType, request.AccessKey, "AccessKey", resp) {
 		return false
 	}
 	// SecretKey string
-	if !util.IsValidLength(reflectType, request.SecretKey, "SecretKey", resp) {
+	if request.SecretKey == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "SecretKey must not be empty.",
+		})
+		return false
+	} else if !util.IsValidLength(reflectType, request.SecretKey, "SecretKey", resp) {
 		return false
 	}
 
 	return true
 }
 
-func isValidStorageModifyRequest(request *ui_clustersync.ModifyStorageRequest, resp *restful.Response) bool {
+func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
 	// Provider string
 	if !isValidOptionalStringField(reflectType, request.Provider, "Provider", resp) {
@@ -123,15 +163,15 @@ func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.R
 		return false
 	}
 	// TTL string
-	if !isValidTTL(&request.TTL, resp) {
+	if !isValidTTL(request.TTL, resp) {
 		return false
 	}
 	// StorageLocation string
-	if !isValidOptionalStringField(reflectType, request.StorageLocation, "StorageLocation", resp) {
+	if !isValidOptionalStringField(reflectType, request.BackupRepository, "StorageLocation", resp) {
 		return false
 	}
 	// VolumeSnapshotLocations []string
-	if !isValidVolumeLocations(request.SnapshotMoveData, request.VolumeSnapshotLocations, resp) {
+	if !isValidVolumeLocations(request.SnapshotRepositories, resp) {
 		return false
 	}
 	// IsOneTime *bool
@@ -152,16 +192,16 @@ func isValidBackupModifyRequest(request *ui_clustersync.ModifyBackupRequest, res
 	if !isValidNamespaceRange(request.IncludedNamespaces, request.ExcludedNamespaces, resp) {
 		return false
 	}
-	// TTL string
-	if request.TTL != "" && !isValidTTL(&request.TTL, resp) {
+	// TTL *string
+	if request.TTL != nil && !isValidTTL(*request.TTL, resp) {
 		return false
 	}
-	// StorageLocation string
-	if !isValidOptionalStringField(reflectType, request.StorageLocation, "StorageLocation", resp) {
+	// StorageLocation *string
+	if request.BackupRepository != nil && !isValidOptionalStringField(reflectType, *request.BackupRepository, "StorageLocation", resp) {
 		return false
 	}
 	// VolumeSnapshotLocations []string
-	if !isValidVolumeLocations(request.SnapshotMoveData, request.VolumeSnapshotLocations, resp) {
+	if !isValidVolumeLocations(request.SnapshotRepositories, resp) {
 		return false
 	}
 
@@ -183,12 +223,12 @@ func isValidRestoreRequest(request *ui_clustersync.RestoreRequest, resp *restful
 		return false
 	}
 	// BackupName string
-	if request.BackupName == "" {
+	if request.BackupSource == "" {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "BackupName must not be empty.",
 		})
 		return false
-	} else if !isValidOptionalStringField(reflectType, request.BackupName, "BackupName", resp) {
+	} else if !isValidOptionalStringField(reflectType, request.BackupSource, "BackupName", resp) {
 		return false
 	}
 	// IncludedNamespaces []string
@@ -210,7 +250,7 @@ func isValidRestoreRequest(request *ui_clustersync.RestoreRequest, resp *restful
 func isValidRestoreModifyRequest(request *ui_clustersync.ModifyRestoreRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
 	// BackupName string
-	if !isValidOptionalStringField(reflectType, request.BackupName, "BackupName", resp) {
+	if !isValidOptionalStringField(reflectType, request.BackupSource, "BackupName", resp) {
 		return false
 	}
 	// IncludedNamespaces []string
@@ -273,16 +313,16 @@ func isValidScheduleTemplate(validateType reflect.Type, template *ui_clustersync
 	if !isValidNamespaceRange(template.IncludedNamespaces, template.ExcludedNamespaces, resp) {
 		return false
 	}
-	// TTL string
-	if !isValidTTL(&template.TTL, resp) {
+	// TTL *string
+	if template.TTL != nil && !isValidTTL(*template.TTL, resp) {
 		return false
 	}
-	// StorageLocation string
-	if !isValidOptionalStringField(validateType, template.StorageLocation, "StorageLocation", resp) {
+	// StorageLocation *string
+	if template.BackupRepository != nil && !isValidOptionalStringField(validateType, *template.BackupRepository, "StorageLocation", resp) {
 		return false
 	}
 	// VolumeSnapshotLocations []string
-	if !isValidVolumeLocations(template.SnapshotMoveData, template.VolumeSnapshotLocations, resp) {
+	if !isValidVolumeLocations(template.SnapshotRepositories, resp) {
 		return false
 	}
 
@@ -359,27 +399,19 @@ func isValidNamespaceRange(included []string, excluded []string, resp *restful.R
 	return true
 }
 
-func isValidTTL(ttl *string, resp *restful.Response) bool {
-	if *ttl == "" {
-		*ttl = "720h"
-	} else if _, err := time.ParseDuration(*ttl); err != nil {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "Invalid TTL : " + err.Error(),
-		})
-		return false
-	}
-	return true
-}
-
-func isValidVolumeLocations(enabled *bool, locations []string, resp *restful.Response) bool {
-	if enabled != nil && *enabled {
-		if len(locations) == 0 {
+func isValidTTL(ttl string, resp *restful.Response) bool {
+	if ttl != "" {
+		if _, err := time.ParseDuration(ttl); err != nil {
 			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-				Reason: "Invalid VolumeSnapshotLocations : must not be empty when SnapshotMoveData is enabled.",
+				Reason: "Invalid TTL : " + err.Error(),
 			})
 			return false
 		}
 	}
+	return true
+}
+
+func isValidVolumeLocations(locations []string, resp *restful.Response) bool {
 	locationMap := make(map[string]bool, 0)
 	for _, location := range locations {
 		if !util.IsValidString(location, resp) {

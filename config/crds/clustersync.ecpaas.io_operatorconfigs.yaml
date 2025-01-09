@@ -38,11 +38,14 @@ spec:
             properties:
               backupConfigs:
                 items:
-                  description: BackupConfig defines the backup configurations.
+                  description: BackupConfig defines the backup configurations. Try
+                    to make BackupSpec as close as velerov1.Backup to simplify transition.
                   properties:
                     backupName:
                       type: string
                     backupSpec:
+                      description: Keep fields in BackupSpec identical to velerov1.BackupSpec.
+                        Add fields if more velero function is needed.
                       properties:
                         defaultVolumesToFsBackup:
                           type: boolean
@@ -69,15 +72,46 @@ spec:
                       type: boolean
                   type: object
                 type: array
+              repositoryConfigs:
+                items:
+                  description: RepositoryConfig defines the repository configurations.
+                  properties:
+                    accessKey:
+                      type: string
+                    bucket:
+                      type: string
+                    ip:
+                      type: string
+                    isDefault:
+                      type: boolean
+                    lastModified:
+                      type: string
+                    port:
+                      type: integer
+                    prefix:
+                      type: string
+                    provider:
+                      type: string
+                    region:
+                      type: string
+                    repositoryName:
+                      type: string
+                    secretKey:
+                      type: string
+                  type: object
+                type: array
               restoreConfigs:
                 items:
-                  description: RestoreConfig defines the restore configurations.
+                  description: RestoreConfig defines the restore configurations. Try
+                    to make RestoreSpec as close as velerov1.Restore to simplify transition.
                   properties:
                     isOneTime:
                       type: boolean
                     restoreName:
                       type: string
                     restoreSpec:
+                      description: Keep fields in RestoreSpec identical to velerov1.RestoreSpec.
+                        Add fields if more velero function is needed.
                       properties:
                         backupName:
                           type: string
@@ -95,18 +129,24 @@ spec:
               scheduleConfigs:
                 items:
                   description: ScheduleConfig defines the schedule configurations.
+                    Try to make ScheduleSpec as close as velerov1.Schedule to simplify
+                    transition.
                   properties:
                     lastModified:
                       type: string
                     scheduleName:
                       type: string
                     scheduleSpec:
+                      description: Keep fields in ScheduleSpec identical to velerov1.ScheduleSpec.
+                        Add fields if more velero function is needed.
                       properties:
                         paused:
                           type: boolean
                         schedule:
                           type: string
                         template:
+                          description: Keep fields in BackupSpec identical to velerov1.BackupSpec.
+                            Add fields if more velero function is needed.
                           properties:
                             defaultVolumesToFsBackup:
                               type: boolean
@@ -135,41 +175,13 @@ spec:
                       type: object
                   type: object
                 type: array
-              storageConfigs:
-                items:
-                  description: StorageConfig defines the storage location.
-                  properties:
-                    accessKey:
-                      type: string
-                    bucket:
-                      type: string
-                    ip:
-                      type: string
-                    isDefault:
-                      type: boolean
-                    lastModified:
-                      type: string
-                    port:
-                      type: integer
-                    prefix:
-                      type: string
-                    provider:
-                      type: string
-                    region:
-                      type: string
-                    secretKey:
-                      type: string
-                    storageName:
-                      type: string
-                  type: object
-                type: array
             type: object
           status:
             description: OperatorConfigStatus defines the observed state of OperatorConfig.
             properties:
               configInitialized:
                 type: boolean
-              scheduleConfigured:
+              repositoryConfigured:
                 items:
                   properties:
                     lastModified:
@@ -178,7 +190,7 @@ spec:
                       type: string
                   type: object
                 type: array
-              storageConfigured:
+              scheduleConfigured:
                 items:
                   properties:
                     lastModified:

@@ -13,34 +13,37 @@ import (
 
 // OperatorConfigSpec defines the desired state of OperatorConfig.
 type OperatorConfigSpec struct {
-	StorageConfigs  []StorageConfig  `json:"storageConfigs,omitempty"`
-	BackupConfigs   []BackupConfig   `json:"backupConfigs,omitempty"`
-	RestoreConfigs  []RestoreConfig  `json:"restoreConfigs,omitempty"`
-	ScheduleConfigs []ScheduleConfig `json:"scheduleConfigs,omitempty"`
+	RepositoryConfigs []RepositoryConfig `json:"repositoryConfigs,omitempty"`
+	BackupConfigs     []BackupConfig     `json:"backupConfigs,omitempty"`
+	RestoreConfigs    []RestoreConfig    `json:"restoreConfigs,omitempty"`
+	ScheduleConfigs   []ScheduleConfig   `json:"scheduleConfigs,omitempty"`
 }
 
-// StorageConfig defines the storage location.
-type StorageConfig struct {
-	StorageName  string `json:"storageName,omitempty"`
-	Provider     string `json:"provider,omitempty"`
-	Bucket       string `json:"bucket,omitempty"`
-	Prefix       string `json:"prefix,omitempty"`
-	Region       string `json:"region,omitempty"`
-	Ip           string `json:"ip,omitempty"`
-	Port         *int   `json:"port,omitempty"`
-	AccessKey    string `json:"accessKey,omitempty"`
-	SecretKey    string `json:"secretKey,omitempty"`
-	IsDefault    *bool  `json:"isDefault,omitempty"`
-	LastModified string `json:"lastModified,omitempty"`
+// RepositoryConfig defines the repository configurations.
+type RepositoryConfig struct {
+	RepositoryName string `json:"repositoryName,omitempty"`
+	Provider       string `json:"provider,omitempty"`
+	Bucket         string `json:"bucket,omitempty"`
+	Prefix         string `json:"prefix,omitempty"`
+	Region         string `json:"region,omitempty"`
+	Ip             string `json:"ip,omitempty"`
+	Port           *int   `json:"port,omitempty"`
+	AccessKey      string `json:"accessKey,omitempty"`
+	SecretKey      string `json:"secretKey,omitempty"`
+	IsDefault      *bool  `json:"isDefault,omitempty"`
+	LastModified   string `json:"lastModified,omitempty"`
 }
 
 // BackupConfig defines the backup configurations.
+// Try to make BackupSpec as close as velerov1.Backup to simplify transition.
 type BackupConfig struct {
 	BackupName string     `json:"backupName,omitempty"`
 	BackupSpec BackupSpec `json:"backupSpec,omitempty"`
 	IsOneTime  *bool      `json:"isOneTime,omitempty"`
 }
 
+// Keep fields in BackupSpec identical to velerov1.BackupSpec.
+// Add fields if more velero function is needed.
 type BackupSpec struct {
 	IncludedNamespaces       []string        `json:"includedNamespaces,omitempty"`
 	ExcludedNamespaces       []string        `json:"excludedNamespaces,omitempty"`
@@ -52,13 +55,15 @@ type BackupSpec struct {
 }
 
 // RestoreConfig defines the restore configurations.
+// Try to make RestoreSpec as close as velerov1.Restore to simplify transition.
 type RestoreConfig struct {
 	RestoreName string      `json:"restoreName,omitempty"`
 	RestoreSpec RestoreSpec `json:"restoreSpec,omitempty"`
 	IsOneTime   *bool       `json:"isOneTime,omitempty"`
 }
 
-
+// Keep fields in RestoreSpec identical to velerov1.RestoreSpec.
+// Add fields if more velero function is needed.
 type RestoreSpec struct {
 	BackupName         string   `json:"backupName,omitempty"`
 	IncludedNamespaces []string `json:"includedNamespaces,omitempty"`
@@ -66,12 +71,15 @@ type RestoreSpec struct {
 }
 
 // ScheduleConfig defines the schedule configurations.
+// Try to make ScheduleSpec as close as velerov1.Schedule to simplify transition.
 type ScheduleConfig struct {
 	ScheduleName string       `json:"scheduleName,omitempty"`
 	ScheduleSpec ScheduleSpec `json:"scheduleSpec,omitempty"`
 	LastModified string       `json:"lastModified,omitempty"`
 }
 
+// Keep fields in ScheduleSpec identical to velerov1.ScheduleSpec.
+// Add fields if more velero function is needed.
 type ScheduleSpec struct {
 	Schedule string     `json:"schedule"`
 	Paused   bool       `json:"paused,omitempty"`
@@ -80,9 +88,9 @@ type ScheduleSpec struct {
 
 // OperatorConfigStatus defines the observed state of OperatorConfig.
 type OperatorConfigStatus struct {
-	ConfigInitialized  bool               `json:"configInitialized,omitempty"`
-	StorageConfigured  []ModificationInfo `json:"storageConfigured,omitempty"`
-	ScheduleConfigured []ModificationInfo `json:"scheduleConfigured,omitempty"`
+	ConfigInitialized    bool               `json:"configInitialized,omitempty"`
+	RepositoryConfigured []ModificationInfo `json:"repositoryConfigured,omitempty"`
+	ScheduleConfigured   []ModificationInfo `json:"scheduleConfigured,omitempty"`
 }
 
 type ModificationInfo struct {
