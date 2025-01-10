@@ -166,12 +166,12 @@ func isValidBackupRequest(request *ui_clustersync.BackupRequest, resp *restful.R
 	if !isValidTTL(request.TTL, resp) {
 		return false
 	}
-	// StorageLocation string
-	if !isValidOptionalStringField(reflectType, request.BackupRepository, "StorageLocation", resp) {
+	// BackupRepository string
+	if !isValidOptionalStringField(reflectType, request.BackupRepository, "BackupRepository", resp) {
 		return false
 	}
-	// VolumeSnapshotLocations []string
-	if !isValidVolumeLocations(request.SnapshotRepositories, resp) {
+	// SnapshotRepositories []string
+	if !isValidSnapshotRepositories(request.SnapshotRepositories, resp) {
 		return false
 	}
 	// IsOneTime *bool
@@ -196,12 +196,12 @@ func isValidBackupModifyRequest(request *ui_clustersync.ModifyBackupRequest, res
 	if request.TTL != nil && !isValidTTL(*request.TTL, resp) {
 		return false
 	}
-	// StorageLocation *string
-	if request.BackupRepository != nil && !isValidOptionalStringField(reflectType, *request.BackupRepository, "StorageLocation", resp) {
+	// BackupRepository *string
+	if request.BackupRepository != nil && !isValidOptionalStringField(reflectType, *request.BackupRepository, "BackupRepository", resp) {
 		return false
 	}
-	// VolumeSnapshotLocations []string
-	if !isValidVolumeLocations(request.SnapshotRepositories, resp) {
+	// SnapshotRepositories []string
+	if !isValidSnapshotRepositories(request.SnapshotRepositories, resp) {
 		return false
 	}
 
@@ -286,7 +286,7 @@ func isValidScheduleRequest(request *ui_clustersync.ScheduleRequest, resp *restf
 		return false
 	}
 	// Template struct
-	if !isValidScheduleTemplate(reflectType, &request.Template, resp) {
+	if !isValidSchedulePostTemplate(&request.Template, resp) {
 		return false
 	}
 
@@ -294,20 +294,43 @@ func isValidScheduleRequest(request *ui_clustersync.ScheduleRequest, resp *restf
 }
 
 func isValidScheduleModifyRequest(request *ui_clustersync.ModifyScheduleRequest, resp *restful.Response) bool {
-	reflectType := reflect.TypeOf(*request)
 	// Schedule string
 	if request.Schedule != "" && !isValidCronString(request.Schedule, resp) {
 		return false
 	}
 	// Template *struct
-	if request.Template != nil && !isValidScheduleTemplate(reflectType, request.Template, resp) {
+	if request.Template != nil && !isValidSchedulePutTemplate(request.Template, resp) {
 		return false
 	}
 
 	return true
 }
 
-func isValidScheduleTemplate(validateType reflect.Type, template *ui_clustersync.Template, resp *restful.Response) bool {
+func isValidSchedulePostTemplate(template *ui_clustersync.PostTemplate, resp *restful.Response) bool {
+	reflectType := reflect.TypeOf(*template)
+	// IncludedNamespaces []string
+	// ExcludedNamespaces []string
+	if !isValidNamespaceRange(template.IncludedNamespaces, template.ExcludedNamespaces, resp) {
+		return false
+	}
+	// TTL *string
+	if !isValidTTL(template.TTL, resp) {
+		return false
+	}
+	// BackupRepository *string
+	if !isValidOptionalStringField(reflectType, template.BackupRepository, "BackupRepository", resp) {
+		return false
+	}
+	// SnapshotRepositories []string
+	if !isValidSnapshotRepositories(template.SnapshotRepositories, resp) {
+		return false
+	}
+
+	return true
+}
+
+func isValidSchedulePutTemplate(template *ui_clustersync.PutTemplate, resp *restful.Response) bool {
+	reflectType := reflect.TypeOf(*template)
 	// IncludedNamespaces []string
 	// ExcludedNamespaces []string
 	if !isValidNamespaceRange(template.IncludedNamespaces, template.ExcludedNamespaces, resp) {
@@ -317,12 +340,12 @@ func isValidScheduleTemplate(validateType reflect.Type, template *ui_clustersync
 	if template.TTL != nil && !isValidTTL(*template.TTL, resp) {
 		return false
 	}
-	// StorageLocation *string
-	if template.BackupRepository != nil && !isValidOptionalStringField(validateType, *template.BackupRepository, "StorageLocation", resp) {
+	// BackupRepository *string
+	if template.BackupRepository != nil && !isValidOptionalStringField(reflectType, *template.BackupRepository, "BackupRepository", resp) {
 		return false
 	}
-	// VolumeSnapshotLocations []string
-	if !isValidVolumeLocations(template.SnapshotRepositories, resp) {
+	// SnapshotRepositories []string
+	if !isValidSnapshotRepositories(template.SnapshotRepositories, resp) {
 		return false
 	}
 
@@ -411,7 +434,7 @@ func isValidTTL(ttl string, resp *restful.Response) bool {
 	return true
 }
 
-func isValidVolumeLocations(locations []string, resp *restful.Response) bool {
+func isValidSnapshotRepositories(locations []string, resp *restful.Response) bool {
 	locationMap := make(map[string]bool, 0)
 	for _, location := range locations {
 		if !util.IsValidString(location, resp) {
@@ -419,7 +442,7 @@ func isValidVolumeLocations(locations []string, resp *restful.Response) bool {
 		}
 		if _, ok := locationMap[location]; ok {
 			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-				Reason: "Invalid VolumeSnapshotLocations, must not contain duplicated locations.",
+				Reason: "Invalid SnapshotRepositories, must not contain duplicated repositories.",
 			})
 			return false
 		}

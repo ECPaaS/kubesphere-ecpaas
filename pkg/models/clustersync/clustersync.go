@@ -799,29 +799,23 @@ func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*Sc
 					IncludedNamespaces: ui_schedule.Template.IncludedNamespaces,
 					ExcludedNamespaces: ui_schedule.Template.ExcludedNamespaces,
 					DefaultVolumesToFsBackup: ui_schedule.Template.DefaultVolumesToFsBackup,
+					StorageLocation: ui_schedule.Template.BackupRepository,
 					VolumeSnapshotLocations: ui_schedule.Template.SnapshotRepositories,
 					SnapshotMoveData: ui_schedule.Template.SnapshotMoveData,
 				},
 			},
 			LastModified: time.Now().String(),
 		}
-		if ui_schedule.Template.BackupRepository != nil {
-			newScheduleConfig.ScheduleSpec.Template.StorageLocation = *ui_schedule.Template.BackupRepository
-		}
 		if ui_schedule.Paused != nil {
 			newScheduleConfig.ScheduleSpec.Paused = *ui_schedule.Paused
 		}
-		ttl := DefaultTTL
-		if ui_schedule.Template.TTL != nil {
-			ttl = *ui_schedule.Template.TTL
-		}
-		if duration, err := parseDurationOrDefault(ttl); err != nil {
+		if duration, err := parseDurationOrDefault(ui_schedule.Template.TTL); err != nil {
 			return nil, err
 		} else {
 			newScheduleConfig.ScheduleSpec.Template.TTL = metav1.Duration{Duration: duration}
 		}
 		if !anyDefaultRepository(config.Spec.RepositoryConfigs, "") {
-			if ui_schedule.Template.BackupRepository != nil && *ui_schedule.Template.BackupRepository == "" {
+			if ui_schedule.Template.BackupRepository == "" {
 				return nil, fmt.Errorf("no default repository existed for BackupRepository")
 			}
 			if len(ui_schedule.Template.SnapshotRepositories) == 0 {
