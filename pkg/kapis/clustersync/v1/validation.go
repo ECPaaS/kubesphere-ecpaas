@@ -107,37 +107,58 @@ func isValidRepositoryRequest(request *ui_clustersync.RepositoryRequest, resp *r
 
 func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
-	// Provider string
-	if !isValidOptionalStringField(reflectType, request.Provider, "Provider", resp) {
+	// Provider *string
+	if !isValidUpdatingRequiredStringField(reflectType, request.Provider, "Provider", resp) {
 		return false
 	}
-	// Bucket string
-	if !isValidOptionalStringField(reflectType, request.Bucket, "Bucket", resp) {
+	// Bucket *string
+	if !isValidUpdatingRequiredStringField(reflectType, request.Bucket, "Bucket", resp) {
 		return false
 	}
-	// Prefix string
-	if !isValidOptionalStringField(reflectType, request.Prefix, "Prefix", resp) {
+	// Prefix *string
+	if !isValidUpdatingRequiredStringField(reflectType, request.Prefix, "Prefix", resp) {
 		return false
 	}
-	// Region string
-	if !isValidOptionalStringField(reflectType, request.Region, "Region", resp) {
+	// Region *string
+	if !isValidUpdatingRequiredStringField(reflectType, request.Region, "Region", resp) {
 		return false
 	}
-	// Ip string
-	if !isValidOptionalIpAddress(request.Ip, resp) {
-		return false
+	// Ip *string
+	if request.Ip != nil {
+		if *request.Ip == "" {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "Ip must not be cleared.",
+			})
+			return false
+		} else if !isValidOptionalIpAddress(*request.Ip, resp) {
+			return false
+		}
 	}
 	// Port *int
 	if !isValidOptionalPortNumber(reflectType, request.Port, "Port", resp) {
 		return false
 	}
-	// AccessKey string
-	if !util.IsValidLength(reflectType, request.AccessKey, "AccessKey", resp) {
-		return false
+	// AccessKey *string
+	if request.AccessKey != nil {
+		if *request.AccessKey == "" {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "AccessKey must not be cleared.",
+			})
+			return false
+		} else if!util.IsValidLength(reflectType, *request.AccessKey, "AccessKey", resp) {
+			return false
+		}
 	}
-	// SecretKey string
-	if !util.IsValidLength(reflectType, request.SecretKey, "SecretKey", resp) {
-		return false
+	// SecretKey *string
+	if request.SecretKey != nil {
+		if *request.SecretKey == ""{
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "SecretKey must not be cleared.",
+			})
+			return false
+		} else if !util.IsValidLength(reflectType, *request.SecretKey, "SecretKey", resp) {
+			return false
+		}
 	}
 
 	return true
@@ -222,13 +243,13 @@ func isValidRestoreRequest(request *ui_clustersync.RestoreRequest, resp *restful
 	} else if !isValidOptionalStringField(reflectType, request.RestoreName, "RestoreName", resp) {
 		return false
 	}
-	// BackupName string
+	// BackupSource string
 	if request.BackupSource == "" {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "BackupName must not be empty.",
+			Reason: "BackupSource must not be empty.",
 		})
 		return false
-	} else if !isValidOptionalStringField(reflectType, request.BackupSource, "BackupName", resp) {
+	} else if !isValidOptionalStringField(reflectType, request.BackupSource, "BackupSource", resp) {
 		return false
 	}
 	// IncludedNamespaces []string
@@ -249,8 +270,8 @@ func isValidRestoreRequest(request *ui_clustersync.RestoreRequest, resp *restful
 
 func isValidRestoreModifyRequest(request *ui_clustersync.ModifyRestoreRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
-	// BackupName string
-	if !isValidOptionalStringField(reflectType, request.BackupSource, "BackupName", resp) {
+	// BackupSource *string
+	if !isValidUpdatingRequiredStringField(reflectType, request.BackupSource, "BackupSource", resp) {
 		return false
 	}
 	// IncludedNamespaces []string
@@ -294,9 +315,16 @@ func isValidScheduleRequest(request *ui_clustersync.ScheduleRequest, resp *restf
 }
 
 func isValidScheduleModifyRequest(request *ui_clustersync.ModifyScheduleRequest, resp *restful.Response) bool {
-	// Schedule string
-	if request.Schedule != "" && !isValidCronString(request.Schedule, resp) {
-		return false
+	// Schedule *string
+	if request.Schedule != nil {
+		if *request.Schedule == "" {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "Schedule must not be empty.",
+			})
+			return false
+		} else if !isValidCronString(*request.Schedule, resp) {
+			return false
+		}
 	}
 	// Template *struct
 	if request.Template != nil && !isValidSchedulePutTemplate(request.Template, resp) {
@@ -359,6 +387,20 @@ func isValidOptionalStringField(validateType reflect.Type, value string, fieldNa
 		if !util.IsValidLength(validateType, value, fieldName, resp) {
 			return false
 		} else if !util.IsValidCaseInsensitiveString(value, resp) {
+			return false
+		}
+	}
+	return true
+}
+
+func isValidUpdatingRequiredStringField(validateType reflect.Type, value *string, fieldName string, resp *restful.Response) bool {
+	if value != nil {
+		if *value == "" {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: fieldName + " must not be cleared.",
+			})
+			return false
+		} else if !isValidOptionalStringField(validateType, *value, fieldName, resp) {
 			return false
 		}
 	}

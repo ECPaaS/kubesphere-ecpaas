@@ -149,29 +149,29 @@ func (cs *clusterSyncOperator) UpdateRepository(name string, ui_repository *Modi
 	if repositoryConfig := getRepositoryConfig(config.Spec.RepositoryConfigs, name); repositoryConfig != nil {
 		// Found, update the Repository
 		newConfig := *repositoryConfig.DeepCopy()
-		if ui_repository.Provider != "" {
-			newConfig.Provider = ui_repository.Provider
+		if ui_repository.Provider != nil {
+			newConfig.Provider = *ui_repository.Provider
 		}
-		if ui_repository.Bucket != "" {
-			newConfig.Bucket = ui_repository.Bucket
+		if ui_repository.Bucket != nil {
+			newConfig.Bucket = *ui_repository.Bucket
 		}
-		if ui_repository.Prefix != "" {
-			newConfig.Prefix = ui_repository.Prefix
+		if ui_repository.Prefix != nil {
+			newConfig.Prefix = *ui_repository.Prefix
 		}
-		if ui_repository.Region != "" {
-			newConfig.Region = ui_repository.Region
+		if ui_repository.Region != nil {
+			newConfig.Region = *ui_repository.Region
 		}
-		if ui_repository.Ip != "" {
-			newConfig.Ip = ui_repository.Ip
+		if ui_repository.Ip != nil {
+			newConfig.Ip = *ui_repository.Ip
 		}
 		if ui_repository.Port != nil {
 			newConfig.Port = ui_repository.Port
 		}
-		if ui_repository.AccessKey != "" {
-			newConfig.AccessKey = ui_repository.AccessKey
+		if ui_repository.AccessKey != nil {
+			newConfig.AccessKey = *ui_repository.AccessKey
 		}
-		if ui_repository.SecretKey != "" {
-			newConfig.SecretKey = ui_repository.SecretKey
+		if ui_repository.SecretKey != nil {
+			newConfig.SecretKey = *ui_repository.SecretKey
 		}
 		if ui_repository.IsDefault != nil {
 			if *ui_repository.IsDefault {
@@ -488,7 +488,7 @@ func (cs *clusterSyncOperator) DeleteBackup(name string) error {
 
 	newSlice := make([]clustersyncv1.BackupConfig, 0)
 	for _, backupConfig := range config.Spec.BackupConfigs {
-		if backupConfig.BackupName != name {
+		if backupConfig.BackupName != name || *backupConfig.IsOneTime {
 			newSlice = append(newSlice, backupConfig)
 		}
 	}
@@ -637,8 +637,8 @@ func (cs *clusterSyncOperator) UpdateRestore(name string, ui_restore *ModifyRest
 	}
 	if restoreConfig := getRestoreConfig(config.Spec.RestoreConfigs, name); restoreConfig != nil {
 		// Found, update the Restore
-		if ui_restore.BackupSource != "" {
-			restoreConfig.RestoreSpec.BackupName = ui_restore.BackupSource
+		if ui_restore.BackupSource != nil {
+			restoreConfig.RestoreSpec.BackupName = *ui_restore.BackupSource
 		}
 		if ui_restore.IncludedNamespaces != nil {
 			restoreConfig.RestoreSpec.IncludedNamespaces = ui_restore.IncludedNamespaces
@@ -716,7 +716,7 @@ func (cs *clusterSyncOperator) DeleteRestore(name string) error {
 
 	newSlice := make([]clustersyncv1.RestoreConfig, 0)
 	for _, restoreConfig := range config.Spec.RestoreConfigs {
-		if restoreConfig.RestoreName != name {
+		if restoreConfig.RestoreName != name || *restoreConfig.IsOneTime {
 			newSlice = append(newSlice, restoreConfig)
 		}
 	}
@@ -850,8 +850,8 @@ func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifySc
 	if scheduleConfig := getScheduleConfig(config.Spec.ScheduleConfigs, name); scheduleConfig != nil {
 		// Found, update the Schedule
 		newConfig := *scheduleConfig.DeepCopy()
-		if ui_schedule.Schedule != "" {
-			newConfig.ScheduleSpec.Schedule = ui_schedule.Schedule
+		if ui_schedule.Schedule != nil {
+			newConfig.ScheduleSpec.Schedule = *ui_schedule.Schedule
 		}
 		if ui_schedule.Paused != nil {
 			newConfig.ScheduleSpec.Paused = *ui_schedule.Paused

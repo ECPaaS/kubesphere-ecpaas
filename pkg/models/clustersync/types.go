@@ -23,15 +23,15 @@ type RepositoryNameResponse struct {
 }
 
 type ModifyRepositoryRequest struct {
-	Provider  string `json:"provider,omitempty" description:"Repository provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Bucket    string `json:"bucket,omitempty" description:"Repository bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Prefix    string `json:"prefix,omitempty" description:"Repository prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Region    string `json:"region,omitempty" description:"Repository region. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Ip        string `json:"ip,omitempty" description:"Repository IP. Must be valid IPv4/v6 format without mask."`
-	Port      *int   `json:"port,omitempty" description:"Repository port." minimum:"1" maximum:"65535"`
-	AccessKey string `json:"accessKey,omitempty" description:"Repository access key." maximum:"128"`
-	SecretKey string `json:"secretKey,omitempty" description:"Repository secret key." maximum:"128"`
-	IsDefault *bool  `json:"isDefault,omitempty" description:"Whether to set this repository as default."`
+	Provider  *string `json:"provider,omitempty" description:"Repository provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	Bucket    *string `json:"bucket,omitempty" description:"Repository bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	Prefix    *string `json:"prefix,omitempty" description:"Repository prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	Region    *string `json:"region,omitempty" description:"Repository region. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	Ip        *string `json:"ip,omitempty" description:"Repository IP. Must be valid IPv4/v6 format without mask."`
+	Port      *int    `json:"port,omitempty" description:"Repository port." minimum:"1" maximum:"65535"`
+	AccessKey *string `json:"accessKey,omitempty" description:"Repository access key." maximum:"128"`
+	SecretKey *string `json:"secretKey,omitempty" description:"Repository secret key." maximum:"128"`
+	IsDefault *bool   `json:"isDefault,omitempty" description:"Whether to set this repository as default."`
 }
 
 type RepositoryResponse struct {
@@ -109,7 +109,7 @@ type RestoreNameResponse struct {
 }
 
 type ModifyRestoreRequest struct {
-	BackupSource       string   `json:"backupSource,omitempty" description:"BackupSource is the unique name of the backup source to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	BackupSource       *string  `json:"backupSource,omitempty" description:"BackupSource is the unique name of the backup source to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
 	IncludedNamespaces []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Empty array means clear this array to include all namespaces. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
 	ExcludedNamespaces []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Empty array means clear this array to exclude no namespace. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
 }
@@ -149,7 +149,7 @@ type ScheduleNameResponse struct {
 }
 
 type ModifyScheduleRequest struct {
-	Schedule string       `json:"schedule,omitempty" description:"Schedule is a Cron expression defining when to run. Valid characters: 0-9, /(slash), *(asterisk), space, and -(hyphen)."`
+	Schedule *string      `json:"schedule,omitempty" description:"Schedule is a Cron expression defining when to run. Valid characters: 0-9, /(slash), *(asterisk), space, and -(hyphen)."`
 	Paused   *bool        `json:"paused,omitempty" description:"Paused specifies whether the schedule is paused or not."`
 	Template *PutTemplate `json:"template,omitempty" description:"Template is the definition of the Backup to be run on the provided schedule."`
 }
