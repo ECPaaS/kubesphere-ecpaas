@@ -106,6 +106,18 @@ func IsValidString(valueToValidate string, resp *restful.Response) bool {
 
 }
 
+// Valid characters: A-Z, a-z, 0-9, and -(hyphen)
+func IsValidCaseInsensitiveString(valueToValidate string, resp *restful.Response) bool {
+	validRegex := regexp.MustCompile(`^[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])?)*$`)
+	if !validRegex.MatchString(valueToValidate) {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+			Reason: "Allowed characters: uppercase and lowercase letters (A-Z, a-z), numbers (0-9), and hyphens (-). And must start and end with alphanumeric charactors.",
+		})
+		return false
+	}
+	return true
+}
+
 func IsValidCIDR(cidr string, resp *restful.Response) bool {
 	_, _, err := net.ParseCIDR(cidr)
 	if err != nil {

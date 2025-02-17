@@ -14,6 +14,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/minio/minio-go/v7"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 
 	"kubesphere.io/kubesphere/pkg/kapis/util"
@@ -47,20 +48,6 @@ func isValidWithinRange(validateType reflect.Type, valueToValidate int, fieldNam
 	}
 	return true
 
-}
-
-func isValidLength(validateType reflect.Type, valueToValidate string, fieldName string, resp *restful.Response) bool {
-	field, found := validateType.FieldByName(fieldName)
-	if found {
-		maximum, _ := strconv.Atoi(field.Tag.Get("maximum"))
-		if len(valueToValidate) > int(maximum) {
-			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-				Reason: fieldName + " length should be less than " + field.Tag.Get("maximum"),
-			})
-			return false
-		}
-	}
-	return true
 }
 
 func isValidString(valueToValidate string, resp *restful.Response) bool {
@@ -97,6 +84,66 @@ func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Resp
 		return false
 	}
 
+	if !isValidGPURequest(vm.GPUs, resp) {
+		return false
+	}
+
+	return true
+}
+
+func isValidGPURequest(gpus []ui_virtz.GPU, resp *restful.Response) bool {
+	if gpus != nil {
+		primaryGPU := false
+		nameMap := make(map[string]bool, 0)
+		reflectType := reflect.TypeOf(ui_virtz.GPU{})
+		for _, gpu := range gpus {
+			// Name
+			if !util.IsValidCaseInsensitiveString(gpu.Name, resp) {
+				return false
+			}
+			if !util.IsValidLength(reflectType, gpu.Name, "Name", resp) {
+				return false
+			}
+			if _, ok := nameMap[gpu.Name]; ok {
+				resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+					Reason: "GPU identification name cannot duplicate",
+				})
+				return false
+			} else {
+				nameMap[gpu.Name] = true
+			}
+			// DeviceName, e.g. "nvidia.com/GRID_A100D-40C"
+			errMsg := k8svalidation.IsQualifiedName(gpu.DeviceName) // Has built-in length check
+			if len(errMsg) > 0 { // TODO test effect
+				errorReason := "Invalid DeviceName: '" + gpu.DeviceName + "'"
+				for _, msg := range errMsg {
+					errorReason += ", " + msg
+				}
+				resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+					Reason: errorReason,
+				})
+				return false
+			}
+			// VGPUDisplay
+			if gpu.VGPUDisplay == nil {
+				*gpu.VGPUDisplay = true
+			}
+			// VGPURamFB
+			if gpu.VGPURamFB == nil {
+				*gpu.VGPURamFB = true
+			}
+			if *gpu.VGPURamFB {
+				if !primaryGPU {
+					primaryGPU = true
+				} else {
+					resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+						Reason: "Only one GPU can enable VGPURamFB setting",
+					})
+					return false
+				}
+			}
+		}
+	}
 	return true
 }
 
@@ -129,6 +176,10 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 		if !isValidWithinRange(reflectType, int(vm.Memory), "Memory", resp) {
 			return false
 		}
+	}
+
+	if !isValidGPURequest(vm.GPUs, resp) {
+		return false
 	}
 
 	if vm.Disk != nil {

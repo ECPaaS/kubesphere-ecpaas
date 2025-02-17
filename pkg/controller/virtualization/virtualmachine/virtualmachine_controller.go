@@ -550,6 +550,7 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 	kvvmSpec.Template.Spec.Domain.Resources.Requests = virtzSpec.Hardware.Domain.Resources.Requests
 	kvvmSpec.Template.Spec.Domain.CPU = &kvapi.CPU{}
 	kvvmSpec.Template.Spec.Domain.CPU.Cores = virtzSpec.Hardware.Domain.CPU.Cores
+	kvvmSpec.Template.Spec.Domain.Devices.GPUs = virtzSpec.Hardware.Domain.Devices.GPUs
 
 	kvvmSpec.Template.Spec.Hostname = virtzSpec.Hardware.Hostname
 

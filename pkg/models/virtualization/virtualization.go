@@ -150,6 +150,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 					},
 				},
 			},
+			GPUs: ConvertGPUsToSpec(ui_vm.GPUs),
 		},
 		Resources: v1alpha1.ResourceRequirements{
 			Requests: v1.ResourceList{
@@ -615,6 +616,26 @@ func ConvertLabelToMap(array interface{}) map[string]string {
 	return returnMap
 }
 
+func ConvertGPUsToSpec(gpus []GPU) []kvapi.GPU {
+	returnArray := make([]kvapi.GPU, 0)
+	for _, gpu := range gpus {
+		spec := kvapi.GPU{
+			Name:       gpu.Name,
+			DeviceName: gpu.DeviceName,
+			VirtualGPUOptions: &kvapi.VGPUOptions{
+				Display: &kvapi.VGPUDisplayOptions{
+					Enabled: gpu.VGPUDisplay,
+					RamFB: &kvapi.FeatureState{
+						Enabled: gpu.VGPURamFB,
+					},
+				},
+			},
+		}
+		returnArray = append(returnArray, spec)
+	}
+	return returnArray
+}
+
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -636,6 +657,10 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	if ui_vm.Memory != 0 && ui_vm.Memory != uint(vm.Spec.Hardware.Domain.Resources.Requests.Memory().Size()) {
 		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] =
 			resource.MustParse(strconv.FormatUint(uint64(ui_vm.Memory), 10) + "Gi")
+	}
+
+	if ui_vm.GPUs != nil {
+		vm.Spec.Hardware.Domain.Devices.GPUs = ConvertGPUsToSpec(ui_vm.GPUs) // TODO test empty array
 	}
 
 	// TODO: update image size
