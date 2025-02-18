@@ -121,6 +121,13 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
 
+	webservice.Route(webservice.GET("/gpus").
+		To(handler.ListAvailableGPUs).
+		Doc("List all available GPUs").
+		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListAvailableGPUResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.VirtualMachineTag}))
+
 	webservice.Route(webservice.POST("/namespaces/{namespace}/disks").
 		To(handler.CreateDisk).
 		Param(webservice.PathParameter("namespace", "namespace name")).

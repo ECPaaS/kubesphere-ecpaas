@@ -619,6 +619,14 @@ func ConvertLabelToMap(array interface{}) map[string]string {
 func ConvertGPUsToSpec(gpus []GPU) []kvapi.GPU {
 	returnArray := make([]kvapi.GPU, 0)
 	for _, gpu := range gpus {
+		if gpu.VGPUDisplay == nil {
+			gpu.VGPUDisplay = new(bool)
+			*gpu.VGPUDisplay = true
+		}
+		if gpu.VGPURamFB == nil {
+			gpu.VGPURamFB = new(bool)
+			*gpu.VGPURamFB = true
+		}
 		spec := kvapi.GPU{
 			Name:       gpu.Name,
 			DeviceName: gpu.DeviceName,
@@ -660,7 +668,7 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	}
 
 	if ui_vm.GPUs != nil {
-		vm.Spec.Hardware.Domain.Devices.GPUs = ConvertGPUsToSpec(ui_vm.GPUs) // TODO test empty array
+		vm.Spec.Hardware.Domain.Devices.GPUs = ConvertGPUsToSpec(ui_vm.GPUs)
 	}
 
 	// TODO: update image size

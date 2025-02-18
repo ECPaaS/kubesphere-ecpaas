@@ -118,6 +118,15 @@ type ListVirtualMachineResponse struct {
 	Items      []VirtualMachineResponse `json:"items" description:"List of virtual machines"`
 }
 
+type ListAvailableGPUResponse struct {
+	TotalCount int               `json:"total_count" description:"Total number of available GPUs on the cluster."`
+	Items      []GPUNameResponse `json:"items" description:"List of available GPUs on the cluster."`
+}
+
+type GPUNameResponse struct {
+	DeviceName string `json:"deviceName" description:"DeviceName of available GPU."`
+}
+
 // Disk
 type DiskRequest struct {
 	Name        string `json:"name" description:"Disk name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`

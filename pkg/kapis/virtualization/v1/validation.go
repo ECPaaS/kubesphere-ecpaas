@@ -114,7 +114,7 @@ func isValidGPURequest(gpus []ui_virtz.GPU, resp *restful.Response) bool {
 			}
 			// DeviceName, e.g. "nvidia.com/GRID_A100D-40C"
 			errMsg := k8svalidation.IsQualifiedName(gpu.DeviceName) // Has built-in length check
-			if len(errMsg) > 0 { // TODO test effect
+			if len(errMsg) > 0 {
 				errorReason := "Invalid DeviceName: '" + gpu.DeviceName + "'"
 				for _, msg := range errMsg {
 					errorReason += ", " + msg
@@ -125,14 +125,8 @@ func isValidGPURequest(gpus []ui_virtz.GPU, resp *restful.Response) bool {
 				return false
 			}
 			// VGPUDisplay
-			if gpu.VGPUDisplay == nil {
-				*gpu.VGPUDisplay = true
-			}
 			// VGPURamFB
-			if gpu.VGPURamFB == nil {
-				*gpu.VGPURamFB = true
-			}
-			if *gpu.VGPURamFB {
+			if gpu.VGPURamFB == nil || *gpu.VGPURamFB {
 				if !primaryGPU {
 					primaryGPU = true
 				} else {

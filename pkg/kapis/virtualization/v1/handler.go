@@ -24,6 +24,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/informers"
 	"kubesphere.io/kubesphere/pkg/kapis/util"
 	"kubesphere.io/kubesphere/pkg/models/quotas"
+	kvapi "kubevirt.io/api/core/v1"
 	"kubevirt.io/client-go/kubecli"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
@@ -214,6 +215,7 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Description:  vm.Annotations[virtzv1alpha1.VirtualizationDescription],
 		CpuCores:     uint(vm.Spec.Hardware.Domain.CPU.Cores),
 		Memory:       uint(memory),
+		GPUs:         h.getVirtualMachineGPUResponse(vm.Spec.Hardware.Domain.Devices.GPUs),
 		Image:        &ui_image_spec,
 		Disks:        h.getUIDisksResponse(vm),
 		Status:       ui_vm_status,
@@ -222,6 +224,21 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Labels:       getLabelResponse(vm.Labels),
 		NodeSelector: getNodeSelectorResponse(vm.Spec.NodeSelector),
 	}
+}
+
+func (h *virtzhandler) getVirtualMachineGPUResponse(gpus []kvapi.GPU) []ui_virtz.GPUResponse {
+	returnArray := make([]ui_virtz.GPUResponse, 0)
+	for _, gpu := range gpus {
+		response := ui_virtz.GPUResponse{
+			Name: gpu.Name,
+			DeviceName: gpu.DeviceName,
+			VGPUDisplay: *gpu.VirtualGPUOptions.Display.Enabled,
+			VGPURamFB: *gpu.VirtualGPUOptions.Display.RamFB.Enabled,
+		}
+		returnArray = append(returnArray, response)
+	}
+
+	return returnArray
 }
 
 func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
@@ -404,6 +421,32 @@ func (h *virtzhandler) DeleteVirtualMachine(req *restful.Request, resp *restful.
 	}
 
 	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) ListAvailableGPUs(req *restful.Request, resp *restful.Response) {
+	availableGPUs := make([]ui_virtz.GPUNameResponse, 0)
+	nodes, err := h.k8sClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return
+	}
+	for _, node := range nodes.Items {
+		allocatable := node.Status.Allocatable
+		for key, value := range allocatable {
+			if strings.Contains(key.String(), "gpu/") {
+				if quantity, flag := value.AsInt64();flag && quantity > 0 {
+					response := ui_virtz.GPUNameResponse{
+						DeviceName: key.String(),
+					}
+					availableGPUs = append(availableGPUs, response)
+				}
+			}
+		}
+	}
+
+	resp.WriteEntity(ui_virtz.ListAvailableGPUResponse{
+		TotalCount: len(availableGPUs),
+		Items:      availableGPUs,
+	})
 }
 
 func (h *virtzhandler) CreateDisk(req *restful.Request, resp *restful.Response) {
