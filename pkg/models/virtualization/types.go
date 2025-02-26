@@ -17,7 +17,7 @@ type VirtualMachineRequest struct {
 	Name         string             `json:"name" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores     uint               `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores" minimum:"1" maximum:"4"`
 	Memory       uint               `json:"memory" default:"1" description:"Virtual machine memory size, unit is GB" minimum:"1" maximum:"8"`
-	GPUs         []GPU              `json:"gpus,omitempty" description:"Specify the GPU device(s) to be attached to the virtual machine."`
+	GPUs         *GPU               `json:"gpus,omitempty" description:"Specify the GPU device(s) to be attached to the virtual machine."`
 	Description  string             `json:"description" description:"Virtual machine description. Default is empty string." maximum:"128"`
 	Image        *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disk         []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
@@ -27,10 +27,8 @@ type VirtualMachineRequest struct {
 }
 
 type GPU struct {
-	Name        string `json:"name" description:"Identification name of the GPU device. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	DeviceName  string `json:"deviceName" description:"System name of the GPU device. Valid characters: A-Z, a-z, 0-9, /(slash), _(underscore), and -(hyphen). And must start and end with alphanumeric character." maximum:"317"`
-	VGPUDisplay *bool  `json:"vGPUDisplay,omitempty" default:"true" description:"Enables determines if a display addapter backed by a vGPU should be enabled or disabled on the virtual machine."`
-	VGPURamFB   *bool  `json:"vGPURamFB,omitempty" default:"true" description:"Enables a boot framebuffer, until the virtual machine's OS loads a real GPU driver."`
+	Model    string `json:"model" description:"GPU model to be used on this virtual machine. Valid characters: A-Z, a-z, 0-9, /(slash), _(underscore), and -(hyphen). And must start and end with alphanumeric character." maximum:"317"`
+	Quantity int    `json:"quantity" description:"GPU quantity to be used on this virtual machine. Must not exceed maximum available GPUs." minimum:"0"`
 }
 
 type DiskSpec struct {
@@ -65,7 +63,7 @@ type ModifyVirtualMachineRequest struct {
 	Name         string           `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores     uint             `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
 	Memory       uint             `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
-	GPUs         []GPU            `json:"gpus,omitempty" description:"Specify the GPU device(s) to be attached to the virtual machine."`
+	GPUs         *GPU             `json:"gpus,omitempty" description:"Specify the GPU device(s) to be attached to the virtual machine."`
 	Disk         []ModifyDiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
 	Description  *string          `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
 	Labels       []Label          `json:"labels,omitempty" description:"Virtual machine labels. Can be empty array."`
@@ -79,7 +77,7 @@ type VirtualMachineResponse struct {
 	Description  string             `json:"description" description:"Virtual machine description"`
 	CpuCores     uint               `json:"cpu_cores" description:"Virtual machine cpu cores"`
 	Memory       uint               `json:"memory" description:"Virtual machine memory size"`
-	GPUs         []GPUResponse      `json:"gpus" description:"Specify the GPU device(s) to be attached to the virtual machine."`
+	GPUs         GPUResponse        `json:"gpus" description:"Specify the GPU device(s) to be attached to the virtual machine."`
 	Image        *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disks        []DiskResponse     `json:"disks" description:"Virtual machine disks"`
 	Status       VMStatus           `json:"status" description:"Virtual machine status"`
@@ -94,10 +92,8 @@ type VirtualMachineIDResponse struct {
 }
 
 type GPUResponse struct {
-	Name        string `json:"name" description:"Identification name of the GPU device."`
-	DeviceName  string `json:"deviceName" description:"System name of the GPU device."`
-	VGPUDisplay bool   `json:"vGPUDisplay" description:"Enables determines if a display addapter backed by a vGPU should be enabled or disabled on the virtual machine."`
-	VGPURamFB   bool   `json:"vGPURamFB" description:"Enables a boot framebuffer, until the virtual machine's OS loads a real GPU driver."`
+	Model    string `json:"model" description:"GPU model to be used on this virtual machine."`
+	Quantity int    `json:"quantity" description:"GPU quantity to be used on this virtual machine."`
 }
 
 type ImageIDResponse struct {
@@ -119,12 +115,13 @@ type ListVirtualMachineResponse struct {
 }
 
 type ListAvailableGPUResponse struct {
-	TotalCount int               `json:"total_count" description:"Total number of available GPUs on the cluster."`
-	Items      []GPUNameResponse `json:"items" description:"List of available GPUs on the cluster."`
+	TotalCount int                   `json:"total_count" description:"Total number of available GPUs on the cluster."`
+	Items      []GPUResourceResponse `json:"items" description:"List of available GPUs on the cluster."`
 }
 
-type GPUNameResponse struct {
-	DeviceName string `json:"deviceName" description:"DeviceName of available GPU."`
+type GPUResourceResponse struct {
+	Model    string `json:"model" description:"Model of available GPU."`
+	Quantity int    `json:"quantity" description:"Quantity of available GPU."`
 }
 
 // Disk

@@ -121,7 +121,7 @@ func AddToContainer(container *restful.Container, minioClient *minio.Client, kub
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil))
 
-	webservice.Route(webservice.GET("/gpus").
+	webservice.Route(webservice.GET("/virtualmachines/gpus").
 		To(handler.ListAvailableGPUs).
 		Doc("List all available GPUs").
 		Returns(http.StatusOK, api.StatusOK, ui_virtz.ListAvailableGPUResponse{}).

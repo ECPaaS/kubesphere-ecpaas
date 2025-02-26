@@ -1429,6 +1429,29 @@
         }
       }
     },
+    "/kapis/virtualization.ecpaas.io/v1/virtualmachines/gpus": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all available GPUs",
+        "operationId": "ListAvailableGPUs",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListAvailableGPUResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/virtualization.ecpaas.io/v1alpha1/minio/image": {
       "post": {
         "consumes": [
@@ -1992,6 +2015,59 @@
         }
       }
     },
+    "virtualization.GPU": {
+      "required": [
+        "model",
+        "quantity"
+      ],
+      "properties": {
+        "model": {
+          "description": "GPU model to be used on this virtual machine. Valid characters: A-Z, a-z, 0-9, /(slash), _(underscore), and -(hyphen). And must start and end with alphanumeric character.",
+          "type": "string",
+          "maximum": 317
+        },
+        "quantity": {
+          "description": "GPU quantity to be used on this virtual machine. Must not exceed maximum available GPUs.",
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0
+        }
+      }
+    },
+    "virtualization.GPUResourceResponse": {
+      "required": [
+        "model",
+        "quantity"
+      ],
+      "properties": {
+        "model": {
+          "description": "Model of available GPU.",
+          "type": "string"
+        },
+        "quantity": {
+          "description": "Quantity of available GPU.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.GPUResponse": {
+      "required": [
+        "model",
+        "quantity"
+      ],
+      "properties": {
+        "model": {
+          "description": "GPU model to be used on this virtual machine.",
+          "type": "string"
+        },
+        "quantity": {
+          "description": "GPU quantity to be used on this virtual machine.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "virtualization.GuestSpec": {
       "required": [
         "username",
@@ -2242,6 +2318,26 @@
         }
       }
     },
+    "virtualization.ListAvailableGPUResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of available GPUs on the cluster.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.GPUResourceResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of available GPUs on the cluster.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "virtualization.ListDiskResponse": {
       "required": [
         "total_count",
@@ -2409,6 +2505,10 @@
             "$ref": "#/definitions/virtualization.ModifyDiskSpec"
           }
         },
+        "gpus": {
+          "description": "Specify the GPU device(s) to be attached to the virtual machine.",
+          "$ref": "#/definitions/virtualization.GPU"
+        },
         "labels": {
           "description": "Virtual machine labels. Can be empty array.",
           "type": "array",
@@ -2513,6 +2613,10 @@
             "$ref": "#/definitions/virtualization.DiskSpec"
           }
         },
+        "gpus": {
+          "description": "Specify the GPU device(s) to be attached to the virtual machine.",
+          "$ref": "#/definitions/virtualization.GPU"
+        },
         "guest": {
           "description": "Virtual machine guest operating system",
           "$ref": "#/definitions/virtualization.GuestSpec"
@@ -2558,6 +2662,7 @@
         "description",
         "cpu_cores",
         "memory",
+        "gpus",
         "image",
         "disks",
         "status",
@@ -2582,6 +2687,10 @@
           "items": {
             "$ref": "#/definitions/virtualization.DiskResponse"
           }
+        },
+        "gpus": {
+          "description": "Specify the GPU device(s) to be attached to the virtual machine.",
+          "$ref": "#/definitions/virtualization.GPUResponse"
         },
         "id": {
           "description": "Virtual machine id",

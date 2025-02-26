@@ -61,7 +61,7 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	if !isValidVirtualMachine(ui_vm, resp) {
+	if !isValidVirtualMachine(h, ui_vm, resp) {
 		return
 	}
 
@@ -102,7 +102,7 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	if !isValidModifyVirtualMachine(ui_vm, resp) {
+	if !isValidModifyVirtualMachine(h, ui_vm, resp) {
 		return
 	}
 
@@ -226,19 +226,27 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 	}
 }
 
-func (h *virtzhandler) getVirtualMachineGPUResponse(gpus []kvapi.GPU) []ui_virtz.GPUResponse {
-	returnArray := make([]ui_virtz.GPUResponse, 0)
+func (h *virtzhandler) getVirtualMachineGPUResponse(gpus []kvapi.GPU) ui_virtz.GPUResponse {
+	// Traverse all gpus from VM, count up the quantity
+	// If multiple GPU kinds, only return the GPU with largest quantity, for now
+	count := make(map[string]int, 0)
+	max := "none"
+	count[max] = 0
 	for _, gpu := range gpus {
-		response := ui_virtz.GPUResponse{
-			Name: gpu.Name,
-			DeviceName: gpu.DeviceName,
-			VGPUDisplay: *gpu.VirtualGPUOptions.Display.Enabled,
-			VGPURamFB: *gpu.VirtualGPUOptions.Display.RamFB.Enabled,
+		if _, ok := count[gpu.DeviceName]; !ok {
+			count[gpu.DeviceName] = 1
+		} else {
+			count[gpu.DeviceName]++
 		}
-		returnArray = append(returnArray, response)
+		if count[gpu.DeviceName] > count[max] {
+			max = gpu.DeviceName
+		}
 	}
 
-	return returnArray
+	return ui_virtz.GPUResponse{
+		Model:    max,
+		Quantity: count[max],
+	}
 }
 
 func (h *virtzhandler) getVirtualMachineNode(namespace, name string) string {
@@ -424,23 +432,9 @@ func (h *virtzhandler) DeleteVirtualMachine(req *restful.Request, resp *restful.
 }
 
 func (h *virtzhandler) ListAvailableGPUs(req *restful.Request, resp *restful.Response) {
-	availableGPUs := make([]ui_virtz.GPUNameResponse, 0)
-	nodes, err := h.k8sClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	availableGPUs, err := h.virtz.ListAvailableGPUs()
 	if err != nil {
 		return
-	}
-	for _, node := range nodes.Items {
-		allocatable := node.Status.Allocatable
-		for key, value := range allocatable {
-			if strings.Contains(key.String(), "gpu/") {
-				if quantity, flag := value.AsInt64();flag && quantity > 0 {
-					response := ui_virtz.GPUNameResponse{
-						DeviceName: key.String(),
-					}
-					availableGPUs = append(availableGPUs, response)
-				}
-			}
-		}
 	}
 
 	resp.WriteEntity(ui_virtz.ListAvailableGPUResponse{

@@ -61,7 +61,7 @@ func isValidString(valueToValidate string, resp *restful.Response) bool {
 	return true
 }
 
-func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Response) bool {
+func isValidVirtualMachine(h *virtzhandler, vm ui_virtz.VirtualMachineRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(vm)
 	if !util.IsValidLength(reflectType, vm.Name, "Name", resp) {
@@ -84,64 +84,64 @@ func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Resp
 		return false
 	}
 
-	if !isValidGPURequest(vm.GPUs, resp) {
+	if !isValidGPURequest(h, vm.GPUs, resp) {
 		return false
 	}
 
 	return true
 }
 
-func isValidGPURequest(gpus []ui_virtz.GPU, resp *restful.Response) bool {
-	if gpus != nil {
-		primaryGPU := false
-		nameMap := make(map[string]bool, 0)
-		reflectType := reflect.TypeOf(ui_virtz.GPU{})
-		for _, gpu := range gpus {
-			// Name
-			if !util.IsValidCaseInsensitiveString(gpu.Name, resp) {
-				return false
+func isValidGPURequest(h *virtzhandler, gpuRequest *ui_virtz.GPU, resp *restful.Response) bool {
+	if gpuRequest != nil {
+		// Quantity, check first, quantity <= 0 is equal to not using any GPU, which will be ignored.
+		if gpuRequest.Quantity <= 0 {
+			return true
+		}
+
+		// Model format check, e.g. "gpu/nvidia.com.A400"
+		errMsg := k8svalidation.IsQualifiedName(gpuRequest.Model) // Has built-in length check
+		if len(errMsg) > 0 {
+			errorReason := "Invalid Model: '" + gpuRequest.Model + "'"
+			for _, msg := range errMsg {
+				errorReason += ", " + msg
 			}
-			if !util.IsValidLength(reflectType, gpu.Name, "Name", resp) {
-				return false
-			}
-			if _, ok := nameMap[gpu.Name]; ok {
-				resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-					Reason: "GPU identification name cannot duplicate",
-				})
-				return false
-			} else {
-				nameMap[gpu.Name] = true
-			}
-			// DeviceName, e.g. "nvidia.com/GRID_A100D-40C"
-			errMsg := k8svalidation.IsQualifiedName(gpu.DeviceName) // Has built-in length check
-			if len(errMsg) > 0 {
-				errorReason := "Invalid DeviceName: '" + gpu.DeviceName + "'"
-				for _, msg := range errMsg {
-					errorReason += ", " + msg
-				}
-				resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-					Reason: errorReason,
-				})
-				return false
-			}
-			// VGPUDisplay
-			// VGPURamFB
-			if gpu.VGPURamFB == nil || *gpu.VGPURamFB {
-				if !primaryGPU {
-					primaryGPU = true
-				} else {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: errorReason,
+			})
+			return false
+		}
+
+		availableGPUs, err := h.virtz.ListAvailableGPUs()
+		if err != nil {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "Invalid request: can't find available GPUs",
+			})
+			return false
+		}
+		found := false
+		for _, availableGPU := range availableGPUs {
+			if availableGPU.Model == gpuRequest.Model {
+				if gpuRequest.Quantity > availableGPU.Quantity {
 					resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-						Reason: "Only one GPU can enable VGPURamFB setting",
+						Reason: "Invalid Quantity: '" + strconv.Itoa(gpuRequest.Quantity) + "' exceeds maximun available GPU quantity",
 					})
 					return false
 				}
+				found = true
+				break
 			}
+		}
+		if !found {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "Invalid Model: '" + gpuRequest.Model + "' not found in available GPU list",
+			})
+			return false
 		}
 	}
 	return true
 }
 
-func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *restful.Response) bool {
+func isValidModifyVirtualMachine(h *virtzhandler, vm ui_virtz.ModifyVirtualMachineRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(vm)
 	if !util.IsValidLength(reflectType, vm.Name, "Name", resp) {
@@ -172,7 +172,7 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 		}
 	}
 
-	if !isValidGPURequest(vm.GPUs, resp) {
+	if !isValidGPURequest(h, vm.GPUs, resp) {
 		return false
 	}
 

@@ -41,6 +41,7 @@ type Interface interface {
 	StopVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error)
 	DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
+	ListAvailableGPUs() ([]GPUResourceResponse, error)
 	// Disk
 	CreateDisk(namespace string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error)
 	UpdateDisk(namespace string, name string, ui_disk *ModifyDiskRequest) (*v1alpha1.DiskVolume, error)
@@ -616,30 +617,24 @@ func ConvertLabelToMap(array interface{}) map[string]string {
 	return returnMap
 }
 
-func ConvertGPUsToSpec(gpus []GPU) []kvapi.GPU {
+func ConvertGPUsToSpec(requestGPU *GPU) []kvapi.GPU {
 	returnArray := make([]kvapi.GPU, 0)
-	for _, gpu := range gpus {
-		if gpu.VGPUDisplay == nil {
-			gpu.VGPUDisplay = new(bool)
-			*gpu.VGPUDisplay = true
+	if requestGPU != nil {
+		for idx := 0; idx < requestGPU.Quantity; idx++ {
+			spec := kvapi.GPU{
+				Name:       "gpu" + strconv.Itoa(idx), // gpu0, gpu1, ...
+				DeviceName: requestGPU.Model,
+				//VirtualGPUOptions: &kvapi.VGPUOptions{
+				//	Display: &kvapi.VGPUDisplayOptions{
+				//		Enabled: true,
+				//		RamFB: &kvapi.FeatureState{
+				//			Enabled: true,
+				//		},
+				//	},
+				//},
+			}
+			returnArray = append(returnArray, spec)
 		}
-		if gpu.VGPURamFB == nil {
-			gpu.VGPURamFB = new(bool)
-			*gpu.VGPURamFB = true
-		}
-		spec := kvapi.GPU{
-			Name:       gpu.Name,
-			DeviceName: gpu.DeviceName,
-			VirtualGPUOptions: &kvapi.VGPUOptions{
-				Display: &kvapi.VGPUDisplayOptions{
-					Enabled: gpu.VGPUDisplay,
-					RamFB: &kvapi.FeatureState{
-						Enabled: gpu.VGPURamFB,
-					},
-				},
-			},
-		}
-		returnArray = append(returnArray, spec)
 	}
 	return returnArray
 }
@@ -864,6 +859,30 @@ func (v *virtualizationOperator) DeleteVirtualMachine(namespace string, name str
 	}
 
 	return vm, nil
+}
+
+func (v *virtualizationOperator) ListAvailableGPUs() ([]GPUResourceResponse, error) {
+	availableGPUs := make([]GPUResourceResponse, 0)
+	nodes, err := v.k8sclient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range nodes.Items {
+		allocatable := node.Status.Allocatable
+		for key, value := range allocatable {
+			if strings.Contains(key.String(), "gpu/") {
+				if quantity, flag := value.AsInt64();flag && quantity > 0 {
+					response := GPUResourceResponse{
+						Model:    key.String(),
+						Quantity: int(quantity),
+					}
+					availableGPUs = append(availableGPUs, response)
+				}
+			}
+		}
+	}
+
+	return availableGPUs, nil
 }
 
 func (v *virtualizationOperator) GetDisk(namespace string, name string) (*v1alpha1.DiskVolume, error) {
