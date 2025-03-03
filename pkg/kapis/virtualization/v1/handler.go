@@ -102,7 +102,7 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	if !isValidModifyVirtualMachine(h, ui_vm, resp) {
+	if !isValidModifyVirtualMachine(h, ui_vm, namespace, vmName, resp) {
 		return
 	}
 
@@ -432,7 +432,7 @@ func (h *virtzhandler) DeleteVirtualMachine(req *restful.Request, resp *restful.
 }
 
 func (h *virtzhandler) ListAvailableGPUs(req *restful.Request, resp *restful.Response) {
-	availableGPUs, err := h.virtz.ListAvailableGPUs()
+	availableGPUs, err := h.virtz.ListAvailableGPUs("", "")
 	if err != nil {
 		return
 	}

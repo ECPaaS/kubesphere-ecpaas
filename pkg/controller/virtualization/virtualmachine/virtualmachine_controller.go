@@ -223,6 +223,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 	modifiedFlag := false
 
+	// update GPUs
+	if !reflect.DeepEqual(vm.Spec.Hardware.Domain.Devices.GPUs, kvVM.Spec.Template.Spec.Domain.Devices.GPUs) {
+		kvVM.Spec.Template.Spec.Domain.Devices.GPUs = vm.Spec.Hardware.Domain.Devices.GPUs
+		modifiedFlag = true
+	}
+
 	// update labels
 	if !reflect.DeepEqual(vm.Labels, kvVM.Spec.Template.ObjectMeta.Labels) {
 		kvVM.Spec.Template.ObjectMeta.Labels = vm.Labels

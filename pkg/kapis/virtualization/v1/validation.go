@@ -84,14 +84,14 @@ func isValidVirtualMachine(h *virtzhandler, vm ui_virtz.VirtualMachineRequest, r
 		return false
 	}
 
-	if !isValidGPURequest(h, vm.GPUs, resp) {
+	if !isValidGPURequest(h, vm.GPUs, "", "", resp) {
 		return false
 	}
 
 	return true
 }
 
-func isValidGPURequest(h *virtzhandler, gpuRequest *ui_virtz.GPU, resp *restful.Response) bool {
+func isValidGPURequest(h *virtzhandler, gpuRequest *ui_virtz.GPU, namespace string, name string, resp *restful.Response) bool {
 	if gpuRequest != nil {
 		// Quantity, check first, quantity <= 0 is equal to not using any GPU, which will be ignored.
 		if gpuRequest.Quantity <= 0 {
@@ -111,7 +111,7 @@ func isValidGPURequest(h *virtzhandler, gpuRequest *ui_virtz.GPU, resp *restful.
 			return false
 		}
 
-		availableGPUs, err := h.virtz.ListAvailableGPUs()
+		availableGPUs, err := h.virtz.ListAvailableGPUs(namespace, name)
 		if err != nil {
 			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 				Reason: "Invalid request: can't find available GPUs",
@@ -141,7 +141,7 @@ func isValidGPURequest(h *virtzhandler, gpuRequest *ui_virtz.GPU, resp *restful.
 	return true
 }
 
-func isValidModifyVirtualMachine(h *virtzhandler, vm ui_virtz.ModifyVirtualMachineRequest, resp *restful.Response) bool {
+func isValidModifyVirtualMachine(h *virtzhandler, vm ui_virtz.ModifyVirtualMachineRequest, namespace string, id string, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(vm)
 	if !util.IsValidLength(reflectType, vm.Name, "Name", resp) {
@@ -172,7 +172,7 @@ func isValidModifyVirtualMachine(h *virtzhandler, vm ui_virtz.ModifyVirtualMachi
 		}
 	}
 
-	if !isValidGPURequest(h, vm.GPUs, resp) {
+	if !isValidGPURequest(h, vm.GPUs, namespace, id, resp) {
 		return false
 	}
 

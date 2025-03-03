@@ -41,7 +41,7 @@ type Interface interface {
 	StopVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error)
 	DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
-	ListAvailableGPUs() ([]GPUResourceResponse, error)
+	ListAvailableGPUs(namespace string, name string) ([]GPUResourceResponse, error)
 	// Disk
 	CreateDisk(namespace string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error)
 	UpdateDisk(namespace string, name string, ui_disk *ModifyDiskRequest) (*v1alpha1.DiskVolume, error)
@@ -861,7 +861,7 @@ func (v *virtualizationOperator) DeleteVirtualMachine(namespace string, name str
 	return vm, nil
 }
 
-func (v *virtualizationOperator) ListAvailableGPUs() ([]GPUResourceResponse, error) {
+func (v *virtualizationOperator) ListAvailableGPUs(namespace string, name string) ([]GPUResourceResponse, error) {
 	// 1. Get all GPU resouces from all nodes to a map
 	gpuResources := make(map[string]int, 0)
 	nodes, err := v.k8sclient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
@@ -889,6 +889,10 @@ func (v *virtualizationOperator) ListAvailableGPUs() ([]GPUResourceResponse, err
 		return nil, err
 	}
 	for _, ksvm := range ksvms.Items {
+		if ksvm.Namespace == namespace && ksvm.Name == name {
+			// When PUT VM, don't subtract allocated GPUs from available GPUs quantity
+			continue;
+		}
 		for _, gpu := range ksvm.Spec.Hardware.Domain.Devices.GPUs {
 			if _, ok := gpuResources[gpu.DeviceName]; ok {
 				gpuResources[gpu.DeviceName] -= 1 // GPU is listed one by one, so subtract 1 each time found in spec
