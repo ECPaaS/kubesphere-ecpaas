@@ -862,7 +862,8 @@ func (v *virtualizationOperator) DeleteVirtualMachine(namespace string, name str
 }
 
 func (v *virtualizationOperator) ListAvailableGPUs() ([]GPUResourceResponse, error) {
-	availableGPUs := make([]GPUResourceResponse, 0)
+	// 1. Get all GPU resouces from all nodes to a map
+	gpuResources := make(map[string]int, 0)
 	nodes, err := v.k8sclient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -872,14 +873,40 @@ func (v *virtualizationOperator) ListAvailableGPUs() ([]GPUResourceResponse, err
 		for key, value := range allocatable {
 			if strings.Contains(key.String(), "gpu/") {
 				if quantity, flag := value.AsInt64();flag && quantity > 0 {
-					response := GPUResourceResponse{
-						Model:    key.String(),
-						Quantity: int(quantity),
+					if _, ok := gpuResources[key.String()]; !ok {
+						gpuResources[key.String()] = int(quantity)
+					} else {
+						gpuResources[key.String()] += int(quantity)
 					}
-					availableGPUs = append(availableGPUs, response)
 				}
 			}
 		}
+	}
+
+	// 2. Subtract allocated GPU resources from the map
+	ksvms, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, ksvm := range ksvms.Items {
+		for _, gpu := range ksvm.Spec.Hardware.Domain.Devices.GPUs {
+			if _, ok := gpuResources[gpu.DeviceName]; ok {
+				gpuResources[gpu.DeviceName] -= 1 // GPU is listed one by one, so subtract 1 each time found in spec
+			}
+		}
+	}
+
+	// 3. Make []GPUResourceResponse from the map
+	availableGPUs := make([]GPUResourceResponse, 0)
+	for key, quantity := range gpuResources {
+		if quantity <= 0 {
+			continue
+		}
+		response := GPUResourceResponse{
+			Model:    key,
+			Quantity: int(quantity),
+		}
+		availableGPUs = append(availableGPUs, response)
 	}
 
 	return availableGPUs, nil
