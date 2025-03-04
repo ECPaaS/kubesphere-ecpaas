@@ -548,6 +548,7 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 			interfaceMehod := getInterfaceMethod(iface)
 			kvvmSpec.Template.Spec.Domain.Devices.Interfaces[i] = kvapi.Interface{
 				Name:                   iface.Name,
+				Model:                  iface.Model,
 				InterfaceBindingMethod: interfaceMehod,
 			}
 		}
@@ -613,6 +614,16 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 	if virtzSpec.Hardware.Domain.Machine != nil {
 		kvvmSpec.Template.Spec.Domain.Machine = &kvapi.Machine{}
 		kvvmSpec.Template.Spec.Domain.Machine = virtzSpec.Hardware.Domain.Machine
+	}
+
+	if virtzSpec.Hardware.Domain.Firmware != nil {
+		kvvmSpec.Template.Spec.Domain.Firmware = &kvapi.Firmware{}
+		kvvmSpec.Template.Spec.Domain.Firmware = virtzSpec.Hardware.Domain.Firmware
+	}
+
+	if virtzSpec.Hardware.Domain.Clock != nil {
+		kvvmSpec.Template.Spec.Domain.Clock = &kvapi.Clock{}
+		kvvmSpec.Template.Spec.Domain.Clock = virtzSpec.Hardware.Domain.Clock
 	}
 
 	if virtzSpec.Hardware.Domain.Features != nil {

@@ -260,12 +260,21 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 		return false
 	}
 
-	if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
+	if !isValidOSFamily(image.OSFamily, resp) {
 		return false
 	}
 
-	if !isValidOSFamily(image.OSFamily, resp) {
-		return false
+	if strings.ToLower(image.OSFamily) == "windows" {
+		if int(image.Size) < 90 {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
+				Reason: "Size of Windows image should be no less then 90Gi",
+			})
+			return false
+		}
+	} else {
+		if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
+			return false
+		}
 	}
 
 	if !isValidImageType(image.Type, resp) {

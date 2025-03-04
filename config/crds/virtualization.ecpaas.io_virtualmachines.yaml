@@ -139,6 +139,105 @@ spec:
                 properties:
                   domain:
                     properties:
+                      clock:
+                        description: Clock sets the clock and timers of the vmi.
+                        properties:
+                          timer:
+                            description: Timer specifies whih timers are attached
+                              to the vmi.
+                            properties:
+                              hpet:
+                                description: HPET (High Precision Event Timer) - multiple
+                                  timers with periodic interrupts.
+                                properties:
+                                  present:
+                                    description: Enabled set to false makes sure that
+                                      the machine type or a preset can't add the timer.
+                                      Defaults to true.
+                                    type: boolean
+                                  tickPolicy:
+                                    description: TickPolicy determines what happens
+                                      when QEMU misses a deadline for injecting a
+                                      tick to the guest. One of "delay", "catchup",
+                                      "merge", "discard".
+                                    type: string
+                                type: object
+                              hyperv:
+                                description: Hyperv (Hypervclock) - lets guests read
+                                  the host’s wall clock time (paravirtualized). For
+                                  windows guests.
+                                properties:
+                                  present:
+                                    description: Enabled set to false makes sure that
+                                      the machine type or a preset can't add the timer.
+                                      Defaults to true.
+                                    type: boolean
+                                type: object
+                              kvm:
+                                description: "KVM \t(KVM clock) - lets guests read
+                                  the host’s wall clock time (paravirtualized). For
+                                  linux guests."
+                                properties:
+                                  present:
+                                    description: Enabled set to false makes sure that
+                                      the machine type or a preset can't add the timer.
+                                      Defaults to true.
+                                    type: boolean
+                                type: object
+                              pit:
+                                description: PIT (Programmable Interval Timer) - a
+                                  timer with periodic interrupts.
+                                properties:
+                                  present:
+                                    description: Enabled set to false makes sure that
+                                      the machine type or a preset can't add the timer.
+                                      Defaults to true.
+                                    type: boolean
+                                  tickPolicy:
+                                    description: TickPolicy determines what happens
+                                      when QEMU misses a deadline for injecting a
+                                      tick to the guest. One of "delay", "catchup",
+                                      "discard".
+                                    type: string
+                                type: object
+                              rtc:
+                                description: RTC (Real Time Clock) - a continuously
+                                  running timer with periodic interrupts.
+                                properties:
+                                  present:
+                                    description: Enabled set to false makes sure that
+                                      the machine type or a preset can't add the timer.
+                                      Defaults to true.
+                                    type: boolean
+                                  tickPolicy:
+                                    description: TickPolicy determines what happens
+                                      when QEMU misses a deadline for injecting a
+                                      tick to the guest. One of "delay", "catchup".
+                                    type: string
+                                  track:
+                                    description: Track the guest or the wall clock.
+                                    type: string
+                                type: object
+                            type: object
+                          timezone:
+                            description: Timezone sets the guest clock to the specified
+                              timezone. Zone name follows the TZ environment variable
+                              format (e.g. 'America/New_York').
+                            type: string
+                          utc:
+                            description: UTC sets the guest clock to UTC on each boot.
+                              If an offset is specified, guest changes to the clock
+                              will be kept during reboots and are not reset.
+                            properties:
+                              offsetSeconds:
+                                description: OffsetSeconds specifies an offset in
+                                  seconds, relative to UTC. If set, guest changes
+                                  to the clock will be kept during reboots and not
+                                  reset.
+                                type: integer
+                            type: object
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                       cpu:
                         properties:
                           cores:
@@ -800,6 +899,78 @@ spec:
                                   true.
                                 type: boolean
                             type: object
+                        type: object
+                      firmware:
+                        description: Firmware.
+                        properties:
+                          bootloader:
+                            description: Settings to control the bootloader that is
+                              used.
+                            properties:
+                              bios:
+                                description: If set (default), BIOS will be used.
+                                properties:
+                                  useSerial:
+                                    description: If set, the BIOS output will be transmitted
+                                      over serial
+                                    type: boolean
+                                type: object
+                              efi:
+                                description: If set, EFI will be used instead of BIOS.
+                                properties:
+                                  secureBoot:
+                                    description: If set, SecureBoot will be enabled
+                                      and the OVMF roms will be swapped for SecureBoot-enabled
+                                      ones. Requires SMM to be enabled. Defaults to
+                                      true
+                                    type: boolean
+                                type: object
+                            type: object
+                          kernelBoot:
+                            description: Settings to set the kernel for booting.
+                            properties:
+                              container:
+                                description: Container defines the container that
+                                  containes kernel artifacts
+                                properties:
+                                  image:
+                                    description: Image that contains initrd / kernel
+                                      files.
+                                    type: string
+                                  imagePullPolicy:
+                                    description: 'Image pull policy. One of Always,
+                                      Never, IfNotPresent. Defaults to Always if :latest
+                                      tag is specified, or IfNotPresent otherwise.
+                                      Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images'
+                                    type: string
+                                  imagePullSecret:
+                                    description: ImagePullSecret is the name of the
+                                      Docker registry secret required to pull the
+                                      image. The secret must already exist.
+                                    type: string
+                                  initrdPath:
+                                    description: the fully-qualified path to the ramdisk
+                                      image in the host OS
+                                    type: string
+                                  kernelPath:
+                                    description: The fully-qualified path to the kernel
+                                      image in the host OS
+                                    type: string
+                                required:
+                                - image
+                                type: object
+                              kernelArgs:
+                                description: Arguments to be passed to the kernel
+                                  at boot time
+                                type: string
+                            type: object
+                          serial:
+                            description: The system-serial-number in SMBIOS
+                            type: string
+                          uuid:
+                            description: UUID reported by the vmi bios. Defaults to
+                              a random generated uid.
+                            type: string
                         type: object
                       machine:
                         description: Machine type.

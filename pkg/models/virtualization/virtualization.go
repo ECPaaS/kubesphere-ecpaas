@@ -269,6 +269,59 @@ func ApplyCloudImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachi
 		},
 	}
 
+	osFamily := imagetemplate.Labels[v1alpha1.VirtualizationOSFamily]
+	if strings.ToLower(osFamily) == "windows" {
+		// Add extra settings for Windows VM
+		var falseFlag bool = false
+		vm.Spec.Hardware.Domain.Clock = &kvapi.Clock{
+			Timer: &kvapi.Timer{
+				HPET: &kvapi.HPETTimer{
+					Enabled: &falseFlag,
+				},
+				Hyperv: &kvapi.HypervTimer{},
+				PIT: &kvapi.PITTimer{
+					TickPolicy: "delay",
+				},
+				RTC: &kvapi.RTCTimer{
+					TickPolicy: "catchup",
+				},
+			},
+			ClockOffset: kvapi.ClockOffset{
+				UTC: &kvapi.ClockOffsetUTC{},
+			},
+		}
+
+		var spinlocksRetries uint32 = 8191
+		vm.Spec.Hardware.Domain.Features = &kvapi.Features{
+			ACPI: kvapi.FeatureState{},
+			APIC: &kvapi.FeatureAPIC{},
+			Hyperv: &kvapi.FeatureHyperv{
+				Relaxed: &kvapi.FeatureState{},
+				VAPIC:   &kvapi.FeatureState{},
+				Spinlocks: &kvapi.FeatureSpinlocks{
+					Retries: &spinlocksRetries,
+				},
+			},
+			SMM: &kvapi.FeatureState{},
+		}
+
+		var trueFlag bool = true
+		vm.Spec.Hardware.Domain.Firmware = &kvapi.Firmware{
+			Bootloader: &kvapi.Bootloader{
+				EFI: &kvapi.EFI{
+					SecureBoot: &trueFlag,
+				},
+			},
+		}
+
+		for idx, kvInterface := range vm.Spec.Hardware.Domain.Devices.Interfaces {
+			if kvInterface.Name == "default" {
+				vm.Spec.Hardware.Domain.Devices.Interfaces[idx].Model = "e1000"
+				break; // Only modify default interface's model
+			}
+		}
+	}
+
 	return nil
 }
 

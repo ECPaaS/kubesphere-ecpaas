@@ -60,6 +60,12 @@ type DomainSpec struct {
 	// Machine type.
 	// +optional
 	Machine *kvapi.Machine `json:"machine,omitempty"`
+	// Firmware.
+	// +optional
+	Firmware *kvapi.Firmware `json:"firmware,omitempty"`
+	// Clock sets the clock and timers of the vmi.
+	// +optional
+	Clock *kvapi.Clock `json:"clock,omitempty"`
 	// Features like acpi, apic, hyperv, smm.
 	// +optional
 	Features *kvapi.Features `json:"features,omitempty"`
