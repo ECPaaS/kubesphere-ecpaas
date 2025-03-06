@@ -6,6 +6,7 @@ package virtualmachine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -33,6 +34,7 @@ import (
 
 	storage "k8s.io/api/storage/v1"
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
+	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
 const (
@@ -525,7 +527,7 @@ func getVirtualMachineStatus(virtClient kubecli.KubevirtClient, namespace string
 
 }
 
-func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtzv1alpha1.VirtualMachineSpec) {
+func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtzv1alpha1.VirtualMachineSpec, osType string) {
 
 	runStrategy := kvapi.RunStrategyAlways
 	if virtzSpec.RunStrategy == virtzv1alpha1.VirtualMachineRunStrategyAlways {
@@ -737,7 +739,7 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 						newDisk.BootOrder = &bootorder
 					}
 
-					if diskMediaType == "cdrom" {
+					if diskMediaType == "cdrom" || osType == "windows" {
 						newDisk.DiskDevice = kvapi.DiskDevice{
 							CDRom: &kvapi.CDRomTarget{
 								Bus: "sata",
@@ -831,7 +833,13 @@ func createVirtualMachine(virtClient kubecli.KubevirtClient, virtzVM *virtzv1alp
 		UID:                virtzVM.UID,
 	})
 
-	applyVirtualMachineSpec(&kvVM.Spec, virtzVM.Spec)
+	imageInfo := ui_virtz.ImageInfo{}
+	err := json.Unmarshal([]byte(virtzVM.Annotations[virtzv1alpha1.VirtualizationImageInfo]), &imageInfo)
+	if err != nil {
+		klog.Infof(err.Error())
+		return err
+	}
+	applyVirtualMachineSpec(&kvVM.Spec, virtzVM.Spec, imageInfo.System)
 	// Copy labels from "ksvm" to "vm", so that these labels go to vmi and virt-launcher pod
 	// doesn't matter whether virtzVM.Labels is nil
 	kvVM.Spec.Template.ObjectMeta.Labels = virtzVM.Labels
