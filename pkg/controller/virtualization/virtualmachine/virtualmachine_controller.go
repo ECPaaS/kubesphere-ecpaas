@@ -739,9 +739,15 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 						newDisk.BootOrder = &bootorder
 					}
 
-					if diskMediaType == "cdrom" || osType == "windows" {
+					if diskMediaType == "cdrom" {
 						newDisk.DiskDevice = kvapi.DiskDevice{
 							CDRom: &kvapi.CDRomTarget{
+								Bus: "sata",
+							},
+						}
+					} else if osType == "windows" {
+						newDisk.DiskDevice = kvapi.DiskDevice{
+							Disk: &kvapi.DiskTarget{
 								Bus: "sata",
 							},
 						}
