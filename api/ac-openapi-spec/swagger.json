@@ -2113,7 +2113,7 @@
           "type": "string"
         },
         "size": {
-          "description": "Image size, unit is GB.",
+          "description": "Image size, unit is GB. Image size range is 10 ~ 80 GB. For 'windows' images , the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,
@@ -2177,7 +2177,7 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, unit is GB.",
+          "description": "Default image size, unit is GB. Image size range is 10 ~ 80 GB. If os_family is 'windows', the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,
@@ -2260,7 +2260,7 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, unit is GB",
+          "description": "Default image size, unit is GB. If os_family is 'windows', the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,
@@ -2474,7 +2474,7 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, unit is GB and the size only can be increased.",
+          "description": "Default image size, unit is GB and the size only can be increased. For 'windows' images, the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,

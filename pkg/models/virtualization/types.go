@@ -174,7 +174,7 @@ type ImageInfo struct {
 type ImageInfoResponse struct {
 	ID        string `json:"id" description:"Image id which is got from image api"`
 	Namespace string `json:"namespace" description:"Image namespace"`
-	Size      uint   `json:"size" default:"20" description:"Image size, unit is GB." minimum:"10" maximum:"80"`
+	Size      uint   `json:"size" default:"20" description:"Image size, unit is GB. Image size range is 10 ~ 80 GB. For 'windows' images , the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 }
 
 type ImageRequest struct {
@@ -183,7 +183,7 @@ type ImageRequest struct {
 	Version        string `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
 	CpuCores       uint   `json:"cpu_cores" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory         uint   `json:"memory" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
-	Size           uint   `json:"size" default:"20" description:"Default image size, unit is GB." minimum:"10" maximum:"80"`
+	Size           uint   `json:"size" default:"20" description:"Default image size, unit is GB. Image size range is 10 ~ 80 GB. If os_family is 'windows', the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 	Description    string `json:"description" description:"Image description. Default is empty string." maximum:"128"`
 	MinioImageName string `json:"minio_image_name" description:"File name which created by minio image api"`
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
@@ -200,7 +200,7 @@ type ModifyImageRequest struct {
 	Name        string  `json:"name,omitempty" description:"Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores    uint    `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory      uint    `json:"memory,omitempty" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
-	Size        uint    `json:"size,omitempty" default:"20" description:"Default image size, unit is GB and the size only can be increased." minimum:"10" maximum:"80"`
+	Size        uint    `json:"size,omitempty" default:"20" description:"Default image size, unit is GB and the size only can be increased. For 'windows' images, the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 	Description *string `json:"description,omitempty" default:"" description:"Image description. Can be empty string." maximum:"128"`
 	Shared      bool    `json:"shared,omitempty" default:"false" description:"Image shared or not"`
 }
@@ -213,7 +213,7 @@ type ImageResponse struct {
 	Version        string      `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
 	CpuCores       uint        `json:"cpu_cores" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory         uint        `json:"memory" default:"1" description:"Default image memory, unit is GB" minimum:"1" maximum:"8"`
-	Size           uint        `json:"size" default:"20" description:"Default image size, unit is GB" minimum:"10" maximum:"80"`
+	Size           uint        `json:"size" default:"20" description:"Default image size, unit is GB. If os_family is 'windows', the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 	MinioImageName string      `json:"minio_image_name" description:"File name which created by minio image api"`
 	Description    string      `json:"description" default:"" description:"Image description"`
 	Shared         bool        `json:"shared" default:"false" description:"Image shared or not"`

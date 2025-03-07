@@ -267,7 +267,7 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 	if strings.ToLower(image.OSFamily) == "windows" {
 		if int(image.Size) < 90 {
 			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
-				Reason: "Size of Windows image should be no less then 90Gi",
+				Reason: "Size of Windows image should be >= 90 GB",
 			})
 			return false
 		}
