@@ -329,16 +329,10 @@ func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.
 		}
 	}
 
-	if image.Size != 0 {
-		if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
-			return false
-		}
-	}
-
 	return true
 }
 
-func isValidImageSize(h *virtzhandler, namespace string, imageName string, newImageSize int, resp *restful.Response) bool {
+func isValidImageSize(h *virtzhandler, namespace string, imageName string, newImageSize int, request ui_virtz.ModifyImageRequest, resp *restful.Response) bool {
 	image, err := h.virtz.GetImage(namespace, imageName)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -346,13 +340,24 @@ func isValidImageSize(h *virtzhandler, namespace string, imageName string, newIm
 	}
 
 	oldImageSize, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationImageStorage], 10, 32)
+	osFamily := strings.ToLower(image.Labels[virtzv1alpha1.VirtualizationOSFamily])
+	reflectType := reflect.TypeOf(request)
 	if int(oldImageSize) >= newImageSize {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "The new image size must be larger than the old image size",
 		})
 		return false
+	} else if osFamily == "windows" {
+		if newImageSize < 90 {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
+				Reason: "Size of Windows image should be >= 90 GB",
+			})
+			return false
+		}
+		return true
+	} else {
+		return isValidWithinRange(reflectType, newImageSize, "Size", resp)
 	}
-	return true
 }
 
 func isValidDiskSize(h *virtzhandler, namespace string, diskName string, newDiskSize int, resp *restful.Response) bool {

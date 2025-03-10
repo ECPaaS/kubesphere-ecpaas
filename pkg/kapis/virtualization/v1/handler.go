@@ -654,7 +654,7 @@ func (h *virtzhandler) UpdateImage(req *restful.Request, resp *restful.Response)
 	}
 
 	if ui_image.Size != 0 {
-		if !isValidImageSize(h, namespace, imageName, int(ui_image.Size), resp) {
+		if !isValidImageSize(h, namespace, imageName, int(ui_image.Size), ui_image, resp) {
 			return
 		}
 	}
