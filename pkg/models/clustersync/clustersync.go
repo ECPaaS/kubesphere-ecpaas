@@ -7,6 +7,7 @@ package clustersync
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -14,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	clustersyncv1 "kubesphere.io/api/clustersync/v1"
@@ -24,6 +26,7 @@ const (
 	OperatorConfigName = "operatorconfig"
 	OperatorConfigNamespace = "default"
 	DefaultTTL = "720h"
+	repositoiesPath = "/apis/velero.io/v1/namespaces/velero/backupstoragelocations"
 )
 
 type Interface interface {
@@ -59,12 +62,14 @@ type Interface interface {
 type clusterSyncOperator struct {
 	ksclient  kubesphere.Interface
 	k8sclient kubernetes.Interface
+	restclient rest.Interface
 }
 
 func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interface {
 	return &clusterSyncOperator{
 		ksclient:  ksclient,
 		k8sclient: k8sclient,
+		restclient: k8sclient.AppsV1().RESTClient(),
 	}
 }
 
@@ -115,12 +120,14 @@ func (cs *clusterSyncOperator) CreateRepository(ui_repository *RepositoryRequest
 			Bucket:      ui_repository.Bucket,
 			Prefix:      ui_repository.Prefix,
 			Region:      ui_repository.Region,
-			Ip:          ui_repository.Ip,
-			Port:        ui_repository.Port,
 			AccessKey:   ui_repository.AccessKey,
 			SecretKey:   ui_repository.SecretKey,
 			IsDefault:   ui_repository.IsDefault,
 			LastModified: time.Now().String(),
+		}
+		if ui_repository.Region == "minio" {
+			newRepositoryConfig.Ip = ui_repository.Ip
+			newRepositoryConfig.Port = ui_repository.Port
 		}
 		config.Spec.RepositoryConfigs = append(config.Spec.RepositoryConfigs, newRepositoryConfig)
 		if createFlag {
@@ -167,6 +174,10 @@ func (cs *clusterSyncOperator) UpdateRepository(name string, ui_repository *Modi
 		if ui_repository.Port != nil {
 			newConfig.Port = ui_repository.Port
 		}
+		if newConfig.Region != "minio" {
+			newConfig.Ip = ""
+			newConfig.Port = nil
+		}
 		if ui_repository.AccessKey != nil {
 			newConfig.AccessKey = *ui_repository.AccessKey
 		}
@@ -195,7 +206,7 @@ func (cs *clusterSyncOperator) UpdateRepository(name string, ui_repository *Modi
 			if err != nil {
 				return nil, err
 			} else {
-				return makeRepositoryResponse(repositoryConfig, name), nil
+				return makeRepositoryResponse(cs.restclient, repositoryConfig, name)
 			}
 		}
 		return nil, nil // No update
@@ -215,7 +226,7 @@ func (cs *clusterSyncOperator) GetRepository(name string) (*RepositoryResponse, 
 	}
 
 	if repositoryConfig := getRepositoryConfig(config.Spec.RepositoryConfigs, name); repositoryConfig != nil {
-		return makeRepositoryResponse(repositoryConfig, repositoryConfig.RepositoryName), nil
+		return makeRepositoryResponse(cs.restclient, repositoryConfig, repositoryConfig.RepositoryName)
 	} else {
 		return nil, fmt.Errorf("repository \"%s\" is not found", name)
 	}
@@ -232,7 +243,11 @@ func (cs *clusterSyncOperator) ListRepository() (*ListRepositoryResponse, error)
 	if config != nil {
 		repositoryConfigs := config.Spec.RepositoryConfigs
 		for _, repositoryConfig := range repositoryConfigs {
-			responseSlice = append(responseSlice, *makeRepositoryResponse(&repositoryConfig, repositoryConfig.RepositoryName))
+			response, err := makeRepositoryResponse(cs.restclient, &repositoryConfig, repositoryConfig.RepositoryName)
+			if err != nil {
+				return nil, err
+			}
+			responseSlice = append(responseSlice, *response)
 		}
 	}
 
@@ -274,7 +289,16 @@ func getRepositoryConfig(configs []clustersyncv1.RepositoryConfig, newConfigName
 	return nil
 }
 
-func makeRepositoryResponse(config *clustersyncv1.RepositoryConfig, name string) *RepositoryResponse {
+func makeRepositoryResponse(restclient rest.Interface, config *clustersyncv1.RepositoryConfig, name string) (*RepositoryResponse, error) {
+	content, err := restclient.Get().AbsPath(repositoiesPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	repositoryObject := &RepositoryObject{}
+	err = json.Unmarshal(content, repositoryObject)
+	if err != nil {
+		return nil, err
+	}
 	response := &RepositoryResponse{
 		RepositoryName: name,
 		Provider:       config.Provider,
@@ -284,6 +308,8 @@ func makeRepositoryResponse(config *clustersyncv1.RepositoryConfig, name string)
 		Ip:             config.Ip,
 		AccessKey:      base64.StdEncoding.EncodeToString([]byte(config.AccessKey)),
 		SecretKey:      base64.StdEncoding.EncodeToString([]byte(config.SecretKey)),
+		Status:         string(repositoryObject.Status.Phase),
+		Message:        repositoryObject.Status.Message,
 	}
 	if config.Port != nil {
 		response.Port = *config.Port
@@ -291,8 +317,11 @@ func makeRepositoryResponse(config *clustersyncv1.RepositoryConfig, name string)
 	if config.IsDefault != nil {
 		response.IsDefault = *config.IsDefault
 	}
+	if response.Status == "" {
+		response.Status = "Connecting"
+	}
 
-	return response
+	return response, nil
 }
 
 func anyDefaultRepository(configs []clustersyncv1.RepositoryConfig, except string) bool {

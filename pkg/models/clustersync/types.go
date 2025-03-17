@@ -6,13 +6,13 @@ package clustersync
 
 // Repository
 type RepositoryRequest struct {
-	RepositoryName string `json:"repositoryName" description:"Repository name. Must be unique. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Provider       string `json:"provider" description:"Repository provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Bucket         string `json:"bucket" description:"Repository bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Prefix         string `json:"prefix" description:"Repository prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Region         string `json:"region" description:"Repository region. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Ip             string `json:"ip" description:"Repository IP. Must be valid IPv4/v6 format without mask."`
-	Port           *int   `json:"port" description:"Repository port." minimum:"1" maximum:"65535"`
+	RepositoryName string `json:"repositoryName" description:"Repository name. Must be unique. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Provider       string `json:"provider" description:"Repository provider name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Bucket         string `json:"bucket" description:"Repository bucket name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Prefix         string `json:"prefix,omitempty" description:"Repository prefix name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Region         string `json:"region" description:"Repository region. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Ip             string `json:"ip,omitempty" description:"Repository IP used when connecting to MinIO repository. If region is 'minio', Ip can't be empty. Must be valid IPv4/v6 format without mask."`
+	Port           *int   `json:"port,omitempty" description:"Repository port used when connecting to MinIO repository. If region is 'minio', Port can't be empty." minimum:"1" maximum:"65535"`
 	AccessKey      string `json:"accessKey" description:"Repository access key." maximum:"128"`
 	SecretKey      string `json:"secretKey" description:"Repository secret key." maximum:"128"`
 	IsDefault      *bool  `json:"isDefault,omitempty" default:"false" description:"Whether to set this repository as default."`
@@ -22,13 +22,25 @@ type RepositoryNameResponse struct {
 	RepositoryName string `json:"repositoryName" description:"Repository name."`
 }
 
+type TestBucketRequest struct {
+	Bucket    string `json:"bucket" description:"Repository bucket name to be tested. Valid characters: a-z, 0-9, .(dot), .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Ip        string `json:"ip,omitempty" description:"MinIO IP to test whether bucket is created. Must be valid IPv4/v6 format without mask."`
+	Port      *int   `json:"port,omitempty" description:"MinIO IP to test whether bucket is created." minimum:"1" maximum:"65535"`
+	AccessKey string `json:"accessKey" description:"Repository access key." maximum:"128"`
+	SecretKey string `json:"secretKey" description:"Repository secret key." maximum:"128"`
+}
+
+type TestBucketResponse struct {
+	Valid bool `json:"valid" description:"Whether the bucket is created, and can be accessed by provided information."`
+}
+
 type ModifyRepositoryRequest struct {
-	Provider  *string `json:"provider,omitempty" description:"Repository provider name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Bucket    *string `json:"bucket,omitempty" description:"Repository bucket name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Prefix    *string `json:"prefix,omitempty" description:"Repository prefix name. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Region    *string `json:"region,omitempty" description:"Repository region. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	Ip        *string `json:"ip,omitempty" description:"Repository IP. Must be valid IPv4/v6 format without mask."`
-	Port      *int    `json:"port,omitempty" description:"Repository port." minimum:"1" maximum:"65535"`
+	Provider  *string `json:"provider,omitempty" description:"Repository provider name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Bucket    *string `json:"bucket,omitempty" description:"Repository bucket name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Prefix    *string `json:"prefix,omitempty" description:"Repository prefix name. Can be cleared by setting empty string. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Region    *string `json:"region,omitempty" description:"Repository region. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Ip        *string `json:"ip,omitempty" description:"Repository IP. If region is 'minio', Ip can't be empty. Must be valid IPv4/v6 format without mask."`
+	Port      *int    `json:"port,omitempty" description:"Repository port. If region is 'minio', Port can't be empty." minimum:"1" maximum:"65535"`
 	AccessKey *string `json:"accessKey,omitempty" description:"Repository access key." maximum:"128"`
 	SecretKey *string `json:"secretKey,omitempty" description:"Repository secret key." maximum:"128"`
 	IsDefault *bool   `json:"isDefault,omitempty" description:"Whether to set this repository as default."`
@@ -45,6 +57,8 @@ type RepositoryResponse struct {
 	AccessKey      string `json:"accessKey" description:"Repository access key. Base64 encoded(not encrypted)."`
 	SecretKey      string `json:"secretKey" description:"Repository secret key. Base64 encoded(not encrypted)."`
 	IsDefault      bool   `json:"isDefault" description:"Whether to set this repository as default."`
+	Status         string `json:"status" description:"Status of the repository connection. Possible values are: 'Available', 'Unavailable', 'Connecting'."`
+	Message        string `json:"message" description:"Message of why the repository is unavailable, empty if the repository is available."`
 }
 
 type ListRepositoryResponse struct {

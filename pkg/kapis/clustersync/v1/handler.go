@@ -5,10 +5,14 @@ Copyright(c) 2024-present Accton. All rights reserved. www.accton.com
 package v1
 
 import (
+	"context"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/emicklei/go-restful"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 
@@ -55,6 +59,44 @@ func (h *clustersyncHandler) CreateRepository(req *restful.Request, resp *restfu
 	resp.WriteEntity(ui_repositoryName)
 }
 
+func (h *clustersyncHandler) TestBucket(req *restful.Request, resp *restful.Response) {
+	var ui_test_bucket ui_clustersync.TestBucketRequest
+	err := req.ReadEntity(&ui_test_bucket)
+	if err != nil {
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if !isValidTestBucket(&ui_test_bucket, resp) {
+		return
+	}
+
+	// test bucket
+	var endpoint string = "s3.amazonaws.com"
+	var flag bool = false
+	if ui_test_bucket.Ip != "" && ui_test_bucket.Port != nil {
+		// endpoint is MinIO
+		endpoint = ui_test_bucket.Ip + ":" + strconv.Itoa(*ui_test_bucket.Port)
+	}
+
+	minioClient, err := minio.New(endpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(ui_test_bucket.AccessKey, ui_test_bucket.SecretKey, ""),
+		Secure: false,
+	})
+	if err != nil {
+		resp.WriteEntity(ui_clustersync.TestBucketResponse{Valid: false})
+		return
+	}
+	flag, err = minioClient.BucketExists(context.Background(), ui_test_bucket.Bucket)
+	if err != nil {
+		resp.WriteEntity(ui_clustersync.TestBucketResponse{Valid: false})
+		return
+	}
+
+	// write response
+	resp.WriteEntity(ui_clustersync.TestBucketResponse{Valid: flag})
+}
+
 // Update existed repositoryConfig in OperatorConfig.spec.repositoryConfigs
 func (h *clustersyncHandler) UpdateRepository(req *restful.Request, resp *restful.Response) {
 	var ui_repository ui_clustersync.ModifyRepositoryRequest
@@ -64,13 +106,24 @@ func (h *clustersyncHandler) UpdateRepository(req *restful.Request, resp *restfu
 		return
 	}
 
+	// Get Repository first
+	repositoryConfigName := req.PathParameter("name")
+	repositoryResponse, err := h.clustersync.GetRepository(repositoryConfigName)
+	if err != nil {
+		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
 	// Validation of ModifyRepositoryRequest
-	if !isValidRepositoryModifyRequest(&ui_repository , resp) {
+	if !isValidRepositoryModifyRequest(&ui_repository, repositoryResponse.Region, resp) {
 		return
 	}
 
 	// Update repositoryConfig in OperatorConfig
-	repositoryConfigName := req.PathParameter("name")
 	_, err = h.clustersync.UpdateRepository(repositoryConfigName, &ui_repository)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)

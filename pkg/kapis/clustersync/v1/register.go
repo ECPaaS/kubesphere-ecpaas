@@ -43,6 +43,15 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRepositoryTag}))
 
+	webservice.Route(webservice.POST("/repository/test-bucket").
+		To(handler.TestBucket).
+		Reads(ui_clustersync.TestBucketRequest{}).
+		Doc("Test whether the bucket is created").
+		Returns(http.StatusOK, api.StatusOK, ui_clustersync.TestBucketResponse{}).
+		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRepositoryTag}))
+
 	webservice.Route(webservice.PUT("/repository/{name}").
 		To(handler.UpdateRepository).
 		Param(webservice.PathParameter("name", "repository name")).

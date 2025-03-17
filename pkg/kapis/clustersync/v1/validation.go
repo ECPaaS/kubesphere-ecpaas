@@ -48,12 +48,7 @@ func isValidRepositoryRequest(request *ui_clustersync.RepositoryRequest, resp *r
 		return false
 	}
 	// Prefix string
-	if request.Prefix == "" {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "Prefix must not be empty.",
-		})
-		return false
-	} else if !isValidOptionalStringField(reflectType, request.Prefix, "Prefix", resp) {
+	if !isValidOptionalStringField(reflectType, request.Prefix, "Prefix", resp) {
 		return false
 	}
 	// Region string
@@ -66,18 +61,18 @@ func isValidRepositoryRequest(request *ui_clustersync.RepositoryRequest, resp *r
 		return false
 	}
 	// Ip string
-	if request.Ip == "" {
+	if request.Region == "minio" && request.Ip == "" {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "Ip must not be empty.",
+			Reason: "Ip must not be empty when connecting to MinIO repository.",
 		})
 		return false
 	} else if !isValidOptionalIpAddress(request.Ip, resp) {
 		return false
 	}
 	// Port *int
-	if request.Port == nil {
+	if request.Region == "minio" && request.Port == nil {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "Port must not be empty.",
+			Reason: "Port must not be empty when connecting to MinIO repository.",
 		})
 		return false
 	} else if !isValidOptionalPortNumber(reflectType, request.Port, "Port", resp) {
@@ -105,7 +100,7 @@ func isValidRepositoryRequest(request *ui_clustersync.RepositoryRequest, resp *r
 	return true
 }
 
-func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequest, resp *restful.Response) bool {
+func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequest, currentRegion string, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
 	// Provider *string
 	if !isValidUpdatingRequiredStringField(reflectType, request.Provider, "Provider", resp) {
@@ -116,27 +111,37 @@ func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequ
 		return false
 	}
 	// Prefix *string
-	if !isValidUpdatingRequiredStringField(reflectType, request.Prefix, "Prefix", resp) {
-		return false
+	if request.Prefix != nil {
+		if !isValidOptionalStringField(reflectType, *request.Prefix, "Prefix", resp) {
+			return false
+		}
 	}
 	// Region *string
 	if !isValidUpdatingRequiredStringField(reflectType, request.Region, "Region", resp) {
 		return false
 	}
 	// Ip *string
-	if request.Ip != nil {
-		if *request.Ip == "" {
+	// Port *int
+	// If region changed to minio, Ip and Port can't be empty
+	// If region remained in minio, Ip and Port can't be empty
+	if (request.Region != nil && *request.Region == "minio") || (request.Region == nil && currentRegion == "minio") {
+		if request.Ip == nil || *request.Ip == "" {
 			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-				Reason: "Ip must not be cleared.",
+				Reason: "Ip must not be empty when connecting to MinIO repository.",
 			})
 			return false
 		} else if !isValidOptionalIpAddress(*request.Ip, resp) {
 			return false
 		}
-	}
-	// Port *int
-	if !isValidOptionalPortNumber(reflectType, request.Port, "Port", resp) {
-		return false
+
+		if request.Port == nil || *request.Port == 0 {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "Port must not be empty when connecting to MinIO repository.",
+			})
+			return false
+		} else if !isValidOptionalPortNumber(reflectType, request.Port, "Port", resp) {
+			return false
+		}
 	}
 	// AccessKey *string
 	if request.AccessKey != nil {
@@ -159,6 +164,57 @@ func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequ
 		} else if !util.IsValidLength(reflectType, *request.SecretKey, "SecretKey", resp) {
 			return false
 		}
+	}
+
+	return true
+}
+
+func isValidTestBucket(request *ui_clustersync.TestBucketRequest, resp *restful.Response) bool {
+	reflectType := reflect.TypeOf(*request)
+	// Bucket string
+	if request.Bucket == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Bucket must not be empty.",
+		})
+		return false
+	} else if !isValidOptionalStringField(reflectType, request.Bucket, "Bucket", resp) {
+		return false
+	}
+	// Ip string
+	if request.Port != nil && request.Ip == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Ip must not be empty when connecting to MinIO repository.",
+		})
+		return false
+	} else if !isValidOptionalIpAddress(request.Ip, resp) {
+		return false
+	}
+	// Port *int
+	if request.Ip != "" && request.Port == nil {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Port must not be empty when connecting to MinIO repository.",
+		})
+		return false
+	} else if !isValidOptionalPortNumber(reflectType, request.Port, "Port", resp) {
+		return false
+	}
+	// AccessKey string
+	if request.AccessKey == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "AccessKey must not be empty.",
+		})
+		return false
+	} else if !util.IsValidLength(reflectType, request.AccessKey, "AccessKey", resp) {
+		return false
+	}
+	// SecretKey string
+	if request.SecretKey == "" {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "SecretKey must not be empty.",
+		})
+		return false
+	} else if !util.IsValidLength(reflectType, request.SecretKey, "SecretKey", resp) {
+		return false
 	}
 
 	return true
@@ -380,13 +436,13 @@ func isValidSchedulePutTemplate(template *ui_clustersync.PutTemplate, resp *rest
 	return true
 }
 
-// Valid characters: A-Z, a-z, 0-9, and -(hyphen).
+// Valid characters: a-z, 0-9, dots (.) and hyphens (-). And must start and end with an alphanumeric character.
 // Valid length: <= maximum.
 func isValidOptionalStringField(validateType reflect.Type, value string, fieldName string, resp *restful.Response) bool {
 	if value != "" {
 		if !util.IsValidLength(validateType, value, fieldName, resp) {
 			return false
-		} else if !util.IsValidCaseInsensitiveString(value, resp) {
+		} else if !util.IsValidKubernetesString(value, fieldName, resp) {
 			return false
 		}
 	}
