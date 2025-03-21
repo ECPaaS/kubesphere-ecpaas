@@ -274,7 +274,39 @@ func (h *clustersyncHandler) DeleteBackup(req *restful.Request, resp *restful.Re
 	err := h.clustersync.DeleteBackup(backupConfigName)
 	if err != nil {
 		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
+			resp.WriteEntity(http.StatusOK)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteEntity(http.StatusOK)
+}
+
+// List all velero.io.backups in velero namespace
+func (h *clustersyncHandler) ListBackupFiles(req *restful.Request, resp *restful.Response) {
+	listBackupFileResponse, err := h.clustersync.ListBackupFile()
+	if err != nil {
+		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
 			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteEntity(listBackupFileResponse)
+}
+
+// Delete velero.io.backups in velero namespace by name
+func (h *clustersyncHandler) DeleteBackupFile(req *restful.Request, resp *restful.Response) {
+	backupConfigName := req.PathParameter("name")
+	
+	err := h.clustersync.DeleteBackupFile(backupConfigName)
+	if err != nil {
+		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
+			resp.WriteEntity(http.StatusOK)
 			return
 		}
 		resp.WriteError(http.StatusInternalServerError, err)

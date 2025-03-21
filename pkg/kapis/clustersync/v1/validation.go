@@ -500,7 +500,7 @@ func isValidNamespaceRange(included []string, excluded []string, resp *restful.R
 		includedMap[ns] = true
 	}
 	for _, ns := range excluded {
-		if !util.IsValidString(ns, resp) {
+		if !util.IsValidNamespaceString(ns, resp) {
 			return false
 		}
 		if _, ok := includedMap[ns]; ok {

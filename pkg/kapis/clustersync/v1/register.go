@@ -132,6 +132,22 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupTag}))
 
+	webservice.Route(webservice.GET("/backup-file").
+		To(handler.ListBackupFiles).
+		Doc("List all backup files").
+		Returns(http.StatusOK, api.StatusOK, ui_clustersync.ListBackupFileResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupTag}))
+
+	webservice.Route(webservice.DELETE("/backup-file/{name}").
+		To(handler.DeleteBackupFile).
+		Param(webservice.PathParameter("name", "backup file name")).
+		Doc("Delete backup file").
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupTag}))
+
 	// Restore
 	webservice.Route(webservice.POST("/restore").
 		To(handler.CreateRestore).

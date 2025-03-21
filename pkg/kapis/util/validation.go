@@ -106,6 +106,24 @@ func IsValidString(valueToValidate string, resp *restful.Response) bool {
 
 }
 
+// Valid characters: a-z, 0-9, and hyphens (-). And must start and end with an alphanumeric character.
+// To validate string value used as Kubernetes namespace.
+func IsValidNamespaceString(valueToValidate string, resp *restful.Response) bool {
+	errMsg := k8svalidation.IsDNS1123Label(valueToValidate) // Has built-in length check
+	if len(errMsg) > 0 {
+		errorReason := "Invalid Namespace: '" + valueToValidate + "'"
+		for _, msg := range errMsg {
+			errorReason += ", " + msg
+		}
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+			Reason: errorReason,
+		})
+		return false
+	}
+
+	return true
+}
+
 // Valid characters: a-z, 0-9, dots (.) and hyphens (-). And must start and end with an alphanumeric character.
 // To validate string value that will be used by Kubernetes.
 func IsValidKubernetesString(valueToValidate string, fieldName string, resp *restful.Response) bool {

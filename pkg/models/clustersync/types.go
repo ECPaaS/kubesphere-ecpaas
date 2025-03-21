@@ -68,13 +68,13 @@ type ListRepositoryResponse struct {
 
 // Backup
 type BackupRequest struct {
-	BackupName               string   `json:"backupName" description:"Backup name. Must be unique. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
-	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. If empty, no namespace is excluded. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
+	BackupName               string   `json:"backupName" description:"Backup name. Must be unique. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
+	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. If empty, no namespace is excluded. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
 	TTL                      string   `json:"ttl,omitempty" default:"720h" description:"TTL is a time.Duration-parseable string describing how long the Backup should be retained for. Default is 720 hours(30 Days). A time.Duration-parseable string is a signed sequence of decimal numbers with optional fraction and unit suffix." maximum:"32"`
-	BackupRepository         string   `json:"backupRepository,omitempty" default:"" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. If no default repository exists, this field is required. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	BackupRepository         string   `json:"backupRepository,omitempty" default:"" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. If no default repository exists, this field is required. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	DefaultVolumesToFsBackup *bool    `json:"defaultVolumesToFsBackup,omitempty" default:"false" description:"DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default."`
-	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means use the default repository. If no default repository exists, this field is required. Valid array data characters: A-Z, a-z, 0-9, and -(hyphen). Array data must start and end with alphanumeric character."`
+	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means use the default repository. If no default repository exists, this field is required. Valid array data characters: a-z, 0-9, .(dot), and -(hyphen). Array data must start and end with an alphanumeric character."`
 	SnapshotMoveData         *bool    `json:"snapshotMoveData,omitempty" default:"false" description:"SnapshotMoveData specifies whether snapshot data should be moved."`
 	IsOneTime                *bool    `json:"isOneTime" description:"Whether this config is for one time backup or cluster sync."`
 }
@@ -84,12 +84,12 @@ type BackupNameResponse struct {
 }
 
 type ModifyBackupRequest struct {
-	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. Empty array means clear this array to include all namespaces. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
-	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Empty array means clear this array to exclude no namespace. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
+	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. Empty array means clear this array to include all namespaces. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
+	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Empty array means clear this array to exclude no namespace. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
 	TTL                      *string  `json:"ttl,omitempty" description:"TTL is a time.Duration-parseable string describing how long the Backup should be retained for. A time.Duration-parseable string is a signed sequence of decimal numbers with optional fraction and unit suffix. Empty string means clear this field to use the default value(720 hours)." maximum:"32"`
-	BackupRepository         *string  `json:"backupRepository,omitempty" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. Empty string means clear this field to use the default repository. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	BackupRepository         *string  `json:"backupRepository,omitempty" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. Empty string means clear this field to use the default repository. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	DefaultVolumesToFsBackup *bool    `json:"defaultVolumesToFsBackup,omitempty" description:"DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default."`
-	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means clear this array to use the default repository. Valid array data characters: A-Z, a-z, 0-9, and -(hyphen). Array data must start and end with alphanumeric character."`
+	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means clear this array to use the default repository. Valid array data characters: a-z, 0-9, .(dot), and -(hyphen). Array data must start and end with an alphanumeric character."`
 	SnapshotMoveData         *bool    `json:"snapshotMoveData,omitempty" description:"SnapshotMoveData specifies whether snapshot data should be moved."`
 }
 
@@ -107,6 +107,20 @@ type BackupResponse struct {
 type ListBackupResponse struct {
 	TotalCount int              `json:"total_count" description:"Total number of backups."`
 	Items      []BackupResponse `json:"items" description:"List of backups. Key is items[].backupName"`
+}
+
+type BackupFileResponse struct {
+	BackupFileName     string   `json:"backupFileName" description:"Backup file name(unique key)."`
+	IncludedNamespaces []string `json:"includedNamespaces" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included."`
+	ExcludedNamespaces []string `json:"excludedNamespaces" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. If empty, no namespace is excluded."`
+	Status             string   `json:"status" description:"Status of this backup file."`
+	CreationDate       string   `json:"creationDate" description:"Backup file creation date."`
+	ExpirationDate     string   `json:"expirationDate" description:"Backup file expiration date, backup file will be garbage collected after this date."`
+}
+
+type ListBackupFileResponse struct {
+	TotalCount int                  `json:"total_count" description:"Total number of backup files."`
+	Items      []BackupFileResponse `json:"items" description:"List of backup files. Key is items[].backupFileName"`
 }
 
 // Restore
@@ -142,19 +156,19 @@ type ListRestoreResponse struct {
 
 // Schedule
 type ScheduleRequest struct {
-	ScheduleName string       `json:"scheduleName" description:"Schedule name. Must be unique. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	ScheduleName string       `json:"scheduleName" description:"Schedule name. Must be unique. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	Schedule     string       `json:"schedule" description:"Schedule is a Cron expression defining when to run. Valid characters: 0-9, /(slash), *(asterisk), space, and -(hyphen)."`
 	Paused       *bool        `json:"paused,omitempty" default:"false" description:"Paused specifies whether the schedule is paused or not."`
 	Template     PostTemplate `json:"template,omitempty" description:"Template is the definition of the Backup to be run on the provided schedule."`
 }
 
 type PostTemplate struct {
-	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
-	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. If empty, no namespace is excluded. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
+	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
+	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. If empty, no namespace is excluded. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
 	TTL                      string   `json:"ttl,omitempty" default:"720h" description:"TTL is a time.Duration-parseable string describing how long the Backup should be retained for. Default is 720 hours(30 Days). A time.Duration-parseable string is a signed sequence of decimal numbers with optional fraction and unit suffix." maximum:"32"`
-	BackupRepository         string   `json:"backupRepository,omitempty" default:"" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. If no default repository exists, this field is required. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	BackupRepository         string   `json:"backupRepository,omitempty" default:"" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. If no default repository exists, this field is required. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	DefaultVolumesToFsBackup *bool    `json:"defaultVolumesToFsBackup,omitempty" default:"false" description:"DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default."`
-	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means use the default repository. If no default repository exists, this field is required. Valid array data characters: A-Z, a-z, 0-9, and -(hyphen). Array data must start and end with alphanumeric character."`
+	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means use the default repository. If no default repository exists, this field is required. Valid array data characters: a-z, 0-9, .(dot), and -(hyphen). Array data must start and end with an alphanumeric character."`
 	SnapshotMoveData         *bool    `json:"snapshotMoveData,omitempty" default:"false" description:"SnapshotMoveData specifies whether snapshot data should be moved."`
 }
 
@@ -169,12 +183,12 @@ type ModifyScheduleRequest struct {
 }
 
 type PutTemplate struct {
-	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. Empty array means clear this array to include all namespaces. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
-	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Empty array means clear this array to exclude no namespace. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
+	IncludedNamespaces       []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. Empty array means clear this array to include all namespaces. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
+	ExcludedNamespaces       []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Empty array means clear this array to exclude no namespace. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
 	TTL                      *string  `json:"ttl,omitempty" description:"TTL is a time.Duration-parseable string describing how long the Backup should be retained for. A time.Duration-parseable string is a signed sequence of decimal numbers with optional fraction and unit suffix. Empty string means clear this field to use the default value(720 hours)." maximum:"32"`
-	BackupRepository         *string  `json:"backupRepository,omitempty" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. Empty string means clear this field to use the default repository. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
+	BackupRepository         *string  `json:"backupRepository,omitempty" description:"BackupRepository is a string containing the name of a repository where the backup should be stored. Empty string means use the default repository. Empty string means clear this field to use the default repository. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	DefaultVolumesToFsBackup *bool    `json:"defaultVolumesToFsBackup,omitempty" description:"DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used for all volumes by default."`
-	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means clear this array to use the default repository. Valid array data characters: A-Z, a-z, 0-9, and -(hyphen). Array data must start and end with alphanumeric character."`
+	SnapshotRepositories     []string `json:"snapshotRepositories,omitempty" description:"SnapshotRepositories is a list containing names of repositories for volume snapshots associated with this backup. Empty array means clear this array to use the default repository. Valid array data characters: a-z, 0-9, .(dot), and -(hyphen). Array data must start and end with an alphanumeric character."`
 	SnapshotMoveData         *bool    `json:"snapshotMoveData,omitempty" description:"SnapshotMoveData specifies whether snapshot data should be moved."`
 }
 
