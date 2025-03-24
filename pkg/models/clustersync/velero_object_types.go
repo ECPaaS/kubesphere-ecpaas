@@ -7,6 +7,7 @@ package clustersync
 import (
 	corev1api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -443,11 +444,259 @@ type DeleteBackupRequestStatus struct {
 }
 
 // DeleteBackupRequestPhase represents the lifecycle phase of a DeleteBackupRequest.
-// +kubebuilder:validation:Enum=New;InProgress;Processed
 type DeleteBackupRequestPhase string
 
 
 // Restore
 
+// Unmarshal object for velero.io.Restores
+type RestoreObject struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec RestoreSpec `json:"spec,omitempty"`
+	Status RestoreStatus `json:"status,omitempty"`
+}
 
-// Schedule
+// RestoreSpec defines the specification for a Velero restore.
+type RestoreSpec struct {
+	// BackupName is the unique name of the Velero backup to restore
+	// from.
+	BackupName string `json:"backupName,omitempty"`
+
+	// ScheduleName is the unique name of the Velero schedule to restore
+	// from. If specified, and BackupName is empty, Velero will restore
+	// from the most recent successful backup created from this schedule.
+	ScheduleName string `json:"scheduleName,omitempty"`
+
+	// IncludedNamespaces is a slice of namespace names to include objects
+	// from. If empty, all namespaces are included.
+	IncludedNamespaces []string `json:"includedNamespaces,omitempty"`
+
+	// ExcludedNamespaces contains a list of namespaces that are not
+	// included in the restore.
+	ExcludedNamespaces []string `json:"excludedNamespaces,omitempty"`
+
+	// IncludedResources is a slice of resource names to include
+	// in the restore. If empty, all resources in the backup are included.
+	IncludedResources []string `json:"includedResources,omitempty"`
+
+	// ExcludedResources is a slice of resource names that are not
+	// included in the restore.
+	ExcludedResources []string `json:"excludedResources,omitempty"`
+
+	// NamespaceMapping is a map of source namespace names
+	// to target namespace names to restore into. Any source
+	// namespaces not included in the map will be restored into
+	// namespaces of the same name.
+	NamespaceMapping map[string]string `json:"namespaceMapping,omitempty"`
+
+	// LabelSelector is a metav1.LabelSelector to filter with
+	// when restoring individual objects from the backup. If empty
+	// or nil, all objects are included. Optional.
+	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty"`
+
+	// OrLabelSelectors is list of metav1.LabelSelector to filter with
+	// when restoring individual objects from the backup. If multiple provided
+	// they will be joined by the OR operator. LabelSelector as well as
+	// OrLabelSelectors cannot co-exist in restore request, only one of them
+	// can be used
+	OrLabelSelectors []*metav1.LabelSelector `json:"orLabelSelectors,omitempty"`
+
+	// RestorePVs specifies whether to restore all included
+	// PVs from snapshot
+	RestorePVs *bool `json:"restorePVs,omitempty"`
+
+	// RestoreStatus specifies which resources we should restore the status
+	// field. If nil, no objects are included. Optional.
+	RestoreStatus *RestoreStatusSpec `json:"restoreStatus,omitempty"`
+
+	// PreserveNodePorts specifies whether to restore old nodePorts from backup.
+	PreserveNodePorts *bool `json:"preserveNodePorts,omitempty"`
+
+	// IncludeClusterResources specifies whether cluster-scoped resources
+	// should be included for consideration in the restore. If null, defaults
+	// to true.
+	IncludeClusterResources *bool `json:"includeClusterResources,omitempty"`
+
+	// Hooks represent custom behaviors that should be executed during or post restore.
+	Hooks RestoreHooks `json:"hooks,omitempty"`
+
+	// ExistingResourcePolicy specifies the restore behavior for the Kubernetes resource to be restored
+	ExistingResourcePolicy PolicyType `json:"existingResourcePolicy,omitempty"`
+
+	// ItemOperationTimeout specifies the time used to wait for RestoreItemAction operations
+	// The default value is 4 hour.
+	ItemOperationTimeout metav1.Duration `json:"itemOperationTimeout,omitempty"`
+
+	// ResourceModifier specifies the reference to JSON resource patches that should be applied to resources before restoration.
+	ResourceModifier *corev1api.TypedLocalObjectReference `json:"resourceModifier,omitempty"`
+
+	// UploaderConfig specifies the configuration for the restore.
+	UploaderConfig *UploaderConfigForRestore `json:"uploaderConfig,omitempty"`
+}
+
+type RestoreStatusSpec struct {
+	// IncludedResources specifies the resources to which will restore the status.
+	// If empty, it applies to all resources.
+	IncludedResources []string `json:"includedResources,omitempty"`
+
+	// ExcludedResources specifies the resources to which will not restore the status.
+	ExcludedResources []string `json:"excludedResources,omitempty"`
+}
+
+// RestoreHooks contains custom behaviors that should be executed during or post restore.
+type RestoreHooks struct {
+	Resources []RestoreResourceHookSpec `json:"resources,omitempty"`
+}
+
+// RestoreResourceHookSpec defines one or more RestoreResrouceHooks that should be executed based on
+// the rules defined for namespaces, resources, and label selector.
+type RestoreResourceHookSpec struct {
+	// Name is the name of this hook.
+	Name string `json:"name"`
+
+	// IncludedNamespaces specifies the namespaces to which this hook spec applies. If empty, it applies
+	// to all namespaces.
+	IncludedNamespaces []string `json:"includedNamespaces,omitempty"`
+
+	// ExcludedNamespaces specifies the namespaces to which this hook spec does not apply.
+	ExcludedNamespaces []string `json:"excludedNamespaces,omitempty"`
+
+	// IncludedResources specifies the resources to which this hook spec applies. If empty, it applies
+	// to all resources.
+	IncludedResources []string `json:"includedResources,omitempty"`
+
+	// ExcludedResources specifies the resources to which this hook spec does not apply.
+	ExcludedResources []string `json:"excludedResources,omitempty"`
+
+	// LabelSelector, if specified, filters the resources to which this hook spec applies.
+	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty"`
+
+	// PostHooks is a list of RestoreResourceHooks to execute during and after restoring a resource.
+	PostHooks []RestoreResourceHook `json:"postHooks,omitempty"`
+}
+
+// RestoreResourceHook defines a restore hook for a resource.
+type RestoreResourceHook struct {
+	// Exec defines an exec restore hook.
+	Exec *ExecRestoreHook `json:"exec,omitempty"`
+
+	// Init defines an init restore hook.
+	Init *InitRestoreHook `json:"init,omitempty"`
+}
+
+// ExecRestoreHook is a hook that uses pod exec API to execute a command inside a container in a pod
+type ExecRestoreHook struct {
+	// Container is the container in the pod where the command should be executed. If not specified,
+	// the pod's first container is used.
+	Container string `json:"container,omitempty"`
+
+	// Command is the command and arguments to execute from within a container after a pod has been restored.
+	Command []string `json:"command"`
+
+	// OnError specifies how Velero should behave if it encounters an error executing this hook.
+	OnError HookErrorMode `json:"onError,omitempty"`
+
+	// ExecTimeout defines the maximum amount of time Velero should wait for the hook to complete before
+	// considering the execution a failure.
+	ExecTimeout metav1.Duration `json:"execTimeout,omitempty"`
+
+	// WaitTimeout defines the maximum amount of time Velero should wait for the container to be Ready
+	// before attempting to run the command.
+	WaitTimeout metav1.Duration `json:"waitTimeout,omitempty"`
+
+	// WaitForReady ensures command will be launched when container is Ready instead of Running.
+	WaitForReady *bool `json:"waitForReady,omitempty"`
+}
+
+// InitRestoreHook is a hook that adds an init container to a PodSpec to run commands before the
+// workload pod is able to start.
+type InitRestoreHook struct {
+	// InitContainers is list of init containers to be added to a pod during its restore.
+	InitContainers []runtime.RawExtension `json:"initContainers"`
+
+	// Timeout defines the maximum amount of time Velero should wait for the initContainers to complete.
+	Timeout metav1.Duration `json:"timeout,omitempty"`
+}
+
+// PolicyType helps specify the ExistingResourcePolicy
+type PolicyType string
+
+// UploaderConfigForRestore defines the configuration for the restore.
+type UploaderConfigForRestore struct {
+	// WriteSparseFiles is a flag to indicate whether write files sparsely or not.
+	WriteSparseFiles *bool `json:"writeSparseFiles,omitempty"`
+	// ParallelFilesDownload is the concurrency number setting for restore.
+	ParallelFilesDownload int `json:"parallelFilesDownload,omitempty"`
+}
+
+// RestoreStatus captures the current status of a Velero restore
+type RestoreStatus struct {
+	// Phase is the current state of the Restore
+	Phase RestorePhase `json:"phase,omitempty"`
+
+	// ValidationErrors is a slice of all validation errors (if
+	// applicable)
+	ValidationErrors []string `json:"validationErrors,omitempty"`
+
+	// Warnings is a count of all warning messages that were generated during
+	// execution of the restore. The actual warnings are stored in object storage.
+	Warnings int `json:"warnings,omitempty"`
+
+	// Errors is a count of all error messages that were generated during
+	// execution of the restore. The actual errors are stored in object storage.
+	Errors int `json:"errors,omitempty"`
+
+	// FailureReason is an error that caused the entire restore to fail.
+	FailureReason string `json:"failureReason,omitempty"`
+
+	// StartTimestamp records the time the restore operation was started.
+	// The server's time is used for StartTimestamps
+	StartTimestamp *metav1.Time `json:"startTimestamp,omitempty"`
+
+	// CompletionTimestamp records the time the restore operation was completed.
+	// Completion time is recorded even on failed restore.
+	// The server's time is used for StartTimestamps
+	CompletionTimestamp *metav1.Time `json:"completionTimestamp,omitempty"`
+
+	// Progress contains information about the restore's execution progress. Note
+	// that this information is best-effort only -- if Velero fails to update it
+	// during a restore for any reason, it may be inaccurate/stale.
+	Progress *RestoreProgress `json:"progress,omitempty"`
+
+	// RestoreItemOperationsAttempted is the total number of attempted
+	// async RestoreItemAction operations for this restore.
+	RestoreItemOperationsAttempted int `json:"restoreItemOperationsAttempted,omitempty"`
+
+	// RestoreItemOperationsCompleted is the total number of successfully completed
+	// async RestoreItemAction operations for this restore.
+	RestoreItemOperationsCompleted int `json:"restoreItemOperationsCompleted,omitempty"`
+
+	// RestoreItemOperationsFailed is the total number of async
+	// RestoreItemAction operations for this restore which ended with an error.
+	RestoreItemOperationsFailed int `json:"restoreItemOperationsFailed,omitempty"`
+
+	// HookStatus contains information about the status of the hooks.
+	HookStatus *HookStatus `json:"hookStatus,omitempty"`
+}
+
+// RestorePhase is a string representation of the lifecycle phase
+// of a Velero restore
+type RestorePhase string
+
+// RestoreProgress stores information about the restore's execution progress
+type RestoreProgress struct {
+	// TotalItems is the total number of items to be restored. This number may change
+	// throughout the execution of the restore due to plugins that return additional related
+	// items to restore
+	TotalItems int `json:"totalItems,omitempty"`
+	// ItemsRestored is the number of items that have actually been restored so far
+	ItemsRestored int `json:"itemsRestored,omitempty"`
+}
+
+// RestoreList is a list of Restores.
+type RestoreList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+	Items []RestoreObject `json:"items"`
+}

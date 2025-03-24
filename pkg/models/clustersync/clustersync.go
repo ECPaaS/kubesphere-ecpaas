@@ -29,6 +29,7 @@ const (
 	repositoiesPath = "/apis/velero.io/v1/namespaces/velero/backupstoragelocations"
 	backupsPath = "/apis/velero.io/v1/namespaces/velero/backups"
 	deleteBackupFilePath = "/apis/velero.io/v1/namespaces/velero/deletebackuprequests"
+	restoresPath = "/apis/velero.io/v1/namespaces/velero/restores"
 )
 
 type Interface interface {
@@ -54,6 +55,8 @@ type Interface interface {
 	GetRestore(name string) (*RestoreResponse, error)
 	ListRestore() (*ListRestoreResponse, error)
 	DeleteRestore(name string) error
+	ListRestoreRecord() (*ListRestoreRecordResponse, error)
+	DeleteRestoreRecord(name string) error
 
 	// Schedule
 	CreateSchedule(ui_schedule *ScheduleRequest) (*ScheduleNameResponse, error)
@@ -576,7 +579,7 @@ func (cs *clusterSyncOperator) ListBackupFile() (*ListBackupFileResponse, error)
 
 	responseList := make([]BackupFileResponse, 0)
 	for _, backupObject := range listObject.Items {
-		// velero.io.backup to BackupFileResponse
+		// BackupObject to BackupFileResponse
 		response := BackupFileResponse{
 			BackupFileName:     backupObject.Name,
 			IncludedNamespaces: backupObject.Spec.IncludedNamespaces,
@@ -873,6 +876,72 @@ func (cs *clusterSyncOperator) DeleteRestore(name string) error {
 	} else {
 		return nil
 	}
+}
+
+func (cs *clusterSyncOperator) ListRestoreRecord() (*ListRestoreRecordResponse, error) {
+	klog.V(2).Infof("Listing Restore records")
+	content, err := cs.restclient.Get().AbsPath(restoresPath).DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	listObject := &RestoreList{}
+	err = json.Unmarshal(content, listObject)
+	if err != nil {
+		return nil, err
+	}
+
+	responseList := make([]RestoreRecordResponse, 0)
+	for _, restoreObject := range listObject.Items {
+		// RestoreObject to RestoreRecordResponse
+		response := RestoreRecordResponse{
+			RestoreRecordName:  restoreObject.Name,
+			BackupSource:       restoreObject.Spec.BackupName,
+			IncludedNamespaces: restoreObject.Spec.IncludedNamespaces,
+			ExcludedNamespaces: restoreObject.Spec.ExcludedNamespaces,
+			Status:             string(restoreObject.Status.Phase),
+		}
+		if restoreObject.Status.StartTimestamp != nil {
+			response.CreationDate = restoreObject.Status.StartTimestamp.String()
+		}
+		if response.IncludedNamespaces == nil {
+			response.IncludedNamespaces = make([]string, 0)
+		}
+		if response.ExcludedNamespaces == nil {
+			response.ExcludedNamespaces = make([]string, 0)
+		}
+		responseList = append(responseList, response)
+	}
+
+	return &ListRestoreRecordResponse{TotalCount: len(responseList), Items: responseList}, nil
+}
+
+func (cs *clusterSyncOperator) DeleteRestoreRecord(name string) error {
+	klog.V(2).Infof("Deleting Restore record: \"%s\"", name)
+	// Check restore-record
+	// If not present or in progress, skip
+	content, err := cs.restclient.Get().AbsPath(restoresPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	restoreObject := &RestoreObject{}
+	err = json.Unmarshal(content, restoreObject)
+	if err != nil {
+		return err
+	}
+	if restoreObject.Status.Phase != "Completed" && restoreObject.Status.Phase != "Failed" &&
+		restoreObject.Status.Phase != "PartiallyFailed" && restoreObject.Status.Phase != "FailedValidation" {
+		return fmt.Errorf("restore record is unable to be deleted now")
+	}
+
+	_, err = cs.restclient.Delete().AbsPath(restoresPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getRestoreConfig(configs []clustersyncv1.RestoreConfig, newConfigName string) *clustersyncv1.RestoreConfig {

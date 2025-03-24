@@ -125,10 +125,10 @@ type ListBackupFileResponse struct {
 
 // Restore
 type RestoreRequest struct {
-	RestoreName        string   `json:"restoreName" description:"Restore name. Must be unique. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	BackupSource       string   `json:"backupSource" description:"BackupSource is the unique name of the backup source to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	IncludedNamespaces []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
-	ExcludedNamespaces []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
+	RestoreName        string   `json:"restoreName" description:"Restore name. Must be unique. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	BackupSource       string   `json:"backupSource" description:"BackupSource is the unique name of the backup source to restore from. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	IncludedNamespaces []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
+	ExcludedNamespaces []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
 	IsOneTime          *bool    `json:"isOneTime" description:"Whether this config is for one time restore or cluster sync."`
 }
 
@@ -137,9 +137,9 @@ type RestoreNameResponse struct {
 }
 
 type ModifyRestoreRequest struct {
-	BackupSource       *string  `json:"backupSource,omitempty" description:"BackupSource is the unique name of the backup source to restore from. Valid characters: A-Z, a-z, 0-9, and -(hyphen). And must start and end with alphanumeric character." maximum:"32"`
-	IncludedNamespaces []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Empty array means clear this array to include all namespaces. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
-	ExcludedNamespaces []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Empty array means clear this array to exclude no namespace. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with alphanumeric character."`
+	BackupSource       *string  `json:"backupSource,omitempty" description:"BackupSource is the unique name of the backup source to restore from. Valid characters: Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	IncludedNamespaces []string `json:"includedNamespaces,omitempty" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included. Empty array means clear this array to include all namespaces. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
+	ExcludedNamespaces []string `json:"excludedNamespaces,omitempty" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. Empty array means clear this array to exclude no namespace. Valid array data characters: a-z, 0-9, -(hyphen). Array data must start and end with an alphanumeric character."`
 }
 
 type RestoreResponse struct {
@@ -152,6 +152,20 @@ type RestoreResponse struct {
 type ListRestoreResponse struct {
 	TotalCount int               `json:"total_count" description:"Total number of restores."`
 	Items      []RestoreResponse `json:"items" description:"List of restores. Key is items[].restoreName"`
+}
+
+type RestoreRecordResponse struct {
+	RestoreRecordName  string   `json:"restoreRecordName" description:"Restore record name(unique key)."`
+	BackupSource       string   `json:"backupSource" description:"BackupSource is the name of the backup source of this restore."`
+	IncludedNamespaces []string `json:"includedNamespaces" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included."`
+	ExcludedNamespaces []string `json:"excludedNamespaces" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. If empty, no namespace is excluded."`
+	Status             string   `json:"status" description:"Status of this restore."`
+	CreationDate       string   `json:"creationDate" description:"Creation date of this restore."`
+}
+
+type ListRestoreRecordResponse struct {
+	TotalCount int                     `json:"total_count" description:"Total number of restore records."`
+	Items      []RestoreRecordResponse `json:"items" description:"List of restore records. Key is items[].RestoreRecordName"`
 }
 
 // Schedule
