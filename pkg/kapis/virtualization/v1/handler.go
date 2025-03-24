@@ -24,6 +24,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/informers"
 	"kubesphere.io/kubesphere/pkg/kapis/util"
 	"kubesphere.io/kubesphere/pkg/models/quotas"
+	kvapi "kubevirt.io/api/core/v1"
 	"kubevirt.io/client-go/kubecli"
 
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
@@ -60,7 +61,7 @@ func (h *virtzhandler) CreateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	if !isValidVirtualMachine(ui_vm, resp) {
+	if !isValidVirtualMachine(h, ui_vm, resp) {
 		return
 	}
 
@@ -101,7 +102,7 @@ func (h *virtzhandler) UpdateVirtualMahcine(req *restful.Request, resp *restful.
 		return
 	}
 
-	if !isValidModifyVirtualMachine(ui_vm, resp) {
+	if !isValidModifyVirtualMachine(h, ui_vm, namespace, vmName, resp) {
 		return
 	}
 
@@ -214,6 +215,7 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		Description:  vm.Annotations[virtzv1alpha1.VirtualizationDescription],
 		CpuCores:     uint(vm.Spec.Hardware.Domain.CPU.Cores),
 		Memory:       uint(memory),
+		GPUs:         h.getVirtualMachineGPUResponse(vm.Spec.Hardware.Domain.Devices.GPUs),
 		Image:        &ui_image_spec,
 		Disks:        h.getUIDisksResponse(vm),
 		Status:       ui_vm_status,
@@ -221,6 +223,29 @@ func (h *virtzhandler) getUIVirtualMachineResponse(vm *virtzv1alpha1.VirtualMach
 		PodName:      h.getVirtualMachinePod(vm.Namespace, vm.Name),
 		Labels:       getLabelResponse(vm.Labels),
 		NodeSelector: getNodeSelectorResponse(vm.Spec.NodeSelector),
+	}
+}
+
+func (h *virtzhandler) getVirtualMachineGPUResponse(gpus []kvapi.GPU) ui_virtz.GPUResponse {
+	// Traverse all gpus from VM, count up the quantity
+	// If multiple GPU kinds, only return the GPU with largest quantity, for now
+	count := make(map[string]int, 0)
+	max := "none"
+	count[max] = 0
+	for _, gpu := range gpus {
+		if _, ok := count[gpu.DeviceName]; !ok {
+			count[gpu.DeviceName] = 1
+		} else {
+			count[gpu.DeviceName]++
+		}
+		if count[gpu.DeviceName] > count[max] {
+			max = gpu.DeviceName
+		}
+	}
+
+	return ui_virtz.GPUResponse{
+		Model:    max,
+		Quantity: count[max],
 	}
 }
 
@@ -404,6 +429,18 @@ func (h *virtzhandler) DeleteVirtualMachine(req *restful.Request, resp *restful.
 	}
 
 	resp.WriteHeader(http.StatusOK)
+}
+
+func (h *virtzhandler) ListAvailableGPUs(req *restful.Request, resp *restful.Response) {
+	availableGPUs, err := h.virtz.ListAvailableGPUs("", "")
+	if err != nil {
+		return
+	}
+
+	resp.WriteEntity(ui_virtz.ListAvailableGPUResponse{
+		TotalCount: len(availableGPUs),
+		Items:      availableGPUs,
+	})
 }
 
 func (h *virtzhandler) CreateDisk(req *restful.Request, resp *restful.Response) {
@@ -617,7 +654,7 @@ func (h *virtzhandler) UpdateImage(req *restful.Request, resp *restful.Response)
 	}
 
 	if ui_image.Size != 0 {
-		if !isValidImageSize(h, namespace, imageName, int(ui_image.Size), resp) {
+		if !isValidImageSize(h, namespace, imageName, int(ui_image.Size), ui_image, resp) {
 			return
 		}
 	}

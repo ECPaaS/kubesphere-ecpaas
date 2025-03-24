@@ -14,6 +14,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/minio/minio-go/v7"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
 
 	"kubesphere.io/kubesphere/pkg/kapis/util"
@@ -49,20 +50,6 @@ func isValidWithinRange(validateType reflect.Type, valueToValidate int, fieldNam
 
 }
 
-func isValidLength(validateType reflect.Type, valueToValidate string, fieldName string, resp *restful.Response) bool {
-	field, found := validateType.FieldByName(fieldName)
-	if found {
-		maximum, _ := strconv.Atoi(field.Tag.Get("maximum"))
-		if len(valueToValidate) > int(maximum) {
-			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-				Reason: fieldName + " length should be less than " + field.Tag.Get("maximum"),
-			})
-			return false
-		}
-	}
-	return true
-}
-
 func isValidString(valueToValidate string, resp *restful.Response) bool {
 	validRegex := regexp.MustCompile("^[A-Za-z0-9-]+$")
 	if !validRegex.MatchString(valueToValidate) {
@@ -74,7 +61,7 @@ func isValidString(valueToValidate string, resp *restful.Response) bool {
 	return true
 }
 
-func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Response) bool {
+func isValidVirtualMachine(h *virtzhandler, vm ui_virtz.VirtualMachineRequest, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(vm)
 	if !util.IsValidLength(reflectType, vm.Name, "Name", resp) {
@@ -97,10 +84,64 @@ func isValidVirtualMachine(vm ui_virtz.VirtualMachineRequest, resp *restful.Resp
 		return false
 	}
 
+	if !isValidGPURequest(h, vm.GPUs, "", "", resp) {
+		return false
+	}
+
 	return true
 }
 
-func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *restful.Response) bool {
+func isValidGPURequest(h *virtzhandler, gpuRequest *ui_virtz.GPU, namespace string, name string, resp *restful.Response) bool {
+	if gpuRequest != nil {
+		// Quantity, check first, quantity <= 0 is equal to not using any GPU, which will be ignored.
+		if gpuRequest.Quantity <= 0 {
+			return true
+		}
+
+		// Model format check, e.g. "gpu/nvidia.com.A400"
+		errMsg := k8svalidation.IsQualifiedName(gpuRequest.Model) // Has built-in length check
+		if len(errMsg) > 0 {
+			errorReason := "Invalid Model: '" + gpuRequest.Model + "'"
+			for _, msg := range errMsg {
+				errorReason += ", " + msg
+			}
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: errorReason,
+			})
+			return false
+		}
+
+		availableGPUs, err := h.virtz.ListAvailableGPUs(namespace, name)
+		if err != nil {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "Invalid request: can't find available GPUs",
+			})
+			return false
+		}
+		found := false
+		for _, availableGPU := range availableGPUs {
+			if availableGPU.Model == gpuRequest.Model {
+				if gpuRequest.Quantity > availableGPU.Quantity {
+					resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+						Reason: "Invalid Quantity: '" + strconv.Itoa(gpuRequest.Quantity) + "' exceeds maximun available GPU quantity",
+					})
+					return false
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "Invalid Model: '" + gpuRequest.Model + "' not found in available GPU list",
+			})
+			return false
+		}
+	}
+	return true
+}
+
+func isValidModifyVirtualMachine(h *virtzhandler, vm ui_virtz.ModifyVirtualMachineRequest, namespace string, id string, resp *restful.Response) bool {
 
 	reflectType := reflect.TypeOf(vm)
 	if !util.IsValidLength(reflectType, vm.Name, "Name", resp) {
@@ -129,6 +170,10 @@ func isValidModifyVirtualMachine(vm ui_virtz.ModifyVirtualMachineRequest, resp *
 		if !isValidWithinRange(reflectType, int(vm.Memory), "Memory", resp) {
 			return false
 		}
+	}
+
+	if !isValidGPURequest(h, vm.GPUs, namespace, id, resp) {
+		return false
 	}
 
 	if vm.Disk != nil {
@@ -215,12 +260,21 @@ func isValidImageRequest(image ui_virtz.ImageRequest, resp *restful.Response) bo
 		return false
 	}
 
-	if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
+	if !isValidOSFamily(image.OSFamily, resp) {
 		return false
 	}
 
-	if !isValidOSFamily(image.OSFamily, resp) {
-		return false
+	if strings.ToLower(image.OSFamily) == "windows" {
+		if int(image.Size) < 90 {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
+				Reason: "Size of Windows image should be >= 90 GB",
+			})
+			return false
+		}
+	} else {
+		if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
+			return false
+		}
 	}
 
 	if !isValidImageType(image.Type, resp) {
@@ -275,16 +329,10 @@ func isValidModifyImageRequest(image ui_virtz.ModifyImageRequest, resp *restful.
 		}
 	}
 
-	if image.Size != 0 {
-		if !isValidWithinRange(reflectType, int(image.Size), "Size", resp) {
-			return false
-		}
-	}
-
 	return true
 }
 
-func isValidImageSize(h *virtzhandler, namespace string, imageName string, newImageSize int, resp *restful.Response) bool {
+func isValidImageSize(h *virtzhandler, namespace string, imageName string, newImageSize int, request ui_virtz.ModifyImageRequest, resp *restful.Response) bool {
 	image, err := h.virtz.GetImage(namespace, imageName)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
@@ -292,13 +340,24 @@ func isValidImageSize(h *virtzhandler, namespace string, imageName string, newIm
 	}
 
 	oldImageSize, _ := strconv.ParseUint(image.Labels[virtzv1alpha1.VirtualizationImageStorage], 10, 32)
+	osFamily := strings.ToLower(image.Labels[virtzv1alpha1.VirtualizationOSFamily])
+	reflectType := reflect.TypeOf(request)
 	if int(oldImageSize) >= newImageSize {
 		resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
 			Reason: "The new image size must be larger than the old image size",
 		})
 		return false
+	} else if osFamily == "windows" {
+		if newImageSize < 90 {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, util.BadRequestError{
+				Reason: "Size of Windows image should be >= 90 GB",
+			})
+			return false
+		}
+		return true
+	} else {
+		return isValidWithinRange(reflectType, newImageSize, "Size", resp)
 	}
-	return true
 }
 
 func isValidDiskSize(h *virtzhandler, namespace string, diskName string, newDiskSize int, resp *restful.Response) bool {

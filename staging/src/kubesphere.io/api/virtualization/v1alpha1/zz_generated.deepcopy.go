@@ -206,6 +206,16 @@ func (in *DomainSpec) DeepCopyInto(out *DomainSpec) {
 		*out = new(v1.Machine)
 		**out = **in
 	}
+	if in.Firmware != nil {
+		in, out := &in.Firmware, &out.Firmware
+		*out = new(v1.Firmware)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Clock != nil {
+		in, out := &in.Clock, &out.Clock
+		*out = new(v1.Clock)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Features != nil {
 		in, out := &in.Features, &out.Features
 		*out = new(v1.Features)
