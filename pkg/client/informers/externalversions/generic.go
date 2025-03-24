@@ -26,6 +26,7 @@ import (
 	v1alpha1 "kubesphere.io/api/application/v1alpha1"
 	auditingv1alpha1 "kubesphere.io/api/auditing/v1alpha1"
 	clusterv1alpha1 "kubesphere.io/api/cluster/v1alpha1"
+	v1 "kubesphere.io/api/clustersync/v1"
 	devopsv1alpha1 "kubesphere.io/api/devops/v1alpha1"
 	v1alpha3 "kubesphere.io/api/devops/v1alpha3"
 	v1alpha2 "kubesphere.io/api/iam/v1alpha2"
@@ -38,7 +39,7 @@ import (
 	tenantv1alpha2 "kubesphere.io/api/tenant/v1alpha2"
 	v1beta1 "kubesphere.io/api/types/v1beta1"
 	virtualizationv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
-	v1 "kubesphere.io/api/vpc/v1"
+	vpcv1 "kubesphere.io/api/vpc/v1"
 )
 
 // GenericInformer is type of SharedIndexInformer which will locate and delegate to other
@@ -89,6 +90,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case clusterv1alpha1.SchemeGroupVersion.WithResource("clusters"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Cluster().V1alpha1().Clusters().Informer()}, nil
 
+		// Group=clustersync.ecpaas.io, Version=v1
+	case v1.SchemeGroupVersion.WithResource("operatorconfigs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Clustersync().V1().OperatorConfigs().Informer()}, nil
+
 		// Group=devops.kubesphere.io, Version=v1alpha1
 	case devopsv1alpha1.SchemeGroupVersion.WithResource("s2ibinaries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Devops().V1alpha1().S2iBinaries().Informer()}, nil
@@ -126,9 +131,9 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Iam().V1alpha2().WorkspaceRoleBindings().Informer()}, nil
 
 		// Group=k8s.ovn.org, Version=v1
-	case v1.SchemeGroupVersion.WithResource("vpcnetworks"):
+	case vpcv1.SchemeGroupVersion.WithResource("vpcnetworks"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().VPCNetworks().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("vpcsubnets"):
+	case vpcv1.SchemeGroupVersion.WithResource("vpcsubnets"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().VPCSubnets().Informer()}, nil
 
 		// Group=network.kubesphere.io, Version=v1alpha1
