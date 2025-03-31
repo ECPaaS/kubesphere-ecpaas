@@ -7,12 +7,11 @@ package clustersync
 // Repository
 type RepositoryRequest struct {
 	RepositoryName string `json:"repositoryName" description:"Repository name. Must be unique. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
-	Provider       string `json:"provider" description:"Repository provider name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	Bucket         string `json:"bucket" description:"Repository bucket name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	Prefix         string `json:"prefix,omitempty" description:"Repository prefix name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	Region         string `json:"region" description:"Repository region. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
-	Ip             string `json:"ip,omitempty" description:"Repository IP used when connecting to MinIO repository. If region is 'minio', Ip can't be empty. Must be valid IPv4/v6 format without mask."`
-	Port           *int   `json:"port,omitempty" description:"Repository port used when connecting to MinIO repository. If region is 'minio', Port can't be empty." minimum:"1" maximum:"65535"`
+	Ip             string `json:"ip,omitempty" description:"Region IP used when connecting to MinIO repository. If region is 'minio', IP can't be empty. Must be valid IPv4/v6 format without mask."`
+	Port           *int   `json:"port,omitempty" description:"Region port used when connecting to MinIO repository. If region is 'minio', Port can't be empty." minimum:"1" maximum:"65535"`
 	AccessKey      string `json:"accessKey" description:"Repository access key." maximum:"128"`
 	SecretKey      string `json:"secretKey" description:"Repository secret key." maximum:"128"`
 	IsDefault      *bool  `json:"isDefault,omitempty" default:"false" description:"Whether to set this repository as default."`
@@ -22,25 +21,25 @@ type RepositoryNameResponse struct {
 	RepositoryName string `json:"repositoryName" description:"Repository name."`
 }
 
-type TestBucketRequest struct {
-	Bucket    string `json:"bucket" description:"Repository bucket name to be tested. Valid characters: a-z, 0-9, .(dot), .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
-	Ip        string `json:"ip,omitempty" description:"MinIO IP to test whether bucket is created. Must be valid IPv4/v6 format without mask."`
-	Port      *int   `json:"port,omitempty" description:"MinIO IP to test whether bucket is created." minimum:"1" maximum:"65535"`
+type BucketValidateRequest struct {
+	Bucket    string `json:"bucket" description:"Repository bucket name to be validated. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
+	Ip        string `json:"ip,omitempty" description:"MinIO IP to validate whether bucket is created and accessible. Must be valid IPv4/v6 format without mask."`
+	Port      *int   `json:"port,omitempty" description:"MinIO IP to validate whether bucket is created and accessible." minimum:"1" maximum:"65535"`
 	AccessKey string `json:"accessKey" description:"Repository access key." maximum:"128"`
 	SecretKey string `json:"secretKey" description:"Repository secret key." maximum:"128"`
 }
 
-type TestBucketResponse struct {
-	Valid bool `json:"valid" description:"Whether the bucket is created, and can be accessed by provided information."`
+type BucketValidateResponse struct {
+	Valid   bool   `json:"valid" description:"Whether the bucket is created, and can be accessed by provided information."`
+	Message string `json:"message" description:"Error message of the validation."`
 }
 
 type ModifyRepositoryRequest struct {
-	Provider  *string `json:"provider,omitempty" description:"Repository provider name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	Bucket    *string `json:"bucket,omitempty" description:"Repository bucket name. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	Prefix    *string `json:"prefix,omitempty" description:"Repository prefix name. Can be cleared by setting empty string. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
 	Region    *string `json:"region,omitempty" description:"Repository region. Valid characters: a-z, 0-9, .(dot), and -(hyphen). And must start and end with an alphanumeric character." maximum:"32"`
-	Ip        *string `json:"ip,omitempty" description:"Repository IP. If region is 'minio', Ip can't be empty. Must be valid IPv4/v6 format without mask."`
-	Port      *int    `json:"port,omitempty" description:"Repository port. If region is 'minio', Port can't be empty." minimum:"1" maximum:"65535"`
+	Ip        *string `json:"ip,omitempty" description:"Region IP. If region is 'minio', IP can't be empty. Must be valid IPv4/v6 format without mask."`
+	Port      *int    `json:"port,omitempty" description:"Region port. If region is 'minio', Port can't be empty." minimum:"1" maximum:"65535"`
 	AccessKey *string `json:"accessKey,omitempty" description:"Repository access key." maximum:"128"`
 	SecretKey *string `json:"secretKey,omitempty" description:"Repository secret key." maximum:"128"`
 	IsDefault *bool   `json:"isDefault,omitempty" description:"Whether to set this repository as default."`
@@ -48,17 +47,16 @@ type ModifyRepositoryRequest struct {
 
 type RepositoryResponse struct {
 	RepositoryName string `json:"repositoryName" description:"Repository name(unique key)."`
-	Provider       string `json:"provider" description:"Repository provider name."`
 	Bucket         string `json:"bucket" description:"Repository bucket name."`
 	Prefix         string `json:"prefix" description:"Repository prefix name."`
 	Region         string `json:"region" description:"Repository region."`
-	Ip             string `json:"ip" description:"Repository IP."`
-	Port           int    `json:"port" description:"Repository port."`
+	Ip             string `json:"ip" description:"Region IP for MinIO repository."`
+	Port           int    `json:"port" description:"Region port for MinIO repository."`
 	AccessKey      string `json:"accessKey" description:"Repository access key. Base64 encoded(not encrypted)."`
 	SecretKey      string `json:"secretKey" description:"Repository secret key. Base64 encoded(not encrypted)."`
 	IsDefault      bool   `json:"isDefault" description:"Whether to set this repository as default."`
 	Status         string `json:"status" description:"Status of the repository connection. Possible values are: 'Available', 'Unavailable', 'Connecting'."`
-	Message        string `json:"message" description:"Message of why the repository is unavailable, empty if the repository is available."`
+	Message        string `json:"message" description:"Message of why the repository is unavailable, empty if the repository is available or connecting."`
 }
 
 type ListRepositoryResponse struct {
@@ -114,8 +112,8 @@ type BackupFileResponse struct {
 	IncludedNamespaces []string `json:"includedNamespaces" description:"IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included."`
 	ExcludedNamespaces []string `json:"excludedNamespaces" description:"ExcludedNamespaces contains a list of namespaces that are not included in the backup. If empty, no namespace is excluded."`
 	Status             string   `json:"status" description:"Status of this backup file."`
-	CreationDate       string   `json:"creationDate" description:"Backup file creation date."`
-	ExpirationDate     string   `json:"expirationDate" description:"Backup file expiration date, backup file will be garbage collected after this date."`
+	CreationDate       string   `json:"creationDate" description:"Creation date of this backup file."`
+	ExpirationDate     string   `json:"expirationDate" description:"Expiration date of this backup file, backup file will be garbage collected after this date."`
 }
 
 type ListBackupFileResponse struct {
@@ -165,7 +163,7 @@ type RestoreRecordResponse struct {
 
 type ListRestoreRecordResponse struct {
 	TotalCount int                     `json:"total_count" description:"Total number of restore records."`
-	Items      []RestoreRecordResponse `json:"items" description:"List of restore records. Key is items[].RestoreRecordName"`
+	Items      []RestoreRecordResponse `json:"items" description:"List of restore records. Key is items[].restoreRecordName"`
 }
 
 // Schedule

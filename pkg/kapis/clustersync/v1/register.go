@@ -43,11 +43,11 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRepositoryTag}))
 
-	webservice.Route(webservice.POST("/repository/test-bucket").
-		To(handler.TestBucket).
-		Reads(ui_clustersync.TestBucketRequest{}).
-		Doc("Test whether the bucket is created").
-		Returns(http.StatusOK, api.StatusOK, ui_clustersync.TestBucketResponse{}).
+	webservice.Route(webservice.POST("/repository/bucket-validate").
+		To(handler.BucketValidate).
+		Reads(ui_clustersync.BucketValidateRequest{}).
+		Doc("Validate whether the bucket is created and accessible").
+		Returns(http.StatusOK, api.StatusOK, ui_clustersync.BucketValidateResponse{}).
 		Returns(http.StatusForbidden, "Invalid format", util.BadRequestError{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRepositoryTag}))
@@ -132,12 +132,21 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupTag}))
 
+	// Backup-file
+	webservice.Route(webservice.GET("/backup-file/{name}").
+		To(handler.GetBackupFile).
+		Param(webservice.PathParameter("name", "backup file name")).
+		Doc("Get backup file").
+		Returns(http.StatusOK, api.StatusOK, ui_clustersync.BackupFileResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupFileTag}))
+
 	webservice.Route(webservice.GET("/backup-file").
 		To(handler.ListBackupFiles).
 		Doc("List all backup files").
 		Returns(http.StatusOK, api.StatusOK, ui_clustersync.ListBackupFileResponse{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupFileTag}))
 
 	webservice.Route(webservice.DELETE("/backup-file/{name}").
 		To(handler.DeleteBackupFile).
@@ -146,7 +155,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncBackupFileTag}))
 
 	// Restore
 	webservice.Route(webservice.POST("/restore").
@@ -193,12 +202,21 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRestoreTag}))
 
+	// Restore-record
+	webservice.Route(webservice.GET("/restore-record/{name}").
+		To(handler.GetRestoreRecord).
+		Param(webservice.PathParameter("name", "restore record name")).
+		Doc("Get restore record").
+		Returns(http.StatusOK, api.StatusOK, ui_clustersync.RestoreRecordResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRestoreRecordTag}))
+
 	webservice.Route(webservice.GET("/restore-record").
 		To(handler.ListRestoreRecords).
 		Doc("List all restore records").
 		Returns(http.StatusOK, api.StatusOK, ui_clustersync.ListRestoreRecordResponse{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRestoreTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRestoreRecordTag}))
 
 	webservice.Route(webservice.DELETE("/restore-record/{name}").
 		To(handler.DeleteRestoreRecord).
@@ -207,7 +225,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
-		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRestoreTag}))
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.ClusterSyncRestoreRecordTag}))
 
 	// Schedule
 	webservice.Route(webservice.POST("/schedule").

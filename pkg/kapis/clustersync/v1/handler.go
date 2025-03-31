@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	"github.com/minio/minio-go/v7"
@@ -19,6 +20,11 @@ import (
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 
 	ui_clustersync "kubesphere.io/kubesphere/pkg/models/clustersync"
+)
+
+const (
+	awsEndpoint = "s3.amazonaws.com"
+	endpointTimeout = 3 // timeout for validating bucket, in seconds
 )
 
 type clustersyncHandler struct {
@@ -59,42 +65,73 @@ func (h *clustersyncHandler) CreateRepository(req *restful.Request, resp *restfu
 	resp.WriteEntity(ui_repositoryName)
 }
 
-func (h *clustersyncHandler) TestBucket(req *restful.Request, resp *restful.Response) {
-	var ui_test_bucket ui_clustersync.TestBucketRequest
-	err := req.ReadEntity(&ui_test_bucket)
+func (h *clustersyncHandler) BucketValidate(req *restful.Request, resp *restful.Response) {
+	var ui_bucket_validate ui_clustersync.BucketValidateRequest
+	err := req.ReadEntity(&ui_bucket_validate)
 	if err != nil {
 		resp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if !isValidTestBucket(&ui_test_bucket, resp) {
+	if !isValidBucketValidateRequest(&ui_bucket_validate, resp) {
 		return
 	}
 
 	// test bucket
-	var endpoint string = "s3.amazonaws.com"
-	var flag bool = false
-	if ui_test_bucket.Ip != "" && ui_test_bucket.Port != nil {
-		// endpoint is MinIO
-		endpoint = ui_test_bucket.Ip + ":" + strconv.Itoa(*ui_test_bucket.Port)
+	endpoint := awsEndpoint
+	found := false
+	if ui_bucket_validate.Ip != "" && ui_bucket_validate.Port != nil {
+		// change endpoint to MinIO Ip:Port
+		endpoint = ui_bucket_validate.Ip + ":" + strconv.Itoa(*ui_bucket_validate.Port)
 	}
-
 	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds: credentials.NewStaticV4(ui_test_bucket.AccessKey, ui_test_bucket.SecretKey, ""),
+		Creds: credentials.NewStaticV4(ui_bucket_validate.AccessKey, ui_bucket_validate.SecretKey, ""),
 		Secure: false,
 	})
 	if err != nil {
-		resp.WriteEntity(ui_clustersync.TestBucketResponse{Valid: false})
-		return
-	}
-	flag, err = minioClient.BucketExists(context.Background(), ui_test_bucket.Bucket)
-	if err != nil {
-		resp.WriteEntity(ui_clustersync.TestBucketResponse{Valid: false})
+		resp.WriteEntity(ui_clustersync.BucketValidateResponse{Valid: false, Message: "Client error: " + err.Error()})
 		return
 	}
 
-	// write response
-	resp.WriteEntity(ui_clustersync.TestBucketResponse{Valid: flag})
+	ctxWithTimeout, cancelFunc := context.WithTimeout(context.Background(), endpointTimeout * time.Second)
+	defer cancelFunc()
+	bucketExistsDone := make(chan struct{})
+	go func() {
+		defer close(bucketExistsDone)
+		found, err = minioClient.BucketExists(ctxWithTimeout, ui_bucket_validate.Bucket)
+	}()
+	select {
+	case <-ctxWithTimeout.Done():
+		// BucketExists() got timed out
+		err = ctxWithTimeout.Err()
+	case <-bucketExistsDone:
+		// BucketExists() finished before timeout
+	}
+	message := ""
+	if err != nil {// write response
+		message = err.Error() // Should be overwiitten. Otherwise, show actual message
+		// connection timeout
+		if strings.Contains(strings.ToLower(message), "timeout") {
+			message = "Connection timeout"
+		} else if strings.Contains(strings.ToLower(message), "context deadline exceed") {
+			message = "Connection timeout"
+		} else if strings.Contains(strings.ToLower(message), "connection refused") {
+			// connection refused
+			message = "Connection refused"
+		} else if strings.Contains(strings.ToLower(message), "no route to host") {
+			// no route to host
+			message = "No route to host"
+		} else if strings.Contains(strings.ToLower(message), "access key") {
+			// The access key ID you provided does not exist in our records
+			message = "AccessKey not correct"
+		} else if strings.Contains(strings.ToLower(message), "signing method") {
+			// Check your key and signing method
+			message = "SecretKey not correct"
+		}
+	} else if !found {
+		message = "Bucket not exists"
+	}
+	resp.WriteEntity(ui_clustersync.BucketValidateResponse{Valid: found, Message: message})
 }
 
 // Update existed repositoryConfig in OperatorConfig.spec.repositoryConfigs
@@ -284,6 +321,26 @@ func (h *clustersyncHandler) DeleteBackup(req *restful.Request, resp *restful.Re
 	resp.WriteEntity(http.StatusOK)
 }
 
+
+// Backup-file
+
+// Get velero.io.backup in velero namespace by name
+func (h *clustersyncHandler) GetBackupFile(req *restful.Request, resp *restful.Response) {
+	backupFileName := req.PathParameter("name")
+
+	backupFileResponse, err := h.clustersync.GetBackupFile(backupFileName)
+	if err != nil {
+		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteEntity(backupFileResponse)
+}
+
 // List all velero.io.backups in velero namespace
 func (h *clustersyncHandler) ListBackupFiles(req *restful.Request, resp *restful.Response) {
 	listBackupFileResponse, err := h.clustersync.ListBackupFile()
@@ -299,11 +356,11 @@ func (h *clustersyncHandler) ListBackupFiles(req *restful.Request, resp *restful
 	resp.WriteEntity(listBackupFileResponse)
 }
 
-// Delete velero.io.backups in velero namespace by name
+// Delete velero.io.backup in velero namespace by name
 func (h *clustersyncHandler) DeleteBackupFile(req *restful.Request, resp *restful.Response) {
-	backupConfigName := req.PathParameter("name")
+	backupFileName := req.PathParameter("name")
 
-	err := h.clustersync.DeleteBackupFile(backupConfigName)
+	err := h.clustersync.DeleteBackupFile(backupFileName)
 	if err != nil {
 		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
 			resp.WriteEntity(http.StatusOK)
@@ -417,6 +474,26 @@ func (h *clustersyncHandler) DeleteRestore(req *restful.Request, resp *restful.R
 	resp.WriteEntity(http.StatusOK)
 }
 
+
+// Restore-record
+
+// Get velero.io.restore in velero namespace by name
+func (h *clustersyncHandler) GetRestoreRecord(req *restful.Request, resp *restful.Response) {
+	restoreRecordName := req.PathParameter("name")
+
+	restoreRecordponse, err := h.clustersync.GetRestoreRecord(restoreRecordName)
+	if err != nil {
+		if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "is not found") {
+			resp.WriteError(http.StatusNotFound, err)
+			return
+		}
+		resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	resp.WriteEntity(restoreRecordponse)
+}
+
 // List all velero.io.restores in velero namespace
 func (h *clustersyncHandler) ListRestoreRecords(req *restful.Request, resp *restful.Response) {
 	listRestoreRecordResponse, err := h.clustersync.ListRestoreRecord()
@@ -432,7 +509,7 @@ func (h *clustersyncHandler) ListRestoreRecords(req *restful.Request, resp *rest
 	resp.WriteEntity(listRestoreRecordResponse)
 }
 
-// Delete velero.io.restores in velero namespace by name
+// Delete velero.io.restore in velero namespace by name
 func (h *clustersyncHandler) DeleteRestoreRecord(req *restful.Request, resp *restful.Response) {
 	restoreRecordName := req.PathParameter("name")
 

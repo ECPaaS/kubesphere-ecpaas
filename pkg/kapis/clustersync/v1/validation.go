@@ -29,15 +29,6 @@ func isValidRepositoryRequest(request *ui_clustersync.RepositoryRequest, resp *r
 	} else if !isValidOptionalStringField(reflectType, request.RepositoryName, "RepositoryName", resp) {
 		return false
 	}
-	// Provider string
-	if request.Provider == "" {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "Provider must not be empty.",
-		})
-		return false
-	} else if !isValidOptionalStringField(reflectType, request.Provider, "Provider", resp) {
-		return false
-	}
 	// Bucket string
 	if request.Bucket == "" {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
@@ -102,10 +93,6 @@ func isValidRepositoryRequest(request *ui_clustersync.RepositoryRequest, resp *r
 
 func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequest, currentRegion string, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
-	// Provider *string
-	if !isValidUpdatingRequiredStringField(reflectType, request.Provider, "Provider", resp) {
-		return false
-	}
 	// Bucket *string
 	if !isValidUpdatingRequiredStringField(reflectType, request.Bucket, "Bucket", resp) {
 		return false
@@ -169,7 +156,7 @@ func isValidRepositoryModifyRequest(request *ui_clustersync.ModifyRepositoryRequ
 	return true
 }
 
-func isValidTestBucket(request *ui_clustersync.TestBucketRequest, resp *restful.Response) bool {
+func isValidBucketValidateRequest(request *ui_clustersync.BucketValidateRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
 	// Bucket string
 	if request.Bucket == "" {
