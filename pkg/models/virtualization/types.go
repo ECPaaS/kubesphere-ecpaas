@@ -17,12 +17,18 @@ type VirtualMachineRequest struct {
 	Name         string             `json:"name" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores     uint               `json:"cpu_cores" default:"1" description:"Virtual machine cpu cores" minimum:"1" maximum:"4"`
 	Memory       uint               `json:"memory" default:"1" description:"Virtual machine memory size, unit is GB" minimum:"1" maximum:"8"`
+	GPUs         *GPU               `json:"gpus,omitempty" description:"Specify the GPU device(s) to be attached to the virtual machine."`
 	Description  string             `json:"description" description:"Virtual machine description. Default is empty string." maximum:"128"`
 	Image        *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disk         []DiskSpec         `json:"disk,omitempty" description:"Virtual machine disks"`
 	Guest        *GuestSpec         `json:"guest,omitempty" description:"Virtual machine guest operating system"`
 	Labels       []Label            `json:"labels,omitempty" description:"Virtual machine labels"`
 	NodeSelector []NodeSelector     `json:"node_selector,omitempty" description:"Virtual machine node selector"`
+}
+
+type GPU struct {
+	Model    string `json:"model" description:"GPU model to be used on this virtual machine. Valid characters: A-Z, a-z, 0-9, /(slash), _(underscore), and -(hyphen). And must start and end with alphanumeric character." maximum:"317"`
+	Quantity int    `json:"quantity" description:"GPU quantity to be used on this virtual machine. Must not exceed maximum available GPUs." minimum:"0"`
 }
 
 type DiskSpec struct {
@@ -57,6 +63,7 @@ type ModifyVirtualMachineRequest struct {
 	Name         string           `json:"name,omitempty" description:"Virtual machine name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores     uint             `json:"cpu_cores,omitempty" default:"1" description:"Virtual machine cpu cores." minimum:"1" maximum:"4"`
 	Memory       uint             `json:"memory,omitempty" default:"1" description:"Virtual machine memory size, unit is GB." minimum:"1" maximum:"8"`
+	GPUs         *GPU             `json:"gpus,omitempty" description:"Specify the GPU device(s) to be attached to the virtual machine."`
 	Disk         []ModifyDiskSpec `json:"disk,omitempty" description:"Virtual machine disks"`
 	Description  *string          `json:"description,omitempty" description:"Virtual machine description. Can be empty string." maximum:"128"`
 	Labels       []Label          `json:"labels,omitempty" description:"Virtual machine labels. Can be empty array."`
@@ -70,6 +77,7 @@ type VirtualMachineResponse struct {
 	Description  string             `json:"description" description:"Virtual machine description"`
 	CpuCores     uint               `json:"cpu_cores" description:"Virtual machine cpu cores"`
 	Memory       uint               `json:"memory" description:"Virtual machine memory size"`
+	GPUs         GPUResponse        `json:"gpus" description:"Specify the GPU device(s) to be attached to the virtual machine."`
 	Image        *ImageInfoResponse `json:"image" description:"Virtual machine image source"`
 	Disks        []DiskResponse     `json:"disks" description:"Virtual machine disks"`
 	Status       VMStatus           `json:"status" description:"Virtual machine status"`
@@ -81,6 +89,11 @@ type VirtualMachineResponse struct {
 
 type VirtualMachineIDResponse struct {
 	ID string `json:"id" description:"virtual machine id"`
+}
+
+type GPUResponse struct {
+	Model    string `json:"model" description:"GPU model to be used on this virtual machine."`
+	Quantity int    `json:"quantity" description:"GPU quantity to be used on this virtual machine."`
 }
 
 type ImageIDResponse struct {
@@ -99,6 +112,16 @@ type VMStatus struct {
 type ListVirtualMachineResponse struct {
 	TotalCount int                      `json:"total_count" description:"Total number of virtual machines"`
 	Items      []VirtualMachineResponse `json:"items" description:"List of virtual machines"`
+}
+
+type ListAvailableGPUResponse struct {
+	TotalCount int                   `json:"total_count" description:"Total number of available GPUs on the cluster."`
+	Items      []GPUResourceResponse `json:"items" description:"List of available GPUs on the cluster."`
+}
+
+type GPUResourceResponse struct {
+	Model    string `json:"model" description:"Model of available GPU."`
+	Quantity int    `json:"quantity" description:"Quantity of available GPU."`
 }
 
 // Disk
@@ -151,7 +174,7 @@ type ImageInfo struct {
 type ImageInfoResponse struct {
 	ID        string `json:"id" description:"Image id which is got from image api"`
 	Namespace string `json:"namespace" description:"Image namespace"`
-	Size      uint   `json:"size" default:"20" description:"Image size, unit is GB." minimum:"10" maximum:"80"`
+	Size      uint   `json:"size" default:"20" description:"Image size, unit is GB. Image size range is 10 ~ 80 GB. For 'windows' images , the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 }
 
 type ImageRequest struct {
@@ -160,7 +183,7 @@ type ImageRequest struct {
 	Version        string `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
 	CpuCores       uint   `json:"cpu_cores" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory         uint   `json:"memory" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
-	Size           uint   `json:"size" default:"20" description:"Default image size, unit is GB." minimum:"10" maximum:"80"`
+	Size           uint   `json:"size" default:"20" description:"Default image size, unit is GB. Image size range is 10 ~ 80 GB. If os_family is 'windows', the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 	Description    string `json:"description" description:"Image description. Default is empty string." maximum:"128"`
 	MinioImageName string `json:"minio_image_name" description:"File name which created by minio image api"`
 	Shared         bool   `json:"shared" default:"false" description:"Image shared or not"`
@@ -177,7 +200,7 @@ type ModifyImageRequest struct {
 	Name        string  `json:"name,omitempty" description:"Image name. Valid characters: A-Z, a-z, 0-9, and -(hyphen)." maximum:"16"`
 	CpuCores    uint    `json:"cpu_cores,omitempty" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory      uint    `json:"memory,omitempty" default:"1" description:"Default image memory, unit is GB." minimum:"1" maximum:"8"`
-	Size        uint    `json:"size,omitempty" default:"20" description:"Default image size, unit is GB and the size only can be increased." minimum:"10" maximum:"80"`
+	Size        uint    `json:"size,omitempty" default:"20" description:"Default image size, unit is GB and the size only can be increased. For 'windows' images, the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 	Description *string `json:"description,omitempty" default:"" description:"Image description. Can be empty string." maximum:"128"`
 	Shared      bool    `json:"shared,omitempty" default:"false" description:"Image shared or not"`
 }
@@ -190,7 +213,7 @@ type ImageResponse struct {
 	Version        string      `json:"version" default:"20.04_LTS_64bit" description:"Image version"`
 	CpuCores       uint        `json:"cpu_cores" default:"1" description:"Default image cpu cores" minimum:"1" maximum:"4"`
 	Memory         uint        `json:"memory" default:"1" description:"Default image memory, unit is GB" minimum:"1" maximum:"8"`
-	Size           uint        `json:"size" default:"20" description:"Default image size, unit is GB" minimum:"10" maximum:"80"`
+	Size           uint        `json:"size" default:"20" description:"Default image size, unit is GB. If os_family is 'windows', the default is 90 GB and range is >= 90 GB." minimum:"10" maximum:"80"`
 	MinioImageName string      `json:"minio_image_name" description:"File name which created by minio image api"`
 	Description    string      `json:"description" default:"" description:"Image description"`
 	Shared         bool        `json:"shared" default:"false" description:"Image shared or not"`

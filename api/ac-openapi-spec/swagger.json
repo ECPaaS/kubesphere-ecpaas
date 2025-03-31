@@ -2294,6 +2294,29 @@
         }
       }
     },
+    "/kapis/virtualization.ecpaas.io/v1/virtualmachines/gpus": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Virtualization Virtual Machine"
+        ],
+        "summary": "List all available GPUs",
+        "operationId": "ListAvailableGPUs",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/virtualization.ListAvailableGPUResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/virtualization.ecpaas.io/v1alpha1/minio/image": {
       "post": {
         "consumes": [
@@ -3775,6 +3798,59 @@
         }
       }
     },
+    "virtualization.GPU": {
+      "required": [
+        "model",
+        "quantity"
+      ],
+      "properties": {
+        "model": {
+          "description": "GPU model to be used on this virtual machine. Valid characters: A-Z, a-z, 0-9, /(slash), _(underscore), and -(hyphen). And must start and end with alphanumeric character.",
+          "type": "string",
+          "maximum": 317
+        },
+        "quantity": {
+          "description": "GPU quantity to be used on this virtual machine. Must not exceed maximum available GPUs.",
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0
+        }
+      }
+    },
+    "virtualization.GPUResourceResponse": {
+      "required": [
+        "model",
+        "quantity"
+      ],
+      "properties": {
+        "model": {
+          "description": "Model of available GPU.",
+          "type": "string"
+        },
+        "quantity": {
+          "description": "Quantity of available GPU.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "virtualization.GPUResponse": {
+      "required": [
+        "model",
+        "quantity"
+      ],
+      "properties": {
+        "model": {
+          "description": "GPU model to be used on this virtual machine.",
+          "type": "string"
+        },
+        "quantity": {
+          "description": "GPU quantity to be used on this virtual machine.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "virtualization.GuestSpec": {
       "required": [
         "username",
@@ -3820,7 +3896,7 @@
           "type": "string"
         },
         "size": {
-          "description": "Image size, unit is GB.",
+          "description": "Image size, unit is GB. Image size range is 10 ~ 80 GB. For 'windows' images , the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,
@@ -3884,7 +3960,7 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, unit is GB.",
+          "description": "Default image size, unit is GB. Image size range is 10 ~ 80 GB. If os_family is 'windows', the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,
@@ -3967,7 +4043,7 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, unit is GB",
+          "description": "Default image size, unit is GB. If os_family is 'windows', the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,
@@ -4022,6 +4098,26 @@
           "description": "Label value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Must start and end with an alphanumeric charactor. Can be empty string.",
           "type": "string",
           "maximum": 63
+        }
+      }
+    },
+    "virtualization.ListAvailableGPUResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of available GPUs on the cluster.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualization.GPUResourceResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of available GPUs on the cluster.",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -4161,7 +4257,7 @@
           "default": false
         },
         "size": {
-          "description": "Default image size, unit is GB and the size only can be increased.",
+          "description": "Default image size, unit is GB and the size only can be increased. For 'windows' images, the default is 90 GB and range is \u003e= 90 GB.",
           "type": "integer",
           "format": "integer",
           "default": 20,
@@ -4191,6 +4287,10 @@
           "items": {
             "$ref": "#/definitions/virtualization.ModifyDiskSpec"
           }
+        },
+        "gpus": {
+          "description": "Specify the GPU device(s) to be attached to the virtual machine.",
+          "$ref": "#/definitions/virtualization.GPU"
         },
         "labels": {
           "description": "Virtual machine labels. Can be empty array.",
@@ -4296,6 +4396,10 @@
             "$ref": "#/definitions/virtualization.DiskSpec"
           }
         },
+        "gpus": {
+          "description": "Specify the GPU device(s) to be attached to the virtual machine.",
+          "$ref": "#/definitions/virtualization.GPU"
+        },
         "guest": {
           "description": "Virtual machine guest operating system",
           "$ref": "#/definitions/virtualization.GuestSpec"
@@ -4341,6 +4445,7 @@
         "description",
         "cpu_cores",
         "memory",
+        "gpus",
         "image",
         "disks",
         "status",
@@ -4365,6 +4470,10 @@
           "items": {
             "$ref": "#/definitions/virtualization.DiskResponse"
           }
+        },
+        "gpus": {
+          "description": "Specify the GPU device(s) to be attached to the virtual machine.",
+          "$ref": "#/definitions/virtualization.GPUResponse"
         },
         "id": {
           "description": "Virtual machine id",

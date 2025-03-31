@@ -41,6 +41,7 @@ type Interface interface {
 	StopVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
 	ListVirtualMachine(namespace string) (*v1alpha1.VirtualMachineList, error)
 	DeleteVirtualMachine(namespace string, name string) (*v1alpha1.VirtualMachine, error)
+	ListAvailableGPUs(namespace string, name string) ([]GPUResourceResponse, error)
 	// Disk
 	CreateDisk(namespace string, ui_disk *DiskRequest) (*v1alpha1.DiskVolume, error)
 	UpdateDisk(namespace string, name string, ui_disk *ModifyDiskRequest) (*v1alpha1.DiskVolume, error)
@@ -150,6 +151,7 @@ func ApplyVMSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachine, vm_u
 					},
 				},
 			},
+			GPUs: ConvertGPUsToSpec(ui_vm.GPUs),
 		},
 		Resources: v1alpha1.ResourceRequirements{
 			Requests: v1.ResourceList{
@@ -265,6 +267,59 @@ func ApplyCloudImageSpec(ui_vm *VirtualMachineRequest, vm *v1alpha1.VirtualMachi
 				},
 			},
 		},
+	}
+
+	osFamily := imagetemplate.Labels[v1alpha1.VirtualizationOSFamily]
+	if strings.ToLower(osFamily) == "windows" {
+		// Add extra settings for Windows VM
+		var falseFlag bool = false
+		vm.Spec.Hardware.Domain.Clock = &kvapi.Clock{
+			Timer: &kvapi.Timer{
+				HPET: &kvapi.HPETTimer{
+					Enabled: &falseFlag,
+				},
+				Hyperv: &kvapi.HypervTimer{},
+				PIT: &kvapi.PITTimer{
+					TickPolicy: "delay",
+				},
+				RTC: &kvapi.RTCTimer{
+					TickPolicy: "catchup",
+				},
+			},
+			ClockOffset: kvapi.ClockOffset{
+				UTC: &kvapi.ClockOffsetUTC{},
+			},
+		}
+
+		var spinlocksRetries uint32 = 8191
+		vm.Spec.Hardware.Domain.Features = &kvapi.Features{
+			ACPI: kvapi.FeatureState{},
+			APIC: &kvapi.FeatureAPIC{},
+			Hyperv: &kvapi.FeatureHyperv{
+				Relaxed: &kvapi.FeatureState{},
+				VAPIC:   &kvapi.FeatureState{},
+				Spinlocks: &kvapi.FeatureSpinlocks{
+					Retries: &spinlocksRetries,
+				},
+			},
+			SMM: &kvapi.FeatureState{},
+		}
+
+		var trueFlag bool = true
+		vm.Spec.Hardware.Domain.Firmware = &kvapi.Firmware{
+			Bootloader: &kvapi.Bootloader{
+				EFI: &kvapi.EFI{
+					SecureBoot: &trueFlag,
+				},
+			},
+		}
+
+		for idx, kvInterface := range vm.Spec.Hardware.Domain.Devices.Interfaces {
+			if kvInterface.Name == "default" {
+				vm.Spec.Hardware.Domain.Devices.Interfaces[idx].Model = "e1000"
+				break; // Only modify default interface's model
+			}
+		}
 	}
 
 	return nil
@@ -615,6 +670,28 @@ func ConvertLabelToMap(array interface{}) map[string]string {
 	return returnMap
 }
 
+func ConvertGPUsToSpec(requestGPU *GPU) []kvapi.GPU {
+	returnArray := make([]kvapi.GPU, 0)
+	if requestGPU != nil {
+		for idx := 0; idx < requestGPU.Quantity; idx++ {
+			spec := kvapi.GPU{
+				Name:       "gpu" + strconv.Itoa(idx), // gpu0, gpu1, ...
+				DeviceName: requestGPU.Model,
+				//VirtualGPUOptions: &kvapi.VGPUOptions{
+				//	Display: &kvapi.VGPUDisplayOptions{
+				//		Enabled: true,
+				//		RamFB: &kvapi.FeatureState{
+				//			Enabled: true,
+				//		},
+				//	},
+				//},
+			}
+			returnArray = append(returnArray, spec)
+		}
+	}
+	return returnArray
+}
+
 func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name string, ui_vm *ModifyVirtualMachineRequest) (*v1alpha1.VirtualMachine, error) {
 	vm, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -636,6 +713,10 @@ func (v *virtualizationOperator) UpdateVirtualMachine(namespace string, name str
 	if ui_vm.Memory != 0 && ui_vm.Memory != uint(vm.Spec.Hardware.Domain.Resources.Requests.Memory().Size()) {
 		vm.Spec.Hardware.Domain.Resources.Requests[v1.ResourceMemory] =
 			resource.MustParse(strconv.FormatUint(uint64(ui_vm.Memory), 10) + "Gi")
+	}
+
+	if ui_vm.GPUs != nil {
+		vm.Spec.Hardware.Domain.Devices.GPUs = ConvertGPUsToSpec(ui_vm.GPUs)
 	}
 
 	// TODO: update image size
@@ -831,6 +912,61 @@ func (v *virtualizationOperator) DeleteVirtualMachine(namespace string, name str
 	}
 
 	return vm, nil
+}
+
+func (v *virtualizationOperator) ListAvailableGPUs(namespace string, name string) ([]GPUResourceResponse, error) {
+	// 1. Get all GPU resouces from all nodes to a map
+	gpuResources := make(map[string]int, 0)
+	nodes, err := v.k8sclient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range nodes.Items {
+		allocatable := node.Status.Allocatable
+		for key, value := range allocatable {
+			if strings.Contains(key.String(), "gpu/") {
+				if quantity, flag := value.AsInt64();flag && quantity > 0 {
+					if _, ok := gpuResources[key.String()]; !ok {
+						gpuResources[key.String()] = int(quantity)
+					} else {
+						gpuResources[key.String()] += int(quantity)
+					}
+				}
+			}
+		}
+	}
+
+	// 2. Subtract allocated GPU resources from the map
+	ksvms, err := v.ksclient.VirtualizationV1alpha1().VirtualMachines(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, ksvm := range ksvms.Items {
+		if ksvm.Namespace == namespace && ksvm.Name == name {
+			// When PUT VM, don't subtract allocated GPUs from available GPUs quantity
+			continue;
+		}
+		for _, gpu := range ksvm.Spec.Hardware.Domain.Devices.GPUs {
+			if _, ok := gpuResources[gpu.DeviceName]; ok {
+				gpuResources[gpu.DeviceName] -= 1 // GPU is listed one by one, so subtract 1 each time found in spec
+			}
+		}
+	}
+
+	// 3. Make []GPUResourceResponse from the map
+	availableGPUs := make([]GPUResourceResponse, 0)
+	for key, quantity := range gpuResources {
+		if quantity <= 0 {
+			continue
+		}
+		response := GPUResourceResponse{
+			Model:    key,
+			Quantity: int(quantity),
+		}
+		availableGPUs = append(availableGPUs, response)
+	}
+
+	return availableGPUs, nil
 }
 
 func (v *virtualizationOperator) GetDisk(namespace string, name string) (*v1alpha1.DiskVolume, error) {

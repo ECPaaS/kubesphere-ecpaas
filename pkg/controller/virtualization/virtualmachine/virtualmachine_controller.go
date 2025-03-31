@@ -6,6 +6,7 @@ package virtualmachine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -33,6 +34,7 @@ import (
 
 	storage "k8s.io/api/storage/v1"
 	virtzv1alpha1 "kubesphere.io/api/virtualization/v1alpha1"
+	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
 const (
@@ -222,6 +224,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 	modifiedFlag := false
+
+	// update GPUs
+	if !reflect.DeepEqual(vm.Spec.Hardware.Domain.Devices.GPUs, kvVM.Spec.Template.Spec.Domain.Devices.GPUs) {
+		kvVM.Spec.Template.Spec.Domain.Devices.GPUs = vm.Spec.Hardware.Domain.Devices.GPUs
+		modifiedFlag = true
+	}
 
 	// update labels
 	if !reflect.DeepEqual(vm.Labels, kvVM.Spec.Template.ObjectMeta.Labels) {
@@ -519,7 +527,7 @@ func getVirtualMachineStatus(virtClient kubecli.KubevirtClient, namespace string
 
 }
 
-func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtzv1alpha1.VirtualMachineSpec) {
+func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtzv1alpha1.VirtualMachineSpec, osType string) {
 
 	runStrategy := kvapi.RunStrategyAlways
 	if virtzSpec.RunStrategy == virtzv1alpha1.VirtualMachineRunStrategyAlways {
@@ -542,6 +550,7 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 			interfaceMehod := getInterfaceMethod(iface)
 			kvvmSpec.Template.Spec.Domain.Devices.Interfaces[i] = kvapi.Interface{
 				Name:                   iface.Name,
+				Model:                  iface.Model,
 				InterfaceBindingMethod: interfaceMehod,
 			}
 		}
@@ -550,6 +559,7 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 	kvvmSpec.Template.Spec.Domain.Resources.Requests = virtzSpec.Hardware.Domain.Resources.Requests
 	kvvmSpec.Template.Spec.Domain.CPU = &kvapi.CPU{}
 	kvvmSpec.Template.Spec.Domain.CPU.Cores = virtzSpec.Hardware.Domain.CPU.Cores
+	kvvmSpec.Template.Spec.Domain.Devices.GPUs = virtzSpec.Hardware.Domain.Devices.GPUs
 
 	kvvmSpec.Template.Spec.Hostname = virtzSpec.Hardware.Hostname
 
@@ -606,6 +616,16 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 	if virtzSpec.Hardware.Domain.Machine != nil {
 		kvvmSpec.Template.Spec.Domain.Machine = &kvapi.Machine{}
 		kvvmSpec.Template.Spec.Domain.Machine = virtzSpec.Hardware.Domain.Machine
+	}
+
+	if virtzSpec.Hardware.Domain.Firmware != nil {
+		kvvmSpec.Template.Spec.Domain.Firmware = &kvapi.Firmware{}
+		kvvmSpec.Template.Spec.Domain.Firmware = virtzSpec.Hardware.Domain.Firmware
+	}
+
+	if virtzSpec.Hardware.Domain.Clock != nil {
+		kvvmSpec.Template.Spec.Domain.Clock = &kvapi.Clock{}
+		kvvmSpec.Template.Spec.Domain.Clock = virtzSpec.Hardware.Domain.Clock
 	}
 
 	if virtzSpec.Hardware.Domain.Features != nil {
@@ -725,6 +745,12 @@ func applyVirtualMachineSpec(kvvmSpec *kvapi.VirtualMachineSpec, virtzSpec virtz
 								Bus: "sata",
 							},
 						}
+					} else if osType == "windows" {
+						newDisk.DiskDevice = kvapi.DiskDevice{
+							Disk: &kvapi.DiskTarget{
+								Bus: "sata",
+							},
+						}
 					} else {
 						newDisk.DiskDevice = kvapi.DiskDevice{
 							Disk: &kvapi.DiskTarget{
@@ -813,7 +839,13 @@ func createVirtualMachine(virtClient kubecli.KubevirtClient, virtzVM *virtzv1alp
 		UID:                virtzVM.UID,
 	})
 
-	applyVirtualMachineSpec(&kvVM.Spec, virtzVM.Spec)
+	imageInfo := ui_virtz.ImageInfo{}
+	err := json.Unmarshal([]byte(virtzVM.Annotations[virtzv1alpha1.VirtualizationImageInfo]), &imageInfo)
+	if err != nil {
+		klog.Infof(err.Error())
+		return err
+	}
+	applyVirtualMachineSpec(&kvVM.Spec, virtzVM.Spec, imageInfo.System)
 	// Copy labels from "ksvm" to "vm", so that these labels go to vmi and virt-launcher pod
 	// doesn't matter whether virtzVM.Labels is nil
 	kvVM.Spec.Template.ObjectMeta.Labels = virtzVM.Labels
