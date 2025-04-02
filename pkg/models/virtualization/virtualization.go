@@ -672,19 +672,21 @@ func ConvertLabelToMap(array interface{}) map[string]string {
 
 func ConvertGPUsToSpec(requestGPU *GPU) []kvapi.GPU {
 	returnArray := make([]kvapi.GPU, 0)
+	falseFlag := false
 	if requestGPU != nil {
 		for idx := 0; idx < requestGPU.Quantity; idx++ {
 			spec := kvapi.GPU{
 				Name:       "gpu" + strconv.Itoa(idx), // gpu0, gpu1, ...
 				DeviceName: requestGPU.Model,
-				//VirtualGPUOptions: &kvapi.VGPUOptions{
-				//	Display: &kvapi.VGPUDisplayOptions{
-				//		Enabled: true,
-				//		RamFB: &kvapi.FeatureState{
-				//			Enabled: true,
-				//		},
-				//	},
-				//},
+				// Disable the RamFB attribute to prevent multiple vGPU conflicts that will cause the VM fail to boot properly
+				VirtualGPUOptions: &kvapi.VGPUOptions{
+					Display: &kvapi.VGPUDisplayOptions{
+						//Enabled: true,
+						RamFB: &kvapi.FeatureState{
+							Enabled: &falseFlag,
+						},
+					},
+				},
 			}
 			returnArray = append(returnArray, spec)
 		}
