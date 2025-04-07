@@ -106,12 +106,31 @@ func IsValidString(valueToValidate string, resp *restful.Response) bool {
 
 }
 
-// Valid characters: A-Z, a-z, 0-9, and -(hyphen)
-func IsValidCaseInsensitiveString(valueToValidate string, resp *restful.Response) bool {
-	validRegex := regexp.MustCompile(`^[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])?)*$`)
+// Valid characters: a-z, 0-9, and hyphens (-). And must start and end with an alphanumeric character.
+// To validate string value used as Kubernetes namespace.
+func IsValidNamespaceString(valueToValidate string, resp *restful.Response) bool {
+	errMsg := k8svalidation.IsDNS1123Label(valueToValidate) // Has built-in length check
+	if len(errMsg) > 0 {
+		errorReason := "Invalid Namespace: '" + valueToValidate + "'"
+		for _, msg := range errMsg {
+			errorReason += ", " + msg
+		}
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
+			Reason: errorReason,
+		})
+		return false
+	}
+
+	return true
+}
+
+// Valid characters: a-z, 0-9, dots (.) and hyphens (-). And must start and end with an alphanumeric character.
+// To validate string value that will be used by Kubernetes.
+func IsValidKubernetesString(valueToValidate string, fieldName string, resp *restful.Response) bool {
+	validRegex := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`)
 	if !validRegex.MatchString(valueToValidate) {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, BadRequestError{
-			Reason: "Allowed characters: uppercase and lowercase letters (A-Z, a-z), numbers (0-9), and hyphens (-). And must start and end with alphanumeric charactors.",
+			Reason: "Invalid " + fieldName + ". Allowed characters: lowercase alphanumeric characters (a-z, 0-9), dots (.) and hyphens (-). And must start and end with an alphanumeric character.",
 		})
 		return false
 	}

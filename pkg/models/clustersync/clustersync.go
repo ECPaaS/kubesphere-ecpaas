@@ -7,6 +7,7 @@ package clustersync
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -14,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	clustersyncv1 "kubesphere.io/api/clustersync/v1"
@@ -24,6 +26,11 @@ const (
 	OperatorConfigName = "operatorconfig"
 	OperatorConfigNamespace = "default"
 	DefaultTTL = "720h"
+	providerAWS = "aws"
+	repositoiesPath = "/apis/velero.io/v1/namespaces/velero/backupstoragelocations"
+	backupsPath = "/apis/velero.io/v1/namespaces/velero/backups"
+	deleteBackupFilePath = "/apis/velero.io/v1/namespaces/velero/deletebackuprequests"
+	restoresPath = "/apis/velero.io/v1/namespaces/velero/restores"
 )
 
 type Interface interface {
@@ -41,12 +48,22 @@ type Interface interface {
 	ListBackup() (*ListBackupResponse, error)
 	DeleteBackup(name string) error
 
+	// Backup-file
+	GetBackupFile(name string) (*BackupFileResponse, error)
+	ListBackupFile() (*ListBackupFileResponse, error)
+	DeleteBackupFile(name string) error
+
 	// Restore
 	CreateRestore(ui_restore *RestoreRequest) (*RestoreNameResponse, error)
 	UpdateRestore(name string, ui_restore *ModifyRestoreRequest) (*RestoreResponse, error)
 	GetRestore(name string) (*RestoreResponse, error)
 	ListRestore() (*ListRestoreResponse, error)
 	DeleteRestore(name string) error
+
+	// Restore-record
+	GetRestoreRecord(name string) (*RestoreRecordResponse, error)
+	ListRestoreRecord() (*ListRestoreRecordResponse, error)
+	DeleteRestoreRecord(name string) error
 
 	// Schedule
 	CreateSchedule(ui_schedule *ScheduleRequest) (*ScheduleNameResponse, error)
@@ -59,12 +76,14 @@ type Interface interface {
 type clusterSyncOperator struct {
 	ksclient  kubesphere.Interface
 	k8sclient kubernetes.Interface
+	restclient rest.Interface
 }
 
 func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interface {
 	return &clusterSyncOperator{
 		ksclient:  ksclient,
 		k8sclient: k8sclient,
+		restclient: k8sclient.AppsV1().RESTClient(),
 	}
 }
 
@@ -104,23 +123,25 @@ func (cs *clusterSyncOperator) CreateRepository(ui_repository *RepositoryRequest
 	} else {
 		// Check if try to set duplicated default repository
 		if ui_repository.IsDefault != nil && *ui_repository.IsDefault {
-			if anyDefaultRepository(config.Spec.RepositoryConfigs, "") {
+			if ok, _:= anyDefaultRepository(config.Spec.RepositoryConfigs, ""); ok {
 				return nil, fmt.Errorf("default repository already exists")
 			}
 		}
 		// New, create config
 		newRepositoryConfig := clustersyncv1.RepositoryConfig{
 			RepositoryName: ui_repository.RepositoryName,
-			Provider:    ui_repository.Provider,
+			Provider:    providerAWS, // Only support aws for now
 			Bucket:      ui_repository.Bucket,
 			Prefix:      ui_repository.Prefix,
 			Region:      ui_repository.Region,
-			Ip:          ui_repository.Ip,
-			Port:        ui_repository.Port,
 			AccessKey:   ui_repository.AccessKey,
 			SecretKey:   ui_repository.SecretKey,
 			IsDefault:   ui_repository.IsDefault,
-			LastModified: time.Now().String(),
+			LastModified: time.Now().Format(time.RFC3339),
+		}
+		if ui_repository.Region == "minio" {
+			newRepositoryConfig.Ip = ui_repository.Ip
+			newRepositoryConfig.Port = ui_repository.Port
 		}
 		config.Spec.RepositoryConfigs = append(config.Spec.RepositoryConfigs, newRepositoryConfig)
 		if createFlag {
@@ -149,9 +170,7 @@ func (cs *clusterSyncOperator) UpdateRepository(name string, ui_repository *Modi
 	if repositoryConfig := getRepositoryConfig(config.Spec.RepositoryConfigs, name); repositoryConfig != nil {
 		// Found, update the Repository
 		newConfig := *repositoryConfig.DeepCopy()
-		if ui_repository.Provider != nil {
-			newConfig.Provider = *ui_repository.Provider
-		}
+		newConfig.Provider = providerAWS // Only support aws for now
 		if ui_repository.Bucket != nil {
 			newConfig.Bucket = *ui_repository.Bucket
 		}
@@ -167,6 +186,10 @@ func (cs *clusterSyncOperator) UpdateRepository(name string, ui_repository *Modi
 		if ui_repository.Port != nil {
 			newConfig.Port = ui_repository.Port
 		}
+		if newConfig.Region != "minio" {
+			newConfig.Ip = ""
+			newConfig.Port = nil
+		}
 		if ui_repository.AccessKey != nil {
 			newConfig.AccessKey = *ui_repository.AccessKey
 		}
@@ -175,14 +198,14 @@ func (cs *clusterSyncOperator) UpdateRepository(name string, ui_repository *Modi
 		}
 		if ui_repository.IsDefault != nil {
 			if *ui_repository.IsDefault {
-				if anyDefaultRepository(config.Spec.RepositoryConfigs, name) {
+				if ok, _ := anyDefaultRepository(config.Spec.RepositoryConfigs, name); ok {
 					return nil, fmt.Errorf("default repository already exists")
 				}
 			}
 			newConfig.IsDefault = ui_repository.IsDefault
 		}
 		if !reflect.DeepEqual(*repositoryConfig, newConfig) {
-			newConfig.LastModified = time.Now().String()
+			newConfig.LastModified = time.Now().Format(time.RFC3339)
 			newSlice := make([]clustersyncv1.RepositoryConfig, 0)
 			for _, config := range config.Spec.RepositoryConfigs {
 				if config.RepositoryName != name {
@@ -195,7 +218,7 @@ func (cs *clusterSyncOperator) UpdateRepository(name string, ui_repository *Modi
 			if err != nil {
 				return nil, err
 			} else {
-				return makeRepositoryResponse(repositoryConfig, name), nil
+				return makeRepositoryResponse(cs.restclient, repositoryConfig, name)
 			}
 		}
 		return nil, nil // No update
@@ -215,7 +238,7 @@ func (cs *clusterSyncOperator) GetRepository(name string) (*RepositoryResponse, 
 	}
 
 	if repositoryConfig := getRepositoryConfig(config.Spec.RepositoryConfigs, name); repositoryConfig != nil {
-		return makeRepositoryResponse(repositoryConfig, repositoryConfig.RepositoryName), nil
+		return makeRepositoryResponse(cs.restclient, repositoryConfig, repositoryConfig.RepositoryName)
 	} else {
 		return nil, fmt.Errorf("repository \"%s\" is not found", name)
 	}
@@ -232,7 +255,11 @@ func (cs *clusterSyncOperator) ListRepository() (*ListRepositoryResponse, error)
 	if config != nil {
 		repositoryConfigs := config.Spec.RepositoryConfigs
 		for _, repositoryConfig := range repositoryConfigs {
-			responseSlice = append(responseSlice, *makeRepositoryResponse(&repositoryConfig, repositoryConfig.RepositoryName))
+			response, err := makeRepositoryResponse(cs.restclient, &repositoryConfig, repositoryConfig.RepositoryName)
+			if err != nil {
+				return nil, err
+			}
+			responseSlice = append(responseSlice, *response)
 		}
 	}
 
@@ -247,6 +274,10 @@ func (cs *clusterSyncOperator) DeleteRepository(name string) error {
 			return nil
 		}
 		return err
+	}
+
+	if isRepositoryInUse(config, name) {
+		return fmt.Errorf("reposiroty \"%s\" is in use, can't be deleted", name)
 	}
 
 	newSlice := make([]clustersyncv1.RepositoryConfig, 0)
@@ -274,16 +305,26 @@ func getRepositoryConfig(configs []clustersyncv1.RepositoryConfig, newConfigName
 	return nil
 }
 
-func makeRepositoryResponse(config *clustersyncv1.RepositoryConfig, name string) *RepositoryResponse {
+func makeRepositoryResponse(restclient rest.Interface, config *clustersyncv1.RepositoryConfig, name string) (*RepositoryResponse, error) {
+	content, err := restclient.Get().AbsPath(repositoiesPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	repositoryObject := &RepositoryObject{}
+	err = json.Unmarshal(content, repositoryObject)
+	if err != nil {
+		return nil, err
+	}
 	response := &RepositoryResponse{
 		RepositoryName: name,
-		Provider:       config.Provider,
 		Bucket:         config.Bucket,
 		Prefix:         config.Prefix,
 		Region:         config.Region,
 		Ip:             config.Ip,
 		AccessKey:      base64.StdEncoding.EncodeToString([]byte(config.AccessKey)),
 		SecretKey:      base64.StdEncoding.EncodeToString([]byte(config.SecretKey)),
+		Status:         string(repositoryObject.Status.Phase),
+		Message:        repositoryObject.Status.Message,
 	}
 	if config.Port != nil {
 		response.Port = *config.Port
@@ -291,19 +332,53 @@ func makeRepositoryResponse(config *clustersyncv1.RepositoryConfig, name string)
 	if config.IsDefault != nil {
 		response.IsDefault = *config.IsDefault
 	}
+	validateTime := ""
+	if repositoryObject.Status.LastValidationTime != nil {
+		validateTime = repositoryObject.Status.LastValidationTime.Format(time.RFC3339)
+	}
+	if response.Status == "" || config.LastModified > validateTime {
+		response.Status = "Connecting"
+	}
 
-	return response
+	return response, nil
 }
 
-func anyDefaultRepository(configs []clustersyncv1.RepositoryConfig, except string) bool {
+func anyDefaultRepository(configs []clustersyncv1.RepositoryConfig, except string) (bool, *clustersyncv1.RepositoryConfig) {
 	for _, config := range configs {
 		if config.IsDefault != nil && *config.IsDefault && config.RepositoryName != except {
 			// except is to tolerate set default repository default again
-			return true
+			return true, &config
 		}
 	}
+	return false, nil
+}
+
+func isRepositoryInUse(config *clustersyncv1.OperatorConfig, name string) bool {
+	for _, backupConfig := range  config.Spec.BackupConfigs {
+		if backupConfig.BackupSpec.StorageLocation == name {
+			return true
+		}
+		for _, location := range backupConfig.BackupSpec.VolumeSnapshotLocations {
+			if location == name {
+				return true
+			}
+		}
+	}
+
+	for _, scheduleConfig := range  config.Spec.ScheduleConfigs {
+		if scheduleConfig.ScheduleSpec.Template.StorageLocation == name {
+			return true
+		}
+		for _, location := range scheduleConfig.ScheduleSpec.Template.VolumeSnapshotLocations {
+			if location == name {
+				return true
+			}
+		}
+	}
+
 	return false
 }
+
 
 // Backup
 
@@ -334,21 +409,41 @@ func (cs *clusterSyncOperator) CreateBackup(ui_backup *BackupRequest) (*BackupNa
 	}
 
 	// Check if no redundant BackupConfig add
-	if getBackupConfig(config.Spec.BackupConfigs, ui_backup.BackupName) != nil {
+	if getBackupConfig(config.Spec.BackupConfigs, ui_backup.BackupName, *ui_backup.IsOneTime) != nil {
 		// Duplicated, error
 		return nil, fmt.Errorf("backup \"%s\" duplicated", ui_backup.BackupName)
 	} else {
+		// Check if redundant one-time backup is in progress
+		if content, err := cs.restclient.Get().AbsPath(backupsPath + "/" + ui_backup.BackupName).DoRaw(context.Background()); err == nil {
+			backupObject := &BackupObject{}
+			err = json.Unmarshal(content, backupObject)
+			if err != nil {
+				return nil, err
+			}
+			if backupObject.Status.Phase != "Completed" && backupObject.Status.Phase != "Failed" &&
+			backupObject.Status.Phase != "PartiallyFailed" && backupObject.Status.Phase != "FailedValidation" {
+				return nil, fmt.Errorf("one-time backup is still in progress now")
+			}
+		}
+
 		// New, create config
 		backupSpec, err := makeBackupSpec(ui_backup)
-		if err !=nil {
+		if err != nil {
 			return nil ,err
 		}
-		if !anyDefaultRepository(config.Spec.RepositoryConfigs, "") {
+		if ok, defaultRepoConfig := anyDefaultRepository(config.Spec.RepositoryConfigs, ""); !ok {
 			if ui_backup.BackupRepository == "" {
 				return nil ,fmt.Errorf("no default repository existed for BackupRepository")
 			}
 			if len(ui_backup.SnapshotRepositories) == 0 {
 				return nil ,fmt.Errorf("no default repository existed for SnapshotRepositories")
+			}
+		} else {
+			if backupSpec.StorageLocation == "" {
+				backupSpec.StorageLocation = defaultRepoConfig.RepositoryName
+			}
+			if len(backupSpec.VolumeSnapshotLocations) == 0 { // nil or empty slice
+				backupSpec.VolumeSnapshotLocations = []string{defaultRepoConfig.RepositoryName}
 			}
 		}
 		newBackupConfig := clustersyncv1.BackupConfig{
@@ -381,7 +476,7 @@ func (cs *clusterSyncOperator) UpdateBackup(name string, ui_backup *ModifyBackup
 		}
 		return nil, err
 	}
-	if backupConfig := getBackupConfig(config.Spec.BackupConfigs, name); backupConfig != nil {
+	if backupConfig := getBackupConfig(config.Spec.BackupConfigs, name, false); backupConfig != nil {
 		// Found, update the Backup
 		if ui_backup.IncludedNamespaces != nil {
 			backupConfig.BackupSpec.IncludedNamespaces = ui_backup.IncludedNamespaces
@@ -408,7 +503,7 @@ func (cs *clusterSyncOperator) UpdateBackup(name string, ui_backup *ModifyBackup
 		if ui_backup.SnapshotMoveData != nil {
 			backupConfig.BackupSpec.SnapshotMoveData = ui_backup.SnapshotMoveData
 		}
-		if !anyDefaultRepository(config.Spec.RepositoryConfigs, "") {
+		if ok, defaultRepoConfig := anyDefaultRepository(config.Spec.RepositoryConfigs, ""); !ok {
 			if ui_backup.BackupRepository != nil && *ui_backup.BackupRepository == "" {
 				// try to clear BackupRepository when no default repository
 				return nil ,fmt.Errorf("no default repository existed for BackupRepository")
@@ -416,6 +511,13 @@ func (cs *clusterSyncOperator) UpdateBackup(name string, ui_backup *ModifyBackup
 			if len(ui_backup.SnapshotRepositories) == 0 {
 				// try to clear SnapshotRepositories when no default repository
 				return nil ,fmt.Errorf("no default repository existed for SnapshotRepositories")
+			}
+		} else {
+			if backupConfig.BackupSpec.StorageLocation == "" {
+				backupConfig.BackupSpec.StorageLocation = defaultRepoConfig.RepositoryName
+			}
+			if len(backupConfig.BackupSpec.VolumeSnapshotLocations) == 0 { // nil or empty slice
+				backupConfig.BackupSpec.VolumeSnapshotLocations = []string{defaultRepoConfig.RepositoryName}
 			}
 		}
 
@@ -449,7 +551,7 @@ func (cs *clusterSyncOperator) GetBackup(name string) (*BackupResponse, error) {
 		return nil, err
 	}
 
-	if backupConfig := getBackupConfig(config.Spec.BackupConfigs, name); backupConfig != nil {
+	if backupConfig := getBackupConfig(config.Spec.BackupConfigs, name, false); backupConfig != nil {
 		return makeBackupResponse(&backupConfig.BackupSpec, backupConfig.BackupName), nil
 	} else {
 		return nil, fmt.Errorf("backup \"%s\" is not found", name)
@@ -502,10 +604,17 @@ func (cs *clusterSyncOperator) DeleteBackup(name string) error {
 	}
 }
 
-func getBackupConfig(configs []clustersyncv1.BackupConfig, newConfigName string) *clustersyncv1.BackupConfig {
+func getBackupConfig(configs []clustersyncv1.BackupConfig, newConfigName string, isOneTime bool) *clustersyncv1.BackupConfig {
 	for _, config := range configs {
-		if config.BackupName == newConfigName && !*config.IsOneTime {
-			 return &config
+		if isOneTime {
+			// New one-time backup looking for redundant
+			if config.BackupName == newConfigName {
+				return &config
+			}
+		} else {
+			if config.BackupName == newConfigName && !*config.IsOneTime {
+				return &config
+			}
 		}
 	}
 	return nil
@@ -565,6 +674,127 @@ func parseDurationOrDefault(durationStr string) (time.Duration, error) {
 	} else {
 		return duration, nil
 	}
+}
+
+
+// Backup-file
+
+func (cs *clusterSyncOperator) GetBackupFile(name string) (*BackupFileResponse, error) {
+	klog.V(2).Infof("Getting Backup file: \"%s\"", name)
+	content, err := cs.restclient.Get().AbsPath(backupsPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("backup-file \"%s\" is not found", name)
+		}
+		return nil, err
+	}
+	backupObject := &BackupObject{}
+	err = json.Unmarshal(content, backupObject)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BackupFileResponse{
+		BackupFileName:     backupObject.Name,
+		IncludedNamespaces: backupObject.Spec.IncludedNamespaces,
+		ExcludedNamespaces: backupObject.Spec.ExcludedNamespaces,
+		Status:             string(backupObject.Status.Phase),
+	}
+	if backupObject.Status.StartTimestamp != nil {
+		response.CreationDate = backupObject.Status.StartTimestamp.String()
+	}
+	if backupObject.Status.Expiration != nil {
+		response.ExpirationDate = backupObject.Status.Expiration.String()
+	}
+	if response.IncludedNamespaces == nil {
+		response.IncludedNamespaces = make([]string, 0)
+	}
+	if response.ExcludedNamespaces == nil {
+		response.ExcludedNamespaces = make([]string, 0)
+	}
+
+	return response, nil
+}
+
+func (cs *clusterSyncOperator) ListBackupFile() (*ListBackupFileResponse, error) {
+	klog.V(2).Infof("Listing Backup files")
+	content, err := cs.restclient.Get().AbsPath(backupsPath).DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	listObject := &BackupList{}
+	err = json.Unmarshal(content, listObject)
+	if err != nil {
+		return nil, err
+	}
+
+	responseList := make([]BackupFileResponse, 0)
+	for _, backupObject := range listObject.Items {
+		// BackupObject to BackupFileResponse
+		response := BackupFileResponse{
+			BackupFileName:     backupObject.Name,
+			IncludedNamespaces: backupObject.Spec.IncludedNamespaces,
+			ExcludedNamespaces: backupObject.Spec.ExcludedNamespaces,
+			Status:             string(backupObject.Status.Phase),
+		}
+		if backupObject.Status.StartTimestamp != nil {
+			response.CreationDate = backupObject.Status.StartTimestamp.String()
+		}
+		if backupObject.Status.Expiration != nil {
+			response.ExpirationDate = backupObject.Status.Expiration.String()
+		}
+		if response.IncludedNamespaces == nil {
+			response.IncludedNamespaces = make([]string, 0)
+		}
+		if response.ExcludedNamespaces == nil {
+			response.ExcludedNamespaces = make([]string, 0)
+		}
+		responseList = append(responseList, response)
+	}
+
+	return &ListBackupFileResponse{TotalCount: len(responseList), Items: responseList}, nil
+}
+
+func (cs *clusterSyncOperator) DeleteBackupFile(name string) error {
+	klog.V(2).Infof("Deleting Backup file: \"%s\"", name)
+	// Check backup-file
+	// If not present or in progress, skip
+	content, err := cs.restclient.Get().AbsPath(backupsPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	backupObject := &BackupObject{}
+	err = json.Unmarshal(content, backupObject)
+	if err != nil {
+		return err
+	}
+	if backupObject.Status.Phase != "Completed" && backupObject.Status.Phase != "Failed" &&
+		backupObject.Status.Phase != "PartiallyFailed" && backupObject.Status.Phase != "FailedValidation" {
+		return fmt.Errorf("backup file is unable to be deleted now")
+	}
+
+	deleteRequest := DeleteBackupRequestObject{}
+	deleteRequest.APIVersion = "velero.io/v1"
+	deleteRequest.Kind = "DeleteBackupRequest"
+	deleteRequest.Name = name + "-delete-request"
+	deleteRequest.Namespace = "velero"
+	deleteRequest.Spec.BackupName = name
+	content, err = json.Marshal(deleteRequest)
+	if err != nil {
+		return nil
+	}
+
+	_, err = cs.restclient.Post().AbsPath(deleteBackupFilePath).Body(content).DoRaw(context.Background())
+	if err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+
+	return nil
 }
 
 
@@ -757,6 +987,110 @@ func makeRestoreResponse(restoreSpec *clustersyncv1.RestoreSpec, name string) *R
 }
 
 
+// Restore-record
+
+func (cs *clusterSyncOperator) GetRestoreRecord(name string) (*RestoreRecordResponse, error) {
+	klog.V(2).Infof("Getting Restore record: \"%s\"", name)
+	content, err := cs.restclient.Get().AbsPath(restoresPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("restore-record \"%s\" is not found", name)
+		}
+		return nil, err
+	}
+	restoreObject := &RestoreObject{}
+	err = json.Unmarshal(content, restoreObject)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RestoreRecordResponse{
+		RestoreRecordName:  restoreObject.Name,
+		BackupSource:       restoreObject.Spec.BackupName,
+		IncludedNamespaces: restoreObject.Spec.IncludedNamespaces,
+		ExcludedNamespaces: restoreObject.Spec.ExcludedNamespaces,
+		Status:             string(restoreObject.Status.Phase),
+	}
+	if restoreObject.Status.StartTimestamp != nil {
+		response.CreationDate = restoreObject.Status.StartTimestamp.String()
+	}
+	if response.IncludedNamespaces == nil {
+		response.IncludedNamespaces = make([]string, 0)
+	}
+	if response.ExcludedNamespaces == nil {
+		response.ExcludedNamespaces = make([]string, 0)
+	}
+
+	return response, nil
+}
+
+func (cs *clusterSyncOperator) ListRestoreRecord() (*ListRestoreRecordResponse, error) {
+	klog.V(2).Infof("Listing Restore records")
+	content, err := cs.restclient.Get().AbsPath(restoresPath).DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	listObject := &RestoreList{}
+	err = json.Unmarshal(content, listObject)
+	if err != nil {
+		return nil, err
+	}
+
+	responseList := make([]RestoreRecordResponse, 0)
+	for _, restoreObject := range listObject.Items {
+		// RestoreObject to RestoreRecordResponse
+		response := RestoreRecordResponse{
+			RestoreRecordName:  restoreObject.Name,
+			BackupSource:       restoreObject.Spec.BackupName,
+			IncludedNamespaces: restoreObject.Spec.IncludedNamespaces,
+			ExcludedNamespaces: restoreObject.Spec.ExcludedNamespaces,
+			Status:             string(restoreObject.Status.Phase),
+		}
+		if restoreObject.Status.StartTimestamp != nil {
+			response.CreationDate = restoreObject.Status.StartTimestamp.String()
+		}
+		if response.IncludedNamespaces == nil {
+			response.IncludedNamespaces = make([]string, 0)
+		}
+		if response.ExcludedNamespaces == nil {
+			response.ExcludedNamespaces = make([]string, 0)
+		}
+		responseList = append(responseList, response)
+	}
+
+	return &ListRestoreRecordResponse{TotalCount: len(responseList), Items: responseList}, nil
+}
+
+func (cs *clusterSyncOperator) DeleteRestoreRecord(name string) error {
+	klog.V(2).Infof("Deleting Restore record: \"%s\"", name)
+	// Check restore-record
+	// If not present or in progress, skip
+	content, err := cs.restclient.Get().AbsPath(restoresPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	restoreObject := &RestoreObject{}
+	err = json.Unmarshal(content, restoreObject)
+	if err != nil {
+		return err
+	}
+	if restoreObject.Status.Phase != "Completed" && restoreObject.Status.Phase != "Failed" &&
+		restoreObject.Status.Phase != "PartiallyFailed" && restoreObject.Status.Phase != "FailedValidation" {
+		return fmt.Errorf("restore record is unable to be deleted now")
+	}
+
+	_, err = cs.restclient.Delete().AbsPath(restoresPath + "/" + name).DoRaw(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
 // Schedule
 
 func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*ScheduleNameResponse, error) {
@@ -804,7 +1138,7 @@ func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*Sc
 					SnapshotMoveData: ui_schedule.Template.SnapshotMoveData,
 				},
 			},
-			LastModified: time.Now().String(),
+			LastModified: time.Now().Format(time.RFC3339),
 		}
 		if ui_schedule.Paused != nil {
 			newScheduleConfig.ScheduleSpec.Paused = *ui_schedule.Paused
@@ -814,12 +1148,19 @@ func (cs *clusterSyncOperator) CreateSchedule(ui_schedule *ScheduleRequest) (*Sc
 		} else {
 			newScheduleConfig.ScheduleSpec.Template.TTL = metav1.Duration{Duration: duration}
 		}
-		if !anyDefaultRepository(config.Spec.RepositoryConfigs, "") {
+		if ok, defaultRepoConfig := anyDefaultRepository(config.Spec.RepositoryConfigs, ""); !ok {
 			if ui_schedule.Template.BackupRepository == "" {
 				return nil, fmt.Errorf("no default repository existed for BackupRepository")
 			}
 			if len(ui_schedule.Template.SnapshotRepositories) == 0 {
 				return nil, fmt.Errorf("no default repository existed for SnapshotRepositories")
+			}
+		} else {
+			if ui_schedule.Template.BackupRepository == "" {
+				newScheduleConfig.ScheduleSpec.Template.StorageLocation = defaultRepoConfig.RepositoryName
+			}
+			if len(ui_schedule.Template.SnapshotRepositories) == 0 {
+				newScheduleConfig.ScheduleSpec.Template.VolumeSnapshotLocations = []string{defaultRepoConfig.RepositoryName}
 			}
 		}
 
@@ -874,17 +1215,24 @@ func (cs *clusterSyncOperator) UpdateSchedule(name string, ui_schedule *ModifySc
 					newConfig.ScheduleSpec.Template.TTL = metav1.Duration{Duration: duration}
 				}
 			}
-			if !anyDefaultRepository(config.Spec.RepositoryConfigs, "") {
-				if ui_schedule.Template.BackupRepository != nil && *ui_schedule.Template.BackupRepository == "" {
+			if ok, defaultRepoConfig := anyDefaultRepository(config.Spec.RepositoryConfigs, ""); !ok {
+				if newConfig.ScheduleSpec.Template.StorageLocation == "" {
 					return nil, fmt.Errorf("no default repository existed for BackupRepository")
 				}
 				if len(ui_schedule.Template.SnapshotRepositories) == 0 {
 					return nil, fmt.Errorf("no default repository existed for SnapshotRepositories")
 				}
+			} else {
+				if newConfig.ScheduleSpec.Template.StorageLocation == "" {
+					newConfig.ScheduleSpec.Template.StorageLocation = defaultRepoConfig.RepositoryName
+				}
+				if len(ui_schedule.Template.SnapshotRepositories) == 0 {
+					newConfig.ScheduleSpec.Template.VolumeSnapshotLocations = []string{defaultRepoConfig.RepositoryName}
+				}
 			}
 		}
 		if !reflect.DeepEqual(scheduleConfig.ScheduleSpec, newConfig.ScheduleSpec) {
-			newConfig.LastModified = time.Now().String()
+			newConfig.LastModified = time.Now().Format(time.RFC3339)
 
 			newSlice := make([]clustersyncv1.ScheduleConfig, 0)
 			for _, config := range config.Spec.ScheduleConfigs {

@@ -151,10 +151,12 @@ const (
 	DiskTag           = "Virtualization Disk"
 	ImageTag          = "Virtualization Image"
 	ResourceQuotasTag = "Resources Quotas"
-	ClusterSyncRepositoryTag = "Cluster Sync Repository"
-	ClusterSyncBackupTag     = "Cluster Sync Backup"
-	ClusterSyncRestoreTag    = "Cluster Sync Restore"
-	ClusterSyncScheduleTag   = "Cluster Sync Schedule"
+	ClusterSyncRepositoryTag    = "Cluster Sync Repository"
+	ClusterSyncBackupTag        = "Cluster Sync Backup"
+	ClusterSyncBackupFileTag    = "Cluster Sync Backup-file"
+	ClusterSyncRestoreTag       = "Cluster Sync Restore"
+	ClusterSyncRestoreRecordTag = "Cluster Sync Restore-record"
+	ClusterSyncScheduleTag      = "Cluster Sync Schedule"
 
 	MinioImageTag = "Minio Images"
 )
