@@ -22,6 +22,7 @@ import (
 	istioclient "istio.io/client-go/pkg/clientset/versioned"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -31,6 +32,8 @@ import (
 type FakeClient struct {
 	// kubernetes client interface
 	K8sClient kubernetes.Interface
+
+	K8sDynamic dynamic.Interface
 
 	// discovery client
 	DiscoveryClient *discovery.DiscoveryClient
@@ -51,13 +54,14 @@ type FakeClient struct {
 	KubeConfig *rest.Config
 }
 
-func NewFakeClientSets(k8sClient kubernetes.Interface, discoveryClient *discovery.DiscoveryClient,
+func NewFakeClientSets(k8sClient kubernetes.Interface, dynamic dynamic.Interface, discoveryClient *discovery.DiscoveryClient,
 	kubeSphereClient kubesphere.Interface,
 	istioClient istioclient.Interface, snapshotClient snapshotclient.Interface,
 	apiextensionsclient apiextensionsclient.Interface, prometheusClient promresourcesclient.Interface,
 	masterURL string, kubeConfig *rest.Config) Client {
 	return &FakeClient{
 		K8sClient:          k8sClient,
+		K8sDynamic:         dynamic,
 		DiscoveryClient:    discoveryClient,
 		KubeSphereClient:   kubeSphereClient,
 		IstioClient:        istioClient,
@@ -71,6 +75,10 @@ func NewFakeClientSets(k8sClient kubernetes.Interface, discoveryClient *discover
 
 func (n *FakeClient) Kubernetes() kubernetes.Interface {
 	return n.K8sClient
+}
+
+func (n *FakeClient) Dynamic() dynamic.Interface {
+	return n.K8sDynamic
 }
 
 func (n *FakeClient) KubeSphere() kubesphere.Interface {
