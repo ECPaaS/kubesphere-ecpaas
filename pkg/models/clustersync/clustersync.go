@@ -80,10 +80,16 @@ type clusterSyncOperator struct {
 }
 
 func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interface {
+	var restclient rest.Interface
+
+	if k8sclient != nil {
+		restclient = k8sclient.AppsV1().RESTClient()
+	}
+
 	return &clusterSyncOperator{
-		ksclient:  ksclient,
-		k8sclient: k8sclient,
-		restclient: k8sclient.AppsV1().RESTClient(),
+		ksclient:   ksclient,
+		k8sclient:  k8sclient,
+		restclient: restclient,
 	}
 }
 
