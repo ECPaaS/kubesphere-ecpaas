@@ -262,11 +262,11 @@ func (c *Controller) syncHandler(key string) error {
 		return fmt.Errorf("invalid resource key: %s", key)
 	}
 
-	// 取得 ConfigMap
+	// Get DSCP ConfigMap
 	configMap, err := c.configMapLister.ConfigMaps(namespace).Get(name)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// ConfigMap 被刪除，需要額外刪掉 DaemonSet
+			// DSCP ConfigMap is deleted, and DaemonSet needs to be deleted
 			klog.Infof("ConfigMap %s deleted", key)
 			err := c.kubeclientset.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{})
 			if err != nil {
@@ -283,7 +283,7 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
-	// 解析 ConfigMap
+	// Parsing DSCP ConfigMap
 	var dscpConfig DscpConfig
 	yamlData := configMap.Data[configMapYamlData]
 	err = yaml.Unmarshal([]byte(yamlData), &dscpConfig)
@@ -291,21 +291,22 @@ func (c *Controller) syncHandler(key string) error {
 		return fmt.Errorf("Unmarshal DSCP config error: %v", err)
 	}
 
-	// ConfigMap 存在，準備建立或更新對應 DaemonSet
+	// Update MARS DSCP
+	err = sendMarsAPI(dscpConfig)
+	if err != nil {
+		return err
+	}
+
+	// DSCP ConfigMap exists and is ready to create or update the corresponding DaemonSet
 	timestamp := time.Now().Format(time.RFC3339)
 	_, err = c.daemonSetLister.DaemonSets(namespace).Get(daemonSetName)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// DaemonSet 尚未建立，創建它
+			// DaemonSet has not been created yet, create it
 			newDS := newDaemonSetFromConfigMap(c.kubeclientset, dscpConfig, daemonSetName, timestamp)
 			_, err := c.kubeclientset.AppsV1().DaemonSets(namespace).Create(context.TODO(), newDS, metav1.CreateOptions{})
 			if err != nil {
 				return fmt.Errorf("Failed to create DaemonSet %s: %v", daemonSetName, err)
-			}
-			// 更新 MARS DSCP
-			err = sendMarsAPI(dscpConfig)
-			if err != nil {
-				return err
 			}
 			klog.Infof("Created DaemonSet %s for ConfigMap %s", daemonSetName, key)
 			return nil
@@ -313,7 +314,7 @@ func (c *Controller) syncHandler(key string) error {
 		return fmt.Errorf("Failed to get DaemonSet %s: %v", daemonSetName, err)
 	}
 
-	// DaemonSet 存在，觸發滾動更新以套用 ConfigMap 最新內容
+	// DaemonSet exists, triggering a rolling update to apply the latest content of DSCP ConfigMap
 	patch := []byte(fmt.Sprintf(`{"metadata":{"annotations":{"create-time":"%s"}}}`, timestamp))
 	_, err = c.kubeclientset.AppsV1().DaemonSets(namespace).Patch(context.TODO(), daemonSetName, types.StrategicMergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
@@ -321,15 +322,9 @@ func (c *Controller) syncHandler(key string) error {
 	}
 	klog.Infof("Patched DaemonSet %s to trigger rolling update due to ConfigMap change", name)
 
-	// 更新 DaemonSet 中 DSCP Pod 的 iptables
+	// Update iptables for DSCP Pod in DaemonSet
 	dscpIpMap := convertDscpIpMapFromConfigMap(c.kubeclientset, dscpConfig)
 	executeCommandInPod(c.kubeclientset, generateIptablesDscpCommand(dscpIpMap, true))
-
-	// 更新 MARS DSCP
-	err = sendMarsAPI(dscpConfig)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -347,7 +342,7 @@ func getMarsCookie(dscpConfig DscpConfig) (*string, error) {
 
 	marsUrl := dscpConfig.MARS["api"] + "/mars/useraccount/v1/swagger-login"
 
-	// 建立 POST 請求
+	// Building a POST request
     req, err := http.NewRequest("POST", marsUrl, bytes.NewBuffer(jsonData))
     if err != nil {
 		return nil, fmt.Errorf("Failed to create MARS cookie request: %v", err)
@@ -356,7 +351,7 @@ func getMarsCookie(dscpConfig DscpConfig) (*string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	// 建立 http client 並發送請求
+	// Create an http client and send a request
     client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
@@ -390,7 +385,7 @@ func sendMarsAPI(dscpConfig DscpConfig) error {
 			return fmt.Errorf("Failed to convert number:", err)
 		}
 
-		// 要傳送的 JSON 資料
+		// DSCP json data to be sent
 		data := map[string]interface{}{
 			"queue": queueNum,
 			"dscp": dscps,
@@ -402,7 +397,7 @@ func sendMarsAPI(dscpConfig DscpConfig) error {
 
 		marsUrl := dscpConfig.MARS["api"] + "/mars/qos/cos/v1"
 
-		// 建立請求
+		// Building a PUT request
 		req, err := http.NewRequest("PUT", marsUrl, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return fmt.Errorf("Failed to create MARS DSCP request: %v", err)
@@ -411,13 +406,13 @@ func sendMarsAPI(dscpConfig DscpConfig) error {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Accept", "application/json")
 
-		// 設定 Cookie
+		// Setting MARS cookies
 		req.AddCookie(&http.Cookie{
 			Name: "marsGSessionId",
 			Value: *marsCookie,
 		})
 
-		// 發送請求
+		// Send Request
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
@@ -439,9 +434,9 @@ func convertDscpIpMapFromConfigMap(clientset kubernetes.Interface, dscpConfig Ds
 			continue
 		}
 
-		// 列出每個 Pod 的 IP
+		// List the IP of each Pod
 		for _, pod := range pods.Items {
-			// 檢查 Pod 是否有 IP 地址
+			// Check if the Pod has an IP address
 			if !pod.Spec.HostNetwork && pod.Status.PodIP != "" {
 				dscpIpMap[ns.DSCP] = append(dscpIpMap[ns.DSCP], pod.Status.PodIP + "/32")
 				klog.V(4).Infof("Pod Name: %s, IP: %s\n", pod.Name, pod.Status.PodIP)
@@ -463,6 +458,8 @@ func generateIptablesDscpCommand(dscpIpMap map[string][]string, updateFlag bool)
 	    commands = append(commands, setDscp)
 	}
 	
+	// "sleep infinity" is added to prevent DaemonSet from continuously re-establishing Pods
+	// because the Pod status changes to "complete" after the Pod is created and iptables commands are executed.
 	if !updateFlag {
 		commands = append(commands, "sleep infinity")
 		fullCommandStr := strings.Join(commands, " && ")
@@ -495,7 +492,7 @@ func executeCommandInPod(clientset kubernetes.Interface, command []string) {
 		return
 	}
 	
-	// DSCP DaemonSet 底下所有 Pod 都需要進行 exec
+	// All Pods under the DSCP DaemonSet need to perform exec
 	for _, pod := range pods.Items {
 		req := clientset.CoreV1().RESTClient().Post().
 			Resource("pods").
@@ -507,14 +504,14 @@ func executeCommandInPod(clientset kubernetes.Interface, command []string) {
 			Stderr:    true,
 		}, scheme.ParameterCodec)
 
-		// 建立執行器
+		// Create an executor
 		exec, err := remotecommand.NewSPDYExecutor(restConfig, "POST", req.URL())
 		if err != nil {
 			utilruntime.HandleError(fmt.Errorf("Error creating SPDY executor: %v", err))
 			return
 		}
 
-		// 執行命令
+		// Execute command
 		var stderr bytes.Buffer
 		err = exec.Stream(remotecommand.StreamOptions{
 			Stderr: &stderr,
@@ -560,29 +557,11 @@ func newDaemonSetFromConfigMap(clientset kubernetes.Interface, dscpConfig DscpCo
 							Image: "iptables",
 							Command: []string{"sh", "-c"},
 							Args: generateIptablesDscpCommand(dscpIpMap, false),
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "config-volume",
-									MountPath: "/etc/config", // 配置掛載到 Pod 中的目錄
-								},
-							},
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							SecurityContext: &corev1.SecurityContext{
 								Capabilities: &corev1.Capabilities{
 									Add:  []corev1.Capability{"NET_ADMIN"},
 									Drop: []corev1.Capability{"KILL"},
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "config-volume",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: configName,
-									},
 								},
 							},
 						},
@@ -599,7 +578,7 @@ func (c *Controller) enqueueConfigMap(obj interface{}) {
 		utilruntime.HandleError(err)
 		return
 	}
-	// 非指定的 ConfigMap (namespace/name) 將不會進入 syncHandler 進行邏輯處理
+	// Unspecified ConfigMap (namespace/name) will not enter syncHandler for logical processing
 	configMapKey := configNamespace + "/" + configName
 	if key != configMapKey {
 		klog.V(4).Infof("Non-DSCP ConfigMap: %s", key)
@@ -624,12 +603,12 @@ func (c *Controller) enqueueDaemonSet(obj interface{}) {
 		klog.V(4).Infof("Recovered deleted daemon set '%s' from tombstone", daemonSet.GetName())
 	}
 
-	// 確認這是 DSCP DaemonSet
+	// Confirm this is a DSCP DaemonSet
 	if daemonSet.Name != "k8s-dscp" || daemonSet.Namespace != configNamespace {
 		return
 	}
 
-	// 檢查 ConfigMap 是否還存在
+	// Check if the DSCP ConfigMap still exists
 	_, err := c.configMapLister.ConfigMaps(configNamespace).Get(configName)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -640,7 +619,7 @@ func (c *Controller) enqueueDaemonSet(obj interface{}) {
 		return
 	}
 
-	// ConfigMap 還存在，將其加入 workqueue
+	// The DSCP ConfigMap still exists, add it to the workqueue.
 	configMapKey := configNamespace + "/" + configName
 	c.workqueue.Add(configMapKey)
 }
@@ -649,7 +628,7 @@ func (c *Controller) handlePodUpdate(oldObj, newObj interface{}) {
     oldPod := oldObj.(*corev1.Pod)
 	newPod := newObj.(*corev1.Pod)
 
-	// 判斷是否從沒有 IP 變成有 IP
+	// Determine whether the Pod has changed from having no IP to having an IP
 	if oldPod.Status.PodIP == "" && newPod.Status.PodIP != "" {
 		execSinglePodIptables(c, newPod, false)
 	}
@@ -681,21 +660,21 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 	val, ok = pod.Labels["daemonset-owner"]
 	checkOwnerLabel := ok && val == daemonSetName
 
-	// 如果是 DSCP Pod 的 Event 則略過
+	// If it is a DSCP Pod event, skip it.
 	isDscpPod := checkAppLabel && checkOwnerLabel
 	if isDscpPod {
 		klog.V(4).Infof("Skip DSCP pod event: %s/%s", pod.Namespace, pod.Name)
 		return
 	}
 
-	// 取得 ConfigMap
+	// Get DSCP ConfigMap
 	configMap, err := c.configMapLister.ConfigMaps(configNamespace).Get(configName)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("Failed to get ConfigMap: %v", err))
 		return
 	}
 
-	// 解析 ConfigMap
+	// Parsing DSCP ConfigMap
 	var dscpConfig DscpConfig
 	yamlData := configMap.Data[configMapYamlData]
 	err = yaml.Unmarshal([]byte(yamlData), &dscpConfig)
@@ -713,11 +692,11 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 	
 	for _, ns := range dscpConfig.NamespaceDscpMap {
 		if ns.Name == pod.Namespace {
-			// 檢查 Pod 是否有 IP 地址
+			// Check if the Pod has an IP address
 			if !pod.Spec.HostNetwork && pod.Status.PodIP != "" {
 				iptablesPodIp := pod.Status.PodIP + "/32"
 				command := fmt.Sprintf("iptables -t mangle %s POSTROUTING -d %s -j MARK --set-mark %s", param, iptablesPodIp, ns.DSCP)
-				klog.Infof("%s: %s/%s (%s)", describe, pod.Namespace, pod.Name, iptablesPodIp)
+				klog.Infof("%s: %s/%s (%s)", describe, pod.Namespace, pod.Name, pod.Status.PodIP)
 				executeCommandInPod(c.kubeclientset, strings.Fields(command))
 				return
 			}
