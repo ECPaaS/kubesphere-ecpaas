@@ -40,7 +40,7 @@ import (
 const (
 	appName = "dscp"
 	controllerName = "dscp-controller"
-	configNamespace = "default"
+	configNamespace = "kube-system"
 	configName = "k8s-dscp-config"
 	daemonSetName = "k8s-dscp"
 
@@ -54,9 +54,11 @@ type NamespaceDscp struct {
 }
 
 type DscpConfig struct {
+	CNI              string              `yaml:"cni"`
+	ContainerImage   string              `yaml:"container_image"`
 	MARS             map[string]string   `yaml:"mars"`
-	NamespaceDscpMap []NamespaceDscp     `yaml:"namespace_dscp_map"`
 	QueueDscpMap     map[string][]string `yaml:"queue_dscp_map"`
+	NamespaceDscpMap []NamespaceDscp     `yaml:"namespace_dscp_map"`
 }
 
 // Controller is the controller implementation for Foo resources
@@ -554,7 +556,7 @@ func newDaemonSetFromConfigMap(clientset kubernetes.Interface, dscpConfig DscpCo
 					Containers: []corev1.Container{
 						{
 							Name:  "dscp-container",
-							Image: "iptables",
+							Image: dscpConfig.ContainerImage,
 							Command: []string{"sh", "-c"},
 							Args: generateIptablesDscpCommand(dscpIpMap, false),
 							ImagePullPolicy: corev1.PullIfNotPresent,
