@@ -120,7 +120,7 @@ func NewDscpController(
 			newCm := newObj.(*corev1.ConfigMap)
 
 			if reflect.DeepEqual(oldCm.Data, newCm.Data) {
-				return // ConfigMap內容沒變就不進入 enqueue function
+				return // If the ConfigMap content does not change, the enqueue function will not be entered.
 			}
 			controller.enqueueConfigMap(newObj)
 		},
