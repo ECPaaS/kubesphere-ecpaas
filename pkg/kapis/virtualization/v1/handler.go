@@ -33,6 +33,10 @@ import (
 	ui_virtz "kubesphere.io/kubesphere/pkg/models/virtualization"
 )
 
+type BadRequestError struct {
+	Reason string `json:"reason"`
+}
+
 type virtzhandler struct {
 	virtz               ui_virtz.Interface
 	resourceQuotaGetter quotas.ResourceQuotaGetter
@@ -455,6 +459,17 @@ func (h *virtzhandler) CreateDisk(req *restful.Request, resp *restful.Response) 
 
 	if !isValidDiskRequest(ui_disk, resp) {
 		return
+	}
+
+	// Verify if the disk name has been used with namespace.
+	diskList, _ := h.virtz.ListDisk(namespace)
+	for _, disk := range diskList.Items {
+		if disk.Annotations[virtzv1alpha1.VirtualizationAliasName] == ui_disk.Name {
+			resp.WriteHeaderAndEntity(http.StatusForbidden, BadRequestError{
+				Reason: "DiskVolume name " + ui_disk.Name + " already exists",
+			})
+			return
+		}
 	}
 
 	createdDisk, err := h.virtz.CreateDisk(namespace, &ui_disk)
