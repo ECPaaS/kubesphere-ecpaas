@@ -273,8 +273,10 @@ func (c *Controller) syncHandler(key string) error {
 		if errors.IsNotFound(err) {
 			// DSCP ConfigMap is deleted, and DaemonSet needs to be deleted
 			klog.Infof("ConfigMap %s deleted", key)
-			command := fmt.Sprintf("iptables -t mangle -F POSTROUTING")
-			executeCommandInPod(c.kubeclientset, strings.Fields(command))
+			// When the DSCP Pod is to be deleted, the rules in the iptables custom chain must be cleared
+			// and the link with the POSTROUTING chain must be removed before the custom chain can be successfully deleted.
+			cmd := fmt.Sprintf("iptables -t mangle -F ACCTONDSCP && iptables -t mangle -D POSTROUTING -j ACCTONDSCP && iptables -t mangle -X ACCTONDSCP")
+			executeCommandInPod(c.kubeclientset, []string{"sh", "-c", cmd})
 			err := c.kubeclientset.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{})
 			if err != nil {
 				if errors.IsNotFound(err) {
@@ -455,13 +457,21 @@ func convertDscpIpMapFromConfigMap(clientset kubernetes.Interface, dscpConfig Ds
 
 func generateIptablesDscpCommand(dscpIpMap map[string][]string, updateFlag bool) []string {
 	commands := make([]string, 0)
-	commands = append(commands, "iptables -t mangle -F POSTROUTING")
+	if !updateFlag {
+		// When a Pod is first created, a custom iptable chain must be added and connected to the default POSTROUTING chain.
+		commands = append(commands, "iptables -t mangle -N ACCTONDSCP && iptables -t mangle -A POSTROUTING -j ACCTONDSCP")
+	} else {
+		// When updating iptables due to ConfigMap changes, 
+		// only the rules in the custom chain are deleted in advance to facilitate subsequent rule updates.
+		commands = append(commands, "iptables -t mangle -F ACCTONDSCP")
+	}
+
 	for dscp, podIps := range dscpIpMap {
 	    for _, ip := range podIps {
-	        markPacket := fmt.Sprintf("iptables -t mangle -A POSTROUTING -d %s -j MARK --set-mark %s", ip, dscp)
+	        markPacket := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -d %s -j MARK --set-mark %s", ip, dscp)
             commands = append(commands, markPacket)
 	    }
-	    setDscp := fmt.Sprintf("iptables -t mangle -A POSTROUTING -m mark --mark %s -j DSCP --set-dscp %s", dscp, dscp)
+	    setDscp := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -m mark --mark %s -j DSCP --set-dscp %s", dscp, dscp)
 	    commands = append(commands, setDscp)
 	}
 	
@@ -691,10 +701,13 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 		return
 	}
 
-	param := "-A"
+	// The rules for marking DSCP for Pod IP are prioritized in iptables 
+	// to prevent the packets with Pod IP from not being set with DSCP 
+	// because the rules have a lower priority than the rules for setting DSCP.
+	param := "-I ACCTONDSCP 1"
 	describe := "Add new pod IP in iptables"
 	if isPodDelete {
-		param = "-D"
+		param = "-D ACCTONDSCP"
 		describe = "Delete pod IP in iptables"
 	}
 	
@@ -703,7 +716,7 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 			// Check if the Pod has an IP address
 			if !pod.Spec.HostNetwork && pod.Status.PodIP != "" {
 				iptablesPodIp := pod.Status.PodIP + "/32"
-				command := fmt.Sprintf("iptables -t mangle %s POSTROUTING -d %s -j MARK --set-mark %s", param, iptablesPodIp, ns.DSCP)
+				command := fmt.Sprintf("iptables -t mangle %s -d %s -j MARK --set-mark %s", param, iptablesPodIp, ns.DSCP)
 				klog.Infof("%s: %s/%s (%s)", describe, pod.Namespace, pod.Name, pod.Status.PodIP)
 				executeCommandInPod(c.kubeclientset, strings.Fields(command))
 				return
