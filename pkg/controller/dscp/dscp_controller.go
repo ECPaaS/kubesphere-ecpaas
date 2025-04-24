@@ -1,3 +1,7 @@
+/*
+ Copyright(c) 2025-present Accton. All rights reserved. www.accton.com.tw
+ */
+
 package dscp
 
 import (
@@ -61,7 +65,6 @@ type DscpConfig struct {
 	NamespaceDscpMap []NamespaceDscp     `yaml:"namespace_dscp_map"`
 }
 
-// Controller is the controller implementation for Foo resources
 type Controller struct {
 	// kubeclientset is a standard kubernetes clientset
 	kubeclientset kubernetes.Interface
@@ -270,6 +273,8 @@ func (c *Controller) syncHandler(key string) error {
 		if errors.IsNotFound(err) {
 			// DSCP ConfigMap is deleted, and DaemonSet needs to be deleted
 			klog.Infof("ConfigMap %s deleted", key)
+			command := fmt.Sprintf("iptables -t mangle -F POSTROUTING")
+			executeCommandInPod(c.kubeclientset, strings.Fields(command))
 			err := c.kubeclientset.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{})
 			if err != nil {
 				if errors.IsNotFound(err) {
@@ -384,7 +389,7 @@ func sendMarsAPI(dscpConfig DscpConfig) error {
 
 		queueNum, err := strconv.Atoi(parts[len(parts)-1])
 		if err != nil {
-			return fmt.Errorf("Failed to convert number:", err)
+			return fmt.Errorf("Failed to convert number: %v", err)
 		}
 
 		// DSCP json data to be sent
@@ -450,7 +455,7 @@ func convertDscpIpMapFromConfigMap(clientset kubernetes.Interface, dscpConfig Ds
 
 func generateIptablesDscpCommand(dscpIpMap map[string][]string, updateFlag bool) []string {
 	commands := make([]string, 0)
-	commands = append(commands, "iptables -t mangle -F")
+	commands = append(commands, "iptables -t mangle -F POSTROUTING")
 	for dscp, podIps := range dscpIpMap {
 	    for _, ip := range podIps {
 	        markPacket := fmt.Sprintf("iptables -t mangle -A POSTROUTING -d %s -j MARK --set-mark %s", ip, dscp)
@@ -553,6 +558,7 @@ func newDaemonSetFromConfigMap(clientset kubernetes.Interface, dscpConfig DscpCo
 					},
 				},
 				Spec: corev1.PodSpec{
+					HostNetwork: true,
 					Containers: []corev1.Container{
 						{
 							Name:  "dscp-container",
