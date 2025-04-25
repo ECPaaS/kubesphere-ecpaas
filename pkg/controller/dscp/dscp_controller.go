@@ -474,7 +474,7 @@ func generateIptablesDscpCommand(dscpIpMap map[string][]string, updateFlag bool)
 	    setDscp := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -m mark --mark %s -j DSCP --set-dscp %s", dscp, dscp)
 	    commands = append(commands, setDscp)
 	}
-	
+
 	// "sleep infinity" is added to prevent DaemonSet from continuously re-establishing Pods
 	// because the Pod status changes to "complete" after the Pod is created and iptables commands are executed.
 	if !updateFlag {
@@ -508,7 +508,7 @@ func executeCommandInPod(clientset kubernetes.Interface, command []string) {
 		utilruntime.HandleError(err)
 		return
 	}
-	
+
 	// All Pods under the DSCP DaemonSet need to perform exec
 	for _, pod := range pods.Items {
 		req := clientset.CoreV1().RESTClient().Post().
@@ -688,7 +688,9 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 	// Get DSCP ConfigMap
 	configMap, err := c.configMapLister.ConfigMaps(configNamespace).Get(configName)
 	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("Failed to get ConfigMap: %v", err))
+		if !errors.IsNotFound(err) {
+			utilruntime.HandleError(fmt.Errorf("Failed to get ConfigMap: %v", err))
+		}
 		return
 	}
 
@@ -701,8 +703,8 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 		return
 	}
 
-	// The rules for marking DSCP for Pod IP are prioritized in iptables 
-	// to prevent the packets with Pod IP from not being set with DSCP 
+	// The rules for marking DSCP for Pod IP are prioritized in iptables
+	// to prevent the packets with Pod IP from not being set with DSCP
 	// because the rules have a lower priority than the rules for setting DSCP.
 	param := "-I ACCTONDSCP 1"
 	describe := "Add new pod IP in iptables"
@@ -710,7 +712,7 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 		param = "-D ACCTONDSCP"
 		describe = "Delete pod IP in iptables"
 	}
-	
+
 	for _, ns := range dscpConfig.NamespaceDscpMap {
 		if ns.Name == pod.Namespace {
 			// Check if the Pod has an IP address
