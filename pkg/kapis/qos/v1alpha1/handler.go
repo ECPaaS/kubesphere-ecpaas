@@ -30,7 +30,7 @@ type handler struct {
 
 func (h *handler) ListDscp(request *restful.Request, response *restful.Response) {
 
-	listDscp, err := h.qos.ListDSPC()
+	listDscp, err := h.qos.ListDSCP()
 
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -63,7 +63,7 @@ func (h *handler) CreateDscp(request *restful.Request, response *restful.Respons
 		return
 	}
 
-	err = h.qos.CreateDSPC(namespace, dscpWithoutNs.Dscp)
+	err = h.qos.CreateDSCP(namespace, dscpWithoutNs.Dscp)
 	if err != nil {
 		klog.Error(err)
 		response.WriteHeader(http.StatusInternalServerError)
@@ -76,7 +76,7 @@ func (h *handler) CreateDscp(request *restful.Request, response *restful.Respons
 func (h *handler) GetDscp(request *restful.Request, response *restful.Response) {
 
 	namespace := request.PathParameter("namespace")
-	result, err := h.qos.GetDSPC(namespace)
+	result, err := h.qos.GetDSCP(namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			klog.Error(err)
@@ -109,7 +109,7 @@ func (h *handler) UpdateDscp(request *restful.Request, response *restful.Respons
 		return
 	}
 
-	err = h.qos.UpdateDSPC(namespace, dscpWithoutNs.Dscp)
+	err = h.qos.UpdateDSCP(namespace, dscpWithoutNs.Dscp)
 	if err != nil {
 		klog.Error(err)
 		response.WriteHeader(http.StatusInternalServerError)
@@ -122,7 +122,7 @@ func (h *handler) UpdateDscp(request *restful.Request, response *restful.Respons
 func (h *handler) DeleteDscp(request *restful.Request, response *restful.Response) {
 	namespace := request.PathParameter("namespace")
 
-	err := h.qos.DeleteDSPC(namespace)
+	err := h.qos.DeleteDSCP(namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			klog.Error(err)

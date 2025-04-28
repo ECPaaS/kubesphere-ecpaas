@@ -17,11 +17,11 @@ import (
 )
 
 type Interface interface {
-	ListDSPC() (*DscpList, error)
-	GetDSPC(namespace string) (*Dscp, error)
-	CreateDSPC(namespace string, dscp int64) error
-	UpdateDSPC(namespace string, dscp int64) error
-	DeleteDSPC(namespace string) error
+	ListDSCP() (*DscpList, error)
+	GetDSCP(namespace string) (*Dscp, error)
+	CreateDSCP(namespace string, dscp int64) error
+	UpdateDSCP(namespace string, dscp int64) error
+	DeleteDSCP(namespace string) error
 }
 
 type qosOperator struct {
@@ -44,7 +44,7 @@ const (
 	Kind    = "egressqoses"
 )
 
-func (h *qosOperator) ListDSPC() (*DscpList, error) {
+func (h *qosOperator) ListDSCP() (*DscpList, error) {
 
 	gvr := schema.GroupVersionResource{
 		Group:    Group,
@@ -94,7 +94,7 @@ func (h *qosOperator) ListDSPC() (*DscpList, error) {
 	return &dscpList, nil
 }
 
-func (h *qosOperator) GetDSPC(namespace string) (*Dscp, error) {
+func (h *qosOperator) GetDSCP(namespace string) (*Dscp, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    Group,
 		Version:  Version,
@@ -127,7 +127,7 @@ func (h *qosOperator) GetDSPC(namespace string) (*Dscp, error) {
 	}, nil
 }
 
-func (h *qosOperator) CreateDSPC(namespace string, dscp int64) error {
+func (h *qosOperator) CreateDSCP(namespace string, dscp int64) error {
 	gvr := schema.GroupVersionResource{
 		Group:    Group,
 		Version:  Version,
@@ -160,7 +160,7 @@ func (h *qosOperator) CreateDSPC(namespace string, dscp int64) error {
 	return nil
 }
 
-func (h *qosOperator) UpdateDSPC(namespace string, dscp int64) error {
+func (h *qosOperator) UpdateDSCP(namespace string, dscp int64) error {
 	gvr := schema.GroupVersionResource{
 		Group:    Group,
 		Version:  Version,
@@ -191,7 +191,7 @@ func (h *qosOperator) UpdateDSPC(namespace string, dscp int64) error {
 	return nil
 }
 
-func (h *qosOperator) DeleteDSPC(namespace string) error {
+func (h *qosOperator) DeleteDSCP(namespace string) error {
 	gvr := schema.GroupVersionResource{
 		Group:    Group,
 		Version:  Version,

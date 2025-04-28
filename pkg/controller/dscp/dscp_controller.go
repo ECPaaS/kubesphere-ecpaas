@@ -32,6 +32,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/cache"
@@ -39,6 +40,9 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/util/workqueue"
+
+	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
+	"kubesphere.io/kubesphere/pkg/models/qos"
 )
 
 const (
@@ -66,8 +70,9 @@ type DscpConfig struct {
 }
 
 type Controller struct {
-	// kubeclientset is a standard kubernetes clientset
-	kubeclientset kubernetes.Interface
+	// k8sclient is a standard kubernetes clientset
+	k8sclient kubernetes.Interface
+	qos       qos.Interface
 
 	configMapLister corev1lister.ConfigMapLister
 	configMapsSynced cache.InformerSynced
@@ -91,7 +96,9 @@ type Controller struct {
 
 // NewController returns a new sample controller
 func NewDscpController(
-	kubeclientset kubernetes.Interface,
+	k8sclient kubernetes.Interface,
+	ksclient  kubesphere.Interface,
+	dynamic   dynamic.Interface,
 	configMapInformer corev1informer.ConfigMapInformer,
 	daemonSetInformer appsv1informer.DaemonSetInformer,
 	podInformer corev1informer.PodInformer) *Controller {
@@ -99,11 +106,12 @@ func NewDscpController(
 	klog.V(4).Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(klog.Infof)
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: k8sclient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerName})
 
 	controller := &Controller{
-		kubeclientset:    kubeclientset,
+		k8sclient:        k8sclient,
+		qos:              qos.New(k8sclient, ksclient, dynamic),
 		configMapLister:  configMapInformer.Lister(),
 		configMapsSynced: configMapInformer.Informer().HasSynced,
 		daemonSetLister:  daemonSetInformer.Lister(),
@@ -276,8 +284,8 @@ func (c *Controller) syncHandler(key string) error {
 			// When the DSCP Pod is to be deleted, the rules in the iptables custom chain must be cleared
 			// and the link with the POSTROUTING chain must be removed before the custom chain can be successfully deleted.
 			cmd := fmt.Sprintf("iptables -t mangle -F ACCTONDSCP && iptables -t mangle -D POSTROUTING -j ACCTONDSCP && iptables -t mangle -X ACCTONDSCP")
-			executeCommandInPod(c.kubeclientset, []string{"sh", "-c", cmd})
-			err := c.kubeclientset.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{})
+			executeCommandInPod(c.k8sclient, []string{"sh", "-c", cmd})
+			err := c.k8sclient.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{})
 			if err != nil {
 				if errors.IsNotFound(err) {
 					klog.Infof("DaemonSet %s already deleted", daemonSetName)
@@ -287,6 +295,19 @@ func (c *Controller) syncHandler(key string) error {
 			}
 
 			klog.Infof("DaemonSet %s deleted due to ConfigMap %s removal", daemonSetName, key)
+
+			// DSCP ConfigMap is deleted, and OVN DSCP needs to be deleted
+			listDscp, err := c.qos.ListDSCP()
+			if err != nil {
+				return err
+			}
+			for _, item := range listDscp.Items {
+				err = c.qos.DeleteDSCP(item.Namespace)
+				if err != nil {
+					return err
+				}
+			}
+
 			return nil
 		}
 		return err
@@ -306,34 +327,60 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
-	// DSCP ConfigMap exists and is ready to create or update the corresponding DaemonSet
-	timestamp := time.Now().Format(time.RFC3339)
-	_, err = c.daemonSetLister.DaemonSets(namespace).Get(daemonSetName)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// DaemonSet has not been created yet, create it
-			newDS := newDaemonSetFromConfigMap(c.kubeclientset, dscpConfig, daemonSetName, timestamp)
-			_, err := c.kubeclientset.AppsV1().DaemonSets(namespace).Create(context.TODO(), newDS, metav1.CreateOptions{})
-			if err != nil {
-				return fmt.Errorf("Failed to create DaemonSet %s: %v", daemonSetName, err)
+	switch dscpConfig.CNI {
+	case "calico":
+		// DSCP ConfigMap exists and is ready to create or update the corresponding DaemonSet
+		timestamp := time.Now().Format(time.RFC3339)
+		_, err = c.daemonSetLister.DaemonSets(namespace).Get(daemonSetName)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				// DaemonSet has not been created yet, create it
+				newDS := newDaemonSetFromConfigMap(c.k8sclient, dscpConfig, daemonSetName, timestamp)
+				_, err := c.k8sclient.AppsV1().DaemonSets(namespace).Create(context.TODO(), newDS, metav1.CreateOptions{})
+				if err != nil {
+					return fmt.Errorf("Failed to create DaemonSet %s: %v", daemonSetName, err)
+				}
+				klog.Infof("Created DaemonSet %s for ConfigMap %s", daemonSetName, key)
+				return nil
 			}
-			klog.Infof("Created DaemonSet %s for ConfigMap %s", daemonSetName, key)
-			return nil
+			return fmt.Errorf("Failed to get DaemonSet %s: %v", daemonSetName, err)
 		}
-		return fmt.Errorf("Failed to get DaemonSet %s: %v", daemonSetName, err)
-	}
 
-	// DaemonSet exists, triggering a rolling update to apply the latest content of DSCP ConfigMap
-	patch := []byte(fmt.Sprintf(`{"metadata":{"annotations":{"create-time":"%s"}}}`, timestamp))
-	_, err = c.kubeclientset.AppsV1().DaemonSets(namespace).Patch(context.TODO(), daemonSetName, types.StrategicMergePatchType, patch, metav1.PatchOptions{})
-	if err != nil {
-		return fmt.Errorf("Failed to patch DaemonSet %s: %v", name, err)
-	}
-	klog.Infof("Patched DaemonSet %s to trigger rolling update due to ConfigMap change", name)
+		// DaemonSet exists, triggering a rolling update to apply the latest content of DSCP ConfigMap
+		patch := []byte(fmt.Sprintf(`{"metadata":{"annotations":{"create-time":"%s"}}}`, timestamp))
+		_, err = c.k8sclient.AppsV1().DaemonSets(namespace).Patch(context.TODO(), daemonSetName, types.StrategicMergePatchType, patch, metav1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("Failed to patch DaemonSet %s: %v", name, err)
+		}
+		klog.Infof("Patched DaemonSet %s to trigger rolling update due to ConfigMap change", name)
 
-	// Update iptables for DSCP Pod in DaemonSet
-	dscpIpMap := convertDscpIpMapFromConfigMap(c.kubeclientset, dscpConfig)
-	executeCommandInPod(c.kubeclientset, generateIptablesDscpCommand(dscpIpMap, true))
+		// Update iptables for DSCP Pod in DaemonSet
+		dscpIpMap := convertDscpIpMapFromConfigMap(c.k8sclient, dscpConfig)
+		executeCommandInPod(c.k8sclient, generateIptablesDscpCommand(dscpIpMap, true))
+
+	case "ovn":
+		for _, ns := range dscpConfig.NamespaceDscpMap {
+			klog.V(4).Infof("Namespace: %s, DSCP: %s", ns.Name, ns.DSCP)
+			dscpNum, err := strconv.ParseInt(ns.DSCP, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			_, err = c.qos.GetDSCP(namespace)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					c.qos.CreateDSCP(ns.Name, dscpNum)
+					continue
+				} else {
+					return err
+				}
+			}
+			c.qos.UpdateDSCP(ns.Name, dscpNum)
+		}
+
+	default:
+		return fmt.Errorf("Unknown CNI: %s", dscpConfig.CNI)
+	}
 
 	return nil
 }
@@ -720,7 +767,7 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 				iptablesPodIp := pod.Status.PodIP + "/32"
 				command := fmt.Sprintf("iptables -t mangle %s -d %s -j MARK --set-mark %s", param, iptablesPodIp, ns.DSCP)
 				klog.Infof("%s: %s/%s (%s)", describe, pod.Namespace, pod.Name, pod.Status.PodIP)
-				executeCommandInPod(c.kubeclientset, strings.Fields(command))
+				executeCommandInPod(c.k8sclient, strings.Fields(command))
 				return
 			}
 			return
