@@ -32,6 +32,7 @@ import (
 
 	"kubesphere.io/kubesphere/cmd/controller-manager/app/options"
 	"kubesphere.io/kubesphere/pkg/controller/application"
+	"kubesphere.io/kubesphere/pkg/controller/dscp"
 	"kubesphere.io/kubesphere/pkg/controller/helm"
 	"kubesphere.io/kubesphere/pkg/controller/namespace"
 	"kubesphere.io/kubesphere/pkg/controller/openpitrix/helmapplication"
@@ -126,6 +127,7 @@ var allControllers = []string{
 	"virtualmachine",
 	"diskvolume",
 	"imagetemplate",
+	"dscp",
 }
 
 // setup all available controllers one by one
@@ -563,6 +565,15 @@ func addAllControllers(mgr manager.Manager, client k8s.Client, informerFactory i
 	if cmOptions.IsControllerEnabled("imagetemplate") {
 		imageTemplateReconciler := &imagetemplate.Reconciler{}
 		addControllerWithSetup(mgr, "imagetemplate", imageTemplateReconciler)
+	}
+
+	// "dscp" controller
+	if cmOptions.IsControllerEnabled("dscp") {
+		dscpController := dscp.NewDscpController(client.Kubernetes(),
+			kubernetesInformer.Core().V1().ConfigMaps(),
+			kubernetesInformer.Apps().V1().DaemonSets(),
+			kubernetesInformer.Core().V1().Pods())
+		addController(mgr, "dscp", dscpController)
 	}
 
 	// log all controllers process result
