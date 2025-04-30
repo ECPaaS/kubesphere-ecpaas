@@ -372,8 +372,7 @@ func (r *Reconciler) updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine
 			klog.Infof("Adding DiskVolume %s/%s to VirtualMachine %s/%s", req.Namespace, diskVolume, req.Namespace, req.Name)
 			err := addVolume(vm_instance.Name, diskVolume, vm_instance.Namespace, virtClient)
 			if err != nil {
-				klog.V(2).Infof(err.Error())
-
+				klog.Infof(err.Error())
 				if reflect.TypeOf(err) == reflect.TypeOf(&errors.StatusError{}) {
 					statusErr := err.(*errors.StatusError)
 					if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
@@ -388,6 +387,10 @@ func (r *Reconciler) updateDiskVolumes(vm_instance *virtzv1alpha1.VirtualMachine
 			if err != nil {
 				return err
 			}
+
+			// Adding multiple volumes simultaneously may cause the hotplug function to malfunction.
+			// To avoid this race condition, add time sleep for 5 seconds.
+			time.Sleep(5 * time.Second)
 		}
 	}
 
@@ -908,7 +911,7 @@ func ContainsString(slice []string, s string, modifier func(s string) string) bo
 func addVolume(vmiName, volumeName, namespace string, virtClient kubecli.KubevirtClient) error {
 	volumeSource, err := getVolumeSourceFromVolume(volumeName, namespace, virtClient)
 	if err != nil {
-		return fmt.Errorf("error adding volume, %v", err)
+		return fmt.Errorf("error when get volume source, %v", err)
 	}
 	hotplugRequest := &kvapi.AddVolumeOptions{
 		Name: volumeName,
