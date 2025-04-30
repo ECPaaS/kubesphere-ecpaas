@@ -245,7 +245,7 @@ func (c *Controller) processNextWorkItem() bool {
 		}
 		// Run the syncHandler, passing it the namespace/name string of the
 		// Foo resource to be synced.
-		if err := c.syncHandler(key); err != nil {
+		if err := c.syncHandler(); err != nil {
 			// Put the item back on the workqueue to handle any transient errors.
 			c.workqueue.AddRateLimited(key)
 			return fmt.Errorf("error syncing '%s': %s, requeuing", key, err.Error())
@@ -269,7 +269,7 @@ func (c *Controller) processNextWorkItem() bool {
 // syncHandler compares the actual state with the desired, and attempts to
 // converge the two. It then updates the Status block of the Foo resource
 // with the current status of the resource.
-func (c *Controller) syncHandler(key string) error {
+func (c *Controller) syncHandler() error {
 	// Get DSCP ConfigMap
 	configMap, err := c.configMapLister.ConfigMaps(configNamespace).Get(configName)
 	if err != nil {
@@ -291,8 +291,8 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	switch dscpConfig.CNI {
-	case "calico":
-		if err := runCalicoDscp(c, dscpConfig); err != nil {
+	case "calico", "flannel":
+		if err := runIptablesDscp(c, dscpConfig); err != nil {
 			return err
 		}
 
@@ -308,7 +308,7 @@ func (c *Controller) syncHandler(key string) error {
 	return nil
 }
 
-func runCalicoDscp(c *Controller, dscpConfig DscpConfig) error {
+func runIptablesDscp(c *Controller, dscpConfig DscpConfig) error {
 	// DSCP ConfigMap exists and is ready to create or update the corresponding DaemonSet
 	timestamp := time.Now().Format(time.RFC3339)
 	_, err := c.daemonSetLister.DaemonSets(configNamespace).Get(daemonSetName)
@@ -394,37 +394,37 @@ func runOvnDscp(c *Controller, dscpConfig DscpConfig) error {
 }
 
 func getMarsCookie(dscpConfig DscpConfig) (*string, error) {
-    data := map[string]string{
-        "user_name": dscpConfig.MARS["username"],
-        "password": dscpConfig.MARS["password"],
-    }
+	data := map[string]string{
+		"user_name": dscpConfig.MARS["username"],
+		"password": dscpConfig.MARS["password"],
+	}
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return nil, fmt.Errorf("MARS cookie json encoding failed: %v", err)
-    }
+	}
 
 	marsUrl := dscpConfig.MARS["api"] + "/mars/useraccount/v1/swagger-login"
 
 	// Building a POST request
-    req, err := http.NewRequest("POST", marsUrl, bytes.NewBuffer(jsonData))
-    if err != nil {
+	req, err := http.NewRequest("POST", marsUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
 		return nil, fmt.Errorf("Failed to create MARS cookie request: %v", err)
-    }
+	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
 	// Create an http client and send a request
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
 		return nil, fmt.Errorf("Failed to send MARS cookie request: %v", err)
-    }
-    defer resp.Body.Close()
+	}
+	defer resp.Body.Close()
 
 	sessionID := resp.Header.Get("MARS_G_SESSION_ID")
-    klog.V(4).Infof("MARS session ID: %s\n", sessionID)
+	klog.V(4).Infof("MARS session ID: %s\n", sessionID)
 
 	return &sessionID, nil
 }
@@ -683,7 +683,7 @@ func (c *Controller) deleteConfigMap(obj interface{}) {
 
 	switch dscpConfig.CNI {
 	// DSCP ConfigMap is deleted, and DaemonSet needs to be deleted
-	case "calico":
+	case "calico", "flannel":
 		// When the DSCP Pod is to be deleted, the rules in the iptables custom chain must be cleared
 		// and the link with the POSTROUTING chain must be removed before the custom chain can be successfully deleted.
 		cmd := fmt.Sprintf("iptables -t mangle -F ACCTONDSCP && iptables -t mangle -D POSTROUTING -j ACCTONDSCP && iptables -t mangle -X ACCTONDSCP")
@@ -712,7 +712,7 @@ func (c *Controller) deleteConfigMap(obj interface{}) {
 				return
 			}
 		}
-		klog.Infof("OVN DSCP update successful")
+		klog.Infof("OVN DSCP delete successful")
 
 	default:
 		return
@@ -747,7 +747,7 @@ func (c *Controller) enqueueDaemonSet(obj interface{}) {
 }
 
 func (c *Controller) handlePodUpdate(oldObj, newObj interface{}) {
-    oldPod := oldObj.(*corev1.Pod)
+	oldPod := oldObj.(*corev1.Pod)
 	newPod := newObj.(*corev1.Pod)
 
 	// Determine whether the Pod has changed from having no IP to having an IP
@@ -776,7 +776,7 @@ func (c *Controller) handlePodDelete(obj interface{}) {
 }
 
 func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
-    val, ok := pod.Labels["app"]
+	val, ok := pod.Labels["app"]
 	checkAppLabel := ok && val == appName
 
 	val, ok = pod.Labels["daemonset-owner"]
