@@ -145,12 +145,12 @@ const (
 
 	DashboardTag = "Dashboard"
 	// accton extension
-	VpcNetworkTag               = "VPC Network"
-	VpcSubnetTag                = "VPC Subnet"
-	VirtualMachineTag           = "Virtualization Virtual Machine"
-	DiskTag                     = "Virtualization Disk"
-	ImageTag                    = "Virtualization Image"
-	ResourceQuotasTag           = "Resources Quotas"
+	VpcNetworkTag     = "VPC Network"
+	VpcSubnetTag      = "VPC Subnet"
+	VirtualMachineTag = "Virtualization Virtual Machine"
+	DiskTag           = "Virtualization Disk"
+	ImageTag          = "Virtualization Image"
+	ResourceQuotasTag = "Resources Quotas"
 	ClusterSyncRepositoryTag    = "Cluster Sync Repository"
 	ClusterSyncBackupTag        = "Cluster Sync Backup"
 	ClusterSyncBackupFileTag    = "Cluster Sync Backup-file"
@@ -159,7 +159,6 @@ const (
 	ClusterSyncScheduleTag      = "Cluster Sync Schedule"
 
 	MinioImageTag = "Minio Images"
-	QoSTag        = "QoS"
 )
 
 var (

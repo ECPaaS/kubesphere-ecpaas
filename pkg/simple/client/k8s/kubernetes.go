@@ -23,7 +23,6 @@ import (
 	promresourcesclient "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	istioclient "istio.io/client-go/pkg/clientset/versioned"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -33,7 +32,6 @@ import (
 
 type Client interface {
 	Kubernetes() kubernetes.Interface
-	Dynamic() dynamic.Interface
 	KubeSphere() kubesphere.Interface
 	Istio() istioclient.Interface
 	Snapshot() snapshotclient.Interface
@@ -46,8 +44,6 @@ type Client interface {
 type kubernetesClient struct {
 	// kubernetes client interface
 	k8s kubernetes.Interface
-
-	dynamic dynamic.Interface
 
 	// generated clientset
 	ks kubesphere.Interface
@@ -78,7 +74,6 @@ func NewKubernetesClientOrDie(options *KubernetesOptions) Client {
 	k := &kubernetesClient{
 		k8s:           kubernetes.NewForConfigOrDie(config),
 		ks:            kubesphere.NewForConfigOrDie(config),
-		dynamic:       dynamic.NewForConfigOrDie(config),
 		istio:         istioclient.NewForConfigOrDie(config),
 		snapshot:      snapshotclient.NewForConfigOrDie(config),
 		apiextensions: apiextensionsclient.NewForConfigOrDie(config),
@@ -111,11 +106,6 @@ func NewKubernetesClient(options *KubernetesOptions) (Client, error) {
 
 	var k kubernetesClient
 	k.k8s, err = kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	k.dynamic, err = dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +144,6 @@ func NewKubernetesClient(options *KubernetesOptions) (Client, error) {
 
 func (k *kubernetesClient) Kubernetes() kubernetes.Interface {
 	return k.k8s
-}
-
-func (k *kubernetesClient) Dynamic() dynamic.Interface {
-	return k.dynamic
 }
 
 func (k *kubernetesClient) KubeSphere() kubesphere.Interface {
