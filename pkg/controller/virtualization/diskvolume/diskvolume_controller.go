@@ -29,12 +29,11 @@ import (
 )
 
 const (
-	controllerName        	 = "diskvolume-controller"
-	successSynced         	 = "Synced"
-	messageResourceSynced 	 = "DiskVolume synced successfully"
-	pvcNamePrefix         	 = "tpl-" // tpl: template
-	cstorStorageClassName    = "cstor-csi-disk"
-	hostpahtStorageClassName = "openebs-hostpath"
+	controllerName        = "diskvolume-controller"
+	successSynced         = "Synced"
+	messageResourceSynced = "DiskVolume synced successfully"
+	pvcNamePrefix         = "tpl-" // tpl: template
+	cstorStorageClassName = "cstor-csi-disk"
 )
 
 // Reconciler reconciles a disk volume object
@@ -125,8 +124,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 						return ctrl.Result{}, err
 					}
 				}
-			// create dataVolume for hostpath blank disk
-			case hostpahtStorageClassName:
+
+			// hostpath and mayastore has been verified and supported.
+			default:
 				err := r.createDV(virtClient, dv_instance)
 				if err != nil {
 					statusErr := err.(*errors.StatusError)
@@ -137,13 +137,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 						return ctrl.Result{}, err
 					}
 				}
-			default:
-				return ctrl.Result{}, fmt.Errorf("Default StorageClassName: %s isn't cstor-csi-disk or openebs-hostpath, so won't create pvc or dataVolume\n", scName)
 			}
 		}
 		// clone pvc for image disk
 		if dv_instance.Spec.Source.Image != nil {
-			err := r.clonePVC(virtClient, dv_instance, scName)
+			err := r.clonePVC(virtClient, dv_instance)
 			if err != nil {
 				statusErr := err.(*errors.StatusError)
 				if statusErr.ErrStatus.Reason == metav1.StatusReasonAlreadyExists {
@@ -222,7 +220,7 @@ func (r *Reconciler) createPVC(dv_instance *virtzv1alpha1.DiskVolume, scName str
 	return nil
 }
 
-func (r *Reconciler) clonePVC(virtClient kubecli.KubevirtClient, dv_instance *virtzv1alpha1.DiskVolume, scName string) error {
+func (r *Reconciler) clonePVC(virtClient kubecli.KubevirtClient, dv_instance *virtzv1alpha1.DiskVolume) error {
 	klog.Infof("Cloning pvc %s/%s", dv_instance.Namespace, dv_instance.Spec.Source.Image.Name)
 
 	blockOwnerDeletion := true

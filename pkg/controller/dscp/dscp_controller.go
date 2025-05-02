@@ -74,6 +74,7 @@ type Controller struct {
 	k8sclient kubernetes.Interface
 	qos       qos.Interface
 
+
 	configMapLister corev1lister.ConfigMapLister
 	configMapsSynced cache.InformerSynced
 
@@ -321,6 +322,7 @@ func runIptablesDscp(c *Controller, dscpConfig DscpConfig) error {
 				return fmt.Errorf("Failed to create DaemonSet %s: %v", daemonSetName, err)
 			}
 			klog.Infof("Created DaemonSet %s for ConfigMap %s", daemonSetName, configName)
+
 			return nil
 		}
 		return fmt.Errorf("Failed to get DaemonSet %s: %v", daemonSetName, err)
@@ -328,6 +330,7 @@ func runIptablesDscp(c *Controller, dscpConfig DscpConfig) error {
 
 	// DaemonSet exists, triggering a rolling update to apply the latest content of DSCP ConfigMap
 	patch := []byte(fmt.Sprintf(`{"metadata":{"annotations":{"create-time":"%s"}}}`, timestamp))
+
 	_, err = c.k8sclient.AppsV1().DaemonSets(configNamespace).Patch(context.TODO(), daemonSetName, types.StrategicMergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to patch DaemonSet %s: %v", daemonSetName, err)
@@ -390,7 +393,7 @@ func runOvnDscp(c *Controller, dscpConfig DscpConfig) error {
 	}
 	klog.Infof("OVN DSCP update successful")
 
-	return nil
+  return nil
 }
 
 func getMarsCookie(dscpConfig DscpConfig) (*string, error) {
@@ -407,6 +410,7 @@ func getMarsCookie(dscpConfig DscpConfig) (*string, error) {
 	marsUrl := dscpConfig.MARS["api"] + "/mars/useraccount/v1/swagger-login"
 
 	// Building a POST request
+
 	req, err := http.NewRequest("POST", marsUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create MARS cookie request: %v", err)
@@ -416,6 +420,7 @@ func getMarsCookie(dscpConfig DscpConfig) (*string, error) {
 	req.Header.Set("Accept", "application/json")
 
 	// Create an http client and send a request
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -738,16 +743,6 @@ func (c *Controller) enqueueDaemonSet(obj interface{}) {
 		return
 	}
 
-	// The DSCP ConfigMap still exists and DaemonSet is ready,
-	// add it to the workqueue.
-	if daemonSet.Status.NumberReady == daemonSet.Status.DesiredNumberScheduled {
-		configMapKey := configNamespace + "/" + configName
-		c.workqueue.Add(configMapKey)
-	}
-}
-
-func (c *Controller) handlePodUpdate(oldObj, newObj interface{}) {
-	oldPod := oldObj.(*corev1.Pod)
 	newPod := newObj.(*corev1.Pod)
 
 	// Determine whether the Pod has changed from having no IP to having an IP
