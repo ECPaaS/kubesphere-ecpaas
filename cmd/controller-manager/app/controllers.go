@@ -569,7 +569,7 @@ func addAllControllers(mgr manager.Manager, client k8s.Client, informerFactory i
 
 	// "dscp" controller
 	if cmOptions.IsControllerEnabled("dscp") {
-		dscpController := dscp.NewDscpController(client.Kubernetes(),
+		dscpController := dscp.NewDscpController(client.Kubernetes(), client.KubeSphere(), client.Dynamic(),
 			kubernetesInformer.Core().V1().ConfigMaps(),
 			kubernetesInformer.Apps().V1().DaemonSets(),
 			kubernetesInformer.Core().V1().Pods())

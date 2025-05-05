@@ -87,6 +87,7 @@ import (
 	openpitrixv1 "kubesphere.io/kubesphere/pkg/kapis/openpitrix/v1"
 	openpitrixv2alpha1 "kubesphere.io/kubesphere/pkg/kapis/openpitrix/v2alpha1"
 	operationsv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/operations/v1alpha2"
+	qosv1alpha1 "kubesphere.io/kubesphere/pkg/kapis/qos/v1alpha1"
 	resourcesv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha2"
 	resourcev1alpha3 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha3"
 	schedulerv1 "kubesphere.io/kubesphere/pkg/kapis/scheduler/v1"
@@ -291,6 +292,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 	urlruntime.Must(tenantv1alpha4.AddToContainer(s.container, s.InformerFactory, s.KubernetesClient.Kubernetes(),
 		s.KubernetesClient.KubeSphere(), s.EventsClient, s.LoggingClient, s.AuditingClient, amOperator, imOperator, rbacAuthorizer, s.MonitoringClient, s.RuntimeCache, s.Config.MeteringOptions, s.OpenpitrixClient))
 	urlruntime.Must(clustersyncv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
+	urlruntime.Must(qosv1alpha1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.KubernetesClient.Dynamic()))
 }
 
 // installCRDAPIs Install CRDs to the KAPIs with List and Get options
