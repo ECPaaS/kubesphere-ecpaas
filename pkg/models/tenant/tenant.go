@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -74,9 +75,15 @@ import (
 	"kubesphere.io/kubesphere/pkg/utils/clusterclient"
 	jsonpatchutil "kubesphere.io/kubesphere/pkg/utils/josnpatchutil"
 	"kubesphere.io/kubesphere/pkg/utils/stringutils"
+	yaml "sigs.k8s.io/yaml"
 )
 
-const orphanFinalizer = "orphan.finalizers.kubesphere.io"
+const (
+	orphanFinalizer = "orphan.finalizers.kubesphere.io"
+	namespaceStartTime                = "ecpaas.io/start-time"
+	namespaceControllerNamespace      = "ns-expire-controller-system"
+	namespaceControllerServiceaccount = "ns-expire-controller-controller-manager"
+)
 
 type Interface interface {
 	ListWorkspaces(user user.Info, queryParam *query.Query) (*api.ListResult, error)
@@ -415,7 +422,60 @@ func (t *tenantOperator) ListNamespaces(user user.Info, workspace string, queryP
 // The reason here why don't check the existence of workspace anymore is this function is only executed in host cluster.
 // but if the host cluster is not authorized to workspace, there will be no workspace in host cluster.
 func (t *tenantOperator) CreateNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error) {
-	return t.k8sclient.CoreV1().Namespaces().Create(context.Background(), labelNamespaceWithWorkspaceName(namespace, workspace), metav1.CreateOptions{})
+	labelNamespaceWithWorkspaceName(namespace, workspace)
+	if startTimeString, ok := namespace.Annotations[namespaceStartTime]; ok {
+		// check startTimeString is valid
+		startTime, err := time.Parse(time.RFC3339, startTimeString)
+		if err != nil {
+			klog.Error(err)
+			return nil, err
+		}
+		if startTime.After(time.Now()) && isNamespaceControllerInstalled(t) {
+			// Create NS in the future
+			nsContent, err := yaml.Marshal(namespace)
+			if err != nil {
+				klog.Error(err)
+				return nil, err
+			}
+
+			// Calculate sleep time in pod, this command will be executed by /bin/sh
+			// Use date command to calculate sleep time in seconds, can feed RFC3339 directly
+			sleepCommand := fmt.Sprintf("sleep $(expr $(date -d \"%s\" +%%s) - $(date +%%s))", startTimeString)
+			createCommand := fmt.Sprintf("%s; kubectl apply -f - <<EOF\n%s\nEOF", sleepCommand, string(nsContent))
+			klog.Infof("show createCommand: %s", createCommand)
+
+			zero := int32(0)
+			job := &batchv1.Job{}
+			job.Name = "namespace-creator-" + namespace.Name
+			job.Namespace = namespaceControllerNamespace
+			job.Spec = batchv1.JobSpec{
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						ServiceAccountName : namespaceControllerServiceaccount,
+						Containers: []corev1.Container{
+							{
+								Name: "namespace-creator",
+								Image: "bitnami/kubectl:1.22.9",
+								Command: []string{
+									"/bin/sh",
+									"-c",
+									createCommand,
+								},
+							},
+						},
+						RestartPolicy: corev1.RestartPolicyNever,
+					},
+				},
+				BackoffLimit: &zero,
+				TTLSecondsAfterFinished: &zero,
+			}
+
+			_, err = t.k8sclient.BatchV1().Jobs(job.Namespace).Create(context.Background(), job, metav1.CreateOptions{})
+			return namespace, err
+		}
+	}
+
+	return t.k8sclient.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
 }
 
 // labelNamespaceWithWorkspaceName adds a kubesphere.io/workspace=[workspaceName] label to namespace which
@@ -428,6 +488,17 @@ func labelNamespaceWithWorkspaceName(namespace *corev1.Namespace, workspaceName 
 	namespace.Labels[tenantv1alpha1.WorkspaceLabel] = workspaceName // label namespace with workspace name
 
 	return namespace
+}
+
+func isNamespaceControllerInstalled(t *tenantOperator) bool {
+	// get serviceaccount and namespace
+	if _, err := t.k8sclient.CoreV1().Namespaces().Get(context.Background(), namespaceControllerNamespace, metav1.GetOptions{}); err != nil {
+		return false
+	}
+	if _, err := t.k8sclient.CoreV1().ServiceAccounts(namespaceControllerNamespace).Get(context.Background(), namespaceControllerServiceaccount, metav1.GetOptions{}); err != nil {
+		return false
+	}
+	return true
 }
 
 func (t *tenantOperator) DescribeNamespace(workspace, namespace string) (*corev1.Namespace, error) {
@@ -447,6 +518,20 @@ func (t *tenantOperator) DescribeNamespace(workspace, namespace string) (*corev1
 func (t *tenantOperator) DeleteNamespace(workspace, namespace string) error {
 	_, err := t.DescribeNamespace(workspace, namespace)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			// Namespace is unstarted yet, check job
+			jobName := "namespace-creator-" + namespace
+			if _, err := t.k8sclient.BatchV1().Jobs(namespaceControllerNamespace).Get(context.Background(), jobName, metav1.GetOptions{}); err == nil {
+				// delete job and pod
+				t.k8sclient.BatchV1().Jobs(namespaceControllerNamespace).Delete(context.Background(), jobName, metav1.DeleteOptions{})
+				zero := int64(0)
+				labelSelector := fmt.Sprintf("job-name in (%s)", jobName)
+				t.k8sclient.CoreV1().Pods(namespaceControllerNamespace).DeleteCollection(context.Background(),
+				metav1.DeleteOptions{GracePeriodSeconds: &zero},
+				metav1.ListOptions{LabelSelector: labelSelector})
+				return nil
+			}
+		}
 		return err
 	}
 	return t.k8sclient.CoreV1().Namespaces().Delete(context.Background(), namespace, *metav1.NewDeleteOptions(0))
@@ -455,6 +540,17 @@ func (t *tenantOperator) DeleteNamespace(workspace, namespace string) error {
 func (t *tenantOperator) UpdateNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error) {
 	_, err := t.DescribeNamespace(workspace, namespace.Name)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			// Namespace is unstarted yet, check job
+			jobName := "namespace-creator-" + namespace.Name
+			if _, err := t.k8sclient.BatchV1().Jobs(namespaceControllerNamespace).Get(context.Background(), jobName, metav1.GetOptions{}); err == nil {
+				if err := t.DeleteNamespace(workspace, namespace.Name); err == nil {
+					time.Sleep(500 * time.Millisecond)
+					return t.CreateNamespace(workspace, namespace)
+				}
+				return nil, err
+			}
+		}
 		return nil, err
 	}
 	namespace = labelNamespaceWithWorkspaceName(namespace, workspace)
@@ -464,6 +560,9 @@ func (t *tenantOperator) UpdateNamespace(workspace string, namespace *corev1.Nam
 func (t *tenantOperator) PatchNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error) {
 	_, err := t.DescribeNamespace(workspace, namespace.Name)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return t.UpdateNamespace(workspace, namespace)
+		}
 		return nil, err
 	}
 	if namespace.Labels != nil {
