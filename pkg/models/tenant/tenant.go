@@ -81,6 +81,7 @@ import (
 const (
 	orphanFinalizer = "orphan.finalizers.kubesphere.io"
 	namespaceStartTime                = "ecpaas.io/start-time"
+	namespaceExpireTime               = "ecpaas.io/expire-time"
 	namespaceControllerNamespace      = "ns-expire-controller-system"
 	namespaceControllerServiceaccount = "ns-expire-controller-controller-manager"
 )
@@ -423,6 +424,7 @@ func (t *tenantOperator) ListNamespaces(user user.Info, workspace string, queryP
 // but if the host cluster is not authorized to workspace, there will be no workspace in host cluster.
 func (t *tenantOperator) CreateNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error) {
 	labelNamespaceWithWorkspaceName(namespace, workspace)
+	validateTime(namespace)
 	if startTimeString, ok := namespace.Annotations[namespaceStartTime]; ok {
 		// check startTimeString is valid
 		startTime, err := time.Parse(time.RFC3339, startTimeString)
@@ -442,7 +444,6 @@ func (t *tenantOperator) CreateNamespace(workspace string, namespace *corev1.Nam
 			// Use date command to calculate sleep time in seconds, can feed RFC3339 directly
 			sleepCommand := fmt.Sprintf("sleep $(expr $(date -d \"%s\" +%%s) - $(date +%%s))", startTimeString)
 			createCommand := fmt.Sprintf("%s; kubectl apply -f - <<EOF\n%s\nEOF", sleepCommand, string(nsContent))
-			klog.Infof("show createCommand: %s", createCommand)
 
 			zero := int32(0)
 			job := &batchv1.Job{}
@@ -501,6 +502,21 @@ func isNamespaceControllerInstalled(t *tenantOperator) bool {
 	return true
 }
 
+// Removes empty Start/Expire time in annotations
+func validateTime(namespace *corev1.Namespace) {
+	if startTimeString, ok := namespace.Annotations[namespaceStartTime]; ok {
+		if startTimeString == "" {
+			delete(namespace.Annotations, namespaceStartTime)
+		}
+	}
+
+	if expireTimeString, ok := namespace.Annotations[namespaceExpireTime]; ok {
+		if expireTimeString == "" {
+			delete(namespace.Annotations, namespaceExpireTime)
+		}
+	}
+}
+
 func (t *tenantOperator) DescribeNamespace(workspace, namespace string) (*corev1.Namespace, error) {
 	obj, err := t.resourceGetter.Get("namespaces", "", namespace)
 	if err != nil {
@@ -538,6 +554,7 @@ func (t *tenantOperator) DeleteNamespace(workspace, namespace string) error {
 }
 
 func (t *tenantOperator) UpdateNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error) {
+	validateTime(namespace)
 	_, err := t.DescribeNamespace(workspace, namespace.Name)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -558,6 +575,7 @@ func (t *tenantOperator) UpdateNamespace(workspace string, namespace *corev1.Nam
 }
 
 func (t *tenantOperator) PatchNamespace(workspace string, namespace *corev1.Namespace) (*corev1.Namespace, error) {
+	// This API only modifies annotations, format merge data for PATCH
 	_, err := t.DescribeNamespace(workspace, namespace.Name)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -565,10 +583,21 @@ func (t *tenantOperator) PatchNamespace(workspace string, namespace *corev1.Name
 		}
 		return nil, err
 	}
-	if namespace.Labels != nil {
-		namespace.Labels[tenantv1alpha1.WorkspaceLabel] = workspace
+
+	newAnnotations := make(map[string]interface{}, 0)
+	for key, value := range namespace.Annotations {
+		if value == "" {
+			newAnnotations[key] = nil
+		} else {
+			newAnnotations[key] = value
+		}
 	}
-	data, err := json.Marshal(namespace)
+	patch := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"annotations": newAnnotations,
+		},
+	}
+	data, err := json.Marshal(patch)
 	if err != nil {
 		return nil, err
 	}
