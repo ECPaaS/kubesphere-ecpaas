@@ -103,11 +103,18 @@ func isYunikornAvailable(h *handler) bool {
 
 func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful.Response) {
 
+	yunikornQueue := []YunikornQueue{}
+
 	yunikornServiceDNS, err := getYuniKornServiceName(h)
 	if err != nil {
 		klog.Error(err.Error())
 		if errors.IsNotFound(err) {
-			response.WriteError(http.StatusNotFound, err)
+			queuesResponse := YunikornQueuesResponse{
+				TotalCount: len(yunikornQueue),
+				Items:      yunikornQueue,
+			}
+			response.WriteAsJson(queuesResponse)
+			return
 		}
 		response.WriteError(http.StatusInternalServerError, err)
 	}
@@ -116,7 +123,12 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 	if err != nil {
 		klog.Error(err.Error())
 		if errors.IsNotFound(err) {
-			response.WriteError(http.StatusNotFound, err)
+			queuesResponse := YunikornQueuesResponse{
+				TotalCount: len(yunikornQueue),
+				Items:      yunikornQueue,
+			}
+			response.WriteAsJson(queuesResponse)
+			return
 		}
 		response.WriteError(http.StatusInternalServerError, err)
 	}
@@ -130,7 +142,6 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 		}
 		response.WriteError(http.StatusInternalServerError, err)
 	}
-	yunikornQueue := []YunikornQueue{}
 
 	for _, queuename := range queues {
 		yunikornQueue = append(yunikornQueue, YunikornQueue{Queue: queuename})
