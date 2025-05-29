@@ -67,7 +67,7 @@ require (
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/kubesphere/pvc-autoresizer v0.1.1
 	github.com/kubesphere/sonargo v0.0.2
-	github.com/kubesphere/storageclass-accessor v0.2.0
+	github.com/kubesphere/storageclass-accessor v0.2.2
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
@@ -555,7 +555,7 @@ replace (
 	github.com/kubernetes-csi/external-snapshotter/v2 => github.com/kubernetes-csi/external-snapshotter/v2 v2.1.1
 	github.com/kubesphere/pvc-autoresizer => github.com/kubesphere/pvc-autoresizer v0.1.1
 	github.com/kubesphere/sonargo => github.com/kubesphere/sonargo v0.0.2
-	github.com/kubesphere/storageclass-accessor => github.com/kubesphere/storageclass-accessor v0.2.0
+	github.com/kubesphere/storageclass-accessor => github.com/kubesphere/storageclass-accessor v0.2.2
 	github.com/kylelemons/go-gypsy => github.com/kylelemons/go-gypsy v0.0.0-20160905020020-08cad365cd28
 	github.com/kylelemons/godebug => github.com/kylelemons/godebug v0.0.0-20160406211939-eadb3ce320cb
 	github.com/lann/builder => github.com/lann/builder v0.0.0-20180802200727-47ae307949d0
