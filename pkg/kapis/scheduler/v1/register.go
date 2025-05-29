@@ -10,10 +10,12 @@ import (
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 )
 
 const (
@@ -27,9 +29,9 @@ func Resource(resource string) schema.GroupResource {
 	return GroupVersion.WithResource(resource).GroupResource()
 }
 
-func AddToContainer(container *restful.Container, k8sclient kubernetes.Interface, ksclient kubesphere.Interface) error {
+func AddToContainer(container *restful.Container, k8sclient kubernetes.Interface, ksclient kubesphere.Interface, dynamic dynamic.Interface) error {
 	webservice := runtime.NewWebService(GroupVersion)
-	handler := newHandler(k8sclient, ksclient)
+	handler := newHandler(k8sclient, ksclient, dynamic)
 
 	webservice.Route(webservice.GET("/scheduler").
 		To(handler.ListSchedulerName).
@@ -46,6 +48,23 @@ func AddToContainer(container *restful.Container, k8sclient kubernetes.Interface
 		Returns(http.StatusOK, api.StatusOK, YunikornQueuesResponse{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{schedulerTag}))
+
+	webservice.Route(webservice.GET("/volcano/queues").
+		To(handler.ListVolcanoQueues).
+		Doc("List Volcano's queues").
+		Notes("This API provides the available Volcano queues").
+		Returns(http.StatusOK, api.StatusOK, VolcanoQueuesResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{schedulerTag}))
+
+	webservice.Route(webservice.GET("/priorityClasses").
+		To(handler.ListPriorityClasses).
+		Doc("List all of PriortyClass name").
+		Notes("This API provides the avialable PriorityClass").
+		Returns(http.StatusOK, api.StatusOK, PriorityClassesResponse{}).
 		Metadata(restfulspec.KeyOpenAPITags, []string{schedulerTag}))
 
 	container.Add(webservice)

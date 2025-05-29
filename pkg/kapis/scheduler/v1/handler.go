@@ -14,20 +14,26 @@ import (
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 )
 
 type handler struct {
 	k8sclient kubernetes.Interface
 	ksclient  kubesphere.Interface
+	dynamic   dynamic.Interface
 }
 
-func newHandler(k8sclient kubernetes.Interface, ksclient kubesphere.Interface) *handler {
+func newHandler(k8sclient kubernetes.Interface, ksclient kubesphere.Interface, dynamic dynamic.Interface) *handler {
 	return &handler{
 		k8sclient: k8sclient,
 		ksclient:  ksclient,
+		dynamic:   dynamic,
 	}
 }
 
@@ -38,6 +44,15 @@ type YunikornQueuesResponse struct {
 
 type YunikornQueue struct {
 	Queue string `json:"queue"  description:"Available yunikorn queue"`
+}
+
+type VolcanoQueuesResponse struct {
+	TotalCount int            `json:"total_count" description:"Total number of queues"`
+	Items      []VolcanoQueue `json:"items" description:"Available volcano queues"`
+}
+
+type VolcanoQueue struct {
+	Name string `json:"name"  description:"Available volcano queue"`
 }
 
 type YunikornPatition struct {
@@ -58,6 +73,15 @@ type SchedulerNameResponse struct {
 
 type SchedulerName struct {
 	Name string `json:"name"  description:"Available scheduler name"`
+}
+
+type PriorityClasses struct {
+	Name string `json:"name"  description:"Available priorityClass name"`
+}
+
+type PriorityClassesResponse struct {
+	TotalCount int               `json:"total_count" description:"Total number of priorityClass"`
+	Items      []PriorityClasses `json:"items" description:"Available priorityClass name"`
 }
 
 func (h *handler) ListSchedulerName(request *restful.Request, response *restful.Response) {
@@ -153,6 +177,90 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 	}
 
 	response.WriteAsJson(queuesResponse)
+}
+
+func (h *handler) ListVolcanoQueues(request *restful.Request, response *restful.Response) {
+	const (
+		Group   = "scheduling.volcano.sh"
+		Version = "v1beta1"
+		Kind    = "queues"
+	)
+
+	gvr := schema.GroupVersionResource{
+		Group:    Group,
+		Version:  Version,
+		Resource: Kind,
+	}
+
+	list, err := h.dynamic.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		response.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Volcano scheduler is not installed",
+		})
+		return
+	}
+
+	volcanoQueues := []VolcanoQueue{}
+
+	for _, item := range list.Items {
+		name, found, err := unstructured.NestedString(item.Object, "metadata", "name")
+		if err != nil || !found {
+			continue
+		}
+		queue := VolcanoQueue{
+			Name: name,
+		}
+		volcanoQueues = append(volcanoQueues, queue)
+	}
+
+	queuesResponse := VolcanoQueuesResponse{
+		TotalCount: len(volcanoQueues),
+		Items:      volcanoQueues,
+	}
+
+	response.WriteAsJson(queuesResponse)
+}
+
+func (h *handler) ListPriorityClasses(request *restful.Request, response *restful.Response) {
+
+	const (
+		Group   = "scheduling.k8s.io"
+		Version = "v1"
+		Kind    = "priorityclasses"
+	)
+
+	gvr := schema.GroupVersionResource{
+		Group:    Group,
+		Version:  Version,
+		Resource: Kind,
+	}
+
+	list, err := h.dynamic.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		response.WriteError(http.StatusNotFound, err)
+	}
+
+	priorityClasses := []PriorityClasses{}
+
+	for _, item := range list.Items {
+		name, found, err := unstructured.NestedString(item.Object, "metadata", "name")
+		if err != nil || !found {
+			continue
+		}
+		priorityClass := PriorityClasses{
+			Name: name,
+		}
+		priorityClasses = append(priorityClasses, priorityClass)
+	}
+
+	PriorityClassesResponse := PriorityClassesResponse{
+		TotalCount: len(priorityClasses),
+		Items:      priorityClasses,
+	}
+
+	response.WriteAsJson(PriorityClassesResponse)
 }
 
 func getAllPartition(yunikornServiceDNS string) ([]string, error) {
