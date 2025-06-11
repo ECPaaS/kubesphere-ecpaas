@@ -285,9 +285,11 @@ func (c *Controller) syncHandler() error {
 	}
 
 	// Update MARS DSCP
-	err = sendMarsAPI(dscpConfig)
-	if err != nil {
-		return err
+	if dscpConfig.MARS != nil {
+		err = sendMarsAPI(dscpConfig)
+		if err != nil {
+			return err
+		}
 	}
 
 	switch dscpConfig.CNI {
