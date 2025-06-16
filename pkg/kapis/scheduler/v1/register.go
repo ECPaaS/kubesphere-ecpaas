@@ -60,13 +60,6 @@ func AddToContainer(container *restful.Container, k8sclient kubernetes.Interface
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{schedulerTag}))
 
-	webservice.Route(webservice.GET("/priorityClasses").
-		To(handler.ListPriorityClasses).
-		Doc("List all of PriortyClass name").
-		Notes("This API provides the avialable PriorityClass").
-		Returns(http.StatusOK, api.StatusOK, PriorityClassesResponse{}).
-		Metadata(restfulspec.KeyOpenAPITags, []string{schedulerTag}))
-
 	container.Add(webservice)
 
 	return nil

@@ -208,6 +208,11 @@ func (h *handler) ListVolcanoQueues(request *restful.Request, response *restful.
 		if err != nil || !found {
 			continue
 		}
+		// root queue shouldn't assign volcao job.
+		if name == "root" {
+			continue
+		}
+
 		queue := VolcanoQueue{
 			Name: name,
 		}
@@ -220,47 +225,6 @@ func (h *handler) ListVolcanoQueues(request *restful.Request, response *restful.
 	}
 
 	response.WriteAsJson(queuesResponse)
-}
-
-func (h *handler) ListPriorityClasses(request *restful.Request, response *restful.Response) {
-
-	const (
-		Group   = "scheduling.k8s.io"
-		Version = "v1"
-		Kind    = "priorityclasses"
-	)
-
-	gvr := schema.GroupVersionResource{
-		Group:    Group,
-		Version:  Version,
-		Resource: Kind,
-	}
-
-	list, err := h.dynamic.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{})
-
-	if err != nil {
-		response.WriteError(http.StatusNotFound, err)
-	}
-
-	priorityClasses := []PriorityClasses{}
-
-	for _, item := range list.Items {
-		name, found, err := unstructured.NestedString(item.Object, "metadata", "name")
-		if err != nil || !found {
-			continue
-		}
-		priorityClass := PriorityClasses{
-			Name: name,
-		}
-		priorityClasses = append(priorityClasses, priorityClass)
-	}
-
-	PriorityClassesResponse := PriorityClassesResponse{
-		TotalCount: len(priorityClasses),
-		Items:      priorityClasses,
-	}
-
-	response.WriteAsJson(PriorityClassesResponse)
 }
 
 func getAllPartition(yunikornServiceDNS string) ([]string, error) {
