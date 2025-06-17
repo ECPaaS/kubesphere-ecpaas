@@ -68,6 +68,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/informers"
 	alertingv1 "kubesphere.io/kubesphere/pkg/kapis/alerting/v1"
 	alertingv2alpha1 "kubesphere.io/kubesphere/pkg/kapis/alerting/v2alpha1"
+	autoscalerv1 "kubesphere.io/kubesphere/pkg/kapis/autoscaler/v1"
 	clusterkapisv1alpha1 "kubesphere.io/kubesphere/pkg/kapis/cluster/v1alpha1"
 	clustersyncv1 "kubesphere.io/kubesphere/pkg/kapis/clustersync/v1"
 	configv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/config/v1alpha2"
@@ -293,6 +294,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 		s.KubernetesClient.KubeSphere(), s.EventsClient, s.LoggingClient, s.AuditingClient, amOperator, imOperator, rbacAuthorizer, s.MonitoringClient, s.RuntimeCache, s.Config.MeteringOptions, s.OpenpitrixClient))
 	urlruntime.Must(clustersyncv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 	urlruntime.Must(qosv1alpha1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.KubernetesClient.Dynamic()))
+	urlruntime.Must(autoscalerv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 }
 
 // installCRDAPIs Install CRDs to the KAPIs with List and Get options
