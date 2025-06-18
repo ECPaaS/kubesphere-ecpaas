@@ -1429,6 +1429,39 @@
         }
       }
     },
+    "/kapis/scheduler.ecpaas.io/v1/volcano/queues": {
+      "get": {
+        "description": "This API provides the available Volcano queues",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Scheduler"
+        ],
+        "summary": "List Volcano's queues",
+        "operationId": "ListVolcanoQueues",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.VolcanoQueuesResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/scheduler.ecpaas.io/v1/yunikorn/queues": {
       "get": {
         "description": "This API provides the available YuniKorn leaf queues, which can be specified in the Job resource's labels, e.g., queue: root.system.high-priority",
@@ -3579,12 +3612,17 @@
     },
     "v1.SchedulerName": {
       "required": [
-        "name"
+        "name",
+        "useOriginalJobFlow"
       ],
       "properties": {
         "name": {
           "description": "Available scheduler name",
           "type": "string"
+        },
+        "useOriginalJobFlow": {
+          "description": "Indicate whether this scheduler uses the original job creation flow.",
+          "type": "boolean"
         }
       }
     },
@@ -3603,6 +3641,37 @@
         },
         "total_count": {
           "description": "Total number of scheduler",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1.VolcanoQueue": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Available volcano queue",
+          "type": "string"
+        }
+      }
+    },
+    "v1.VolcanoQueuesResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "Available volcano queues",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.VolcanoQueue"
+          }
+        },
+        "total_count": {
+          "description": "Total number of queues",
           "type": "integer",
           "format": "int32"
         }

@@ -16,6 +16,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 	"kubesphere.io/kubesphere/pkg/constants"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 	"kubesphere.io/kubesphere/pkg/models/qos"
 )
 
@@ -58,7 +59,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Param(webservice.PathParameter("namespace", "Namespace to update")).
 		Reads(qos.DscpWithoutNs{}).
 		Returns(http.StatusOK, api.StatusOK, qos.Dscp{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, nil).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.QoSTag}))
 
