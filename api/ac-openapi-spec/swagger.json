@@ -3612,12 +3612,17 @@
     },
     "v1.SchedulerName": {
       "required": [
-        "name"
+        "name",
+        "useOriginalJobFlow"
       ],
       "properties": {
         "name": {
           "description": "Available scheduler name",
           "type": "string"
+        },
+        "useOriginalJobFlow": {
+          "description": "Indicate whether this scheduler uses the original job creation flow.",
+          "type": "boolean"
         }
       }
     },

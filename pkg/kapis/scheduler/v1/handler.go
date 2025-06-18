@@ -72,7 +72,8 @@ type SchedulerNameResponse struct {
 }
 
 type SchedulerName struct {
-	Name string `json:"name"  description:"Available scheduler name"`
+	Name               string `json:"name"  description:"Available scheduler name"`
+	UseOriginalJobFlow bool   `json:"useOriginalJobFlow"  description:"Indicate whether this scheduler uses the original job creation flow."`
 }
 
 type PriorityClasses struct {
@@ -87,14 +88,24 @@ type PriorityClassesResponse struct {
 func (h *handler) ListSchedulerName(request *restful.Request, response *restful.Response) {
 	schedulers := []SchedulerName{
 		{
-			Name: "default-scheduler",
+			Name:               "default-scheduler",
+			UseOriginalJobFlow: true,
 		},
 	}
 
 	// Yunikorn scheduler
 	if isYunikornAvailable(h) {
 		schedulers = append(schedulers, SchedulerName{
-			Name: "yunikorn",
+			Name:               "yunikorn",
+			UseOriginalJobFlow: true,
+		})
+	}
+
+	// Volcano scheduler
+	if isVolcanoAvailable(h) {
+		schedulers = append(schedulers, SchedulerName{
+			Name:               "volcano",
+			UseOriginalJobFlow: false,
 		})
 	}
 
@@ -123,6 +134,25 @@ func isYunikornAvailable(h *handler) bool {
 	defer resp.Body.Close()
 
 	return resp.StatusCode == 200
+}
+
+func isVolcanoAvailable(h *handler) bool {
+
+	const (
+		Group   = "batch.volcano.sh"
+		Version = "v1alpha1"
+	)
+
+	gv := Group + "/" + Version
+
+	_, err := h.k8sclient.Discovery().ServerResourcesForGroupVersion(gv)
+
+	if err != nil {
+		klog.Warningf("Volcano not available: %v", err)
+		return false
+	}
+
+	return true
 }
 
 func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful.Response) {
