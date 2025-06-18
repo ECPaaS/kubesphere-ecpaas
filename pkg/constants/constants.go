@@ -160,6 +160,7 @@ const (
 
 	MinioImageTag = "Minio Images"
 	QoSTag        = "QoS"
+	FileTag       = "File"
 )
 
 var (
