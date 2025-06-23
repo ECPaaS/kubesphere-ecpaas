@@ -2,7 +2,7 @@
 Copyright(c) 2025-present Accton. All rights reserved. www.accton.com.tw
 */
 
-package v1alpha1
+package v1
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func newHandler(k8sclient kubernetes.Interface) fileHandler {
 	}
 }
 
-type FileUploadInfo struct {
+type FileUploadResponse struct {
 	Namespace  string `json:"namespace" description:"The namespace where the PVC is located"`
 	PvcName    string `json:"pvcName" description:"PVC name"`
 	TargetPath string `json:"targetPath" description:"Specify the target path where the file is stored in the PVC"`
@@ -112,7 +112,7 @@ func (h *fileHandler) UploadFile(req *restful.Request, resp *restful.Response) {
 	// and return the upload information.
 	success, err := WaitForJobCompletion(h.k8sClient, namespace, jobName)
 	if success {
-		uploadInfo := FileUploadInfo{
+		uploadInfo := FileUploadResponse{
 			Namespace:  namespace,
 			PvcName:    pvcName,
 			TargetPath: targetPath,
