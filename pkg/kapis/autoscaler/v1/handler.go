@@ -18,15 +18,11 @@ import (
 
 type handler struct {
 	autoscaler ui_autoscaler.Interface
-	ksClient   kubesphere.Interface
-	k8sClient  kubernetes.Interface
 }
 
 func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) handler {
 	return handler{
 		autoscaler: ui_autoscaler.New(ksclient, k8sclient),
-		ksClient:   ksclient,
-		k8sClient:  k8sclient,
 	}
 }
 

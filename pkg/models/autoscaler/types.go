@@ -17,9 +17,9 @@ type HpaRequest struct {
 }
 
 type ScalingRules struct {
-	StableWindow *int32          `json:"stabilizationWindowSeconds" description:"The number of seconds for which past recommendations should be considered while scaling up. Unit is second. Default: 0 when scaling up; 300 when scaling down." minimum:"0" maximum:"3600"`
-	SelectPolicy string          `json:"selectPolicy" default:"Max" description:"To specify which policy should be used. Available input: Max, Min, Disabled"`
-	Policies     []ScalingPolicy `json:"policies" description:"A list of potential scaling policies which can be used during scaling. At least one item must be set, and each type can be set at most once."`
+	StabilizationWindowSeconds *int32          `json:"stabilizationWindowSeconds" description:"The number of seconds for which past recommendations should be considered while scaling up. Unit is second. Default: 0 when scaling up; 300 when scaling down." minimum:"0" maximum:"3600"`
+	SelectPolicy               string          `json:"selectPolicy" default:"Max" description:"To specify which policy should be used. Available input: Max, Min, Disabled"`
+	Policies                   []ScalingPolicy `json:"policies" description:"A list of potential scaling policies which can be used during scaling. At least one item must be set, and each type can be set at most once."`
 }
 
 type ScalingPolicy struct {

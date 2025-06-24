@@ -31,28 +31,24 @@ func isValidHpaRequest(request *ui_autoscaler.HpaRequest, resp *restful.Response
 			Reason: "resourceName must not be empty.",
 		})
 		return false
-	} else if !util.IsValidKubernetesString(request.ResourceName, "resourceName", resp) {
+	} else if !util.IsValidKubernetesString(request.ResourceName, "ResourceName", resp) {
 		return false
 	}
 	// TargetCpuUsage int32
-	if request.TargetCpuUsage == 0 {
+	// TargetMemoryUsage float32
+	if request.TargetCpuUsage == 0 && request.TargetMemoryUsage == 0.0 {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "targetCpuUsage must not be empty.",
+			Reason: "at least one of targetCpuUsage or targetMemoryUsage must be set.",
 		})
 		return false
-	} else if request.TargetCpuUsage > percentUpperLimit || request.TargetCpuUsage < percentLowerLimit {
+	}
+	if request.TargetCpuUsage != 0 && (request.TargetCpuUsage > percentUpperLimit || request.TargetCpuUsage < percentLowerLimit) {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "targetCpuUsage must be whole number percentage between 1 ~ 100",
 		})
 		return false
 	}
-	// TargetMemoryUsage float32
-	if request.TargetMemoryUsage == 0.0 {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "targetMemoryUsage must not be empty.",
-		})
-		return false
-	} else if request.TargetMemoryUsage > resourceUpperLimit || request.TargetMemoryUsage < resourceLowerLimit {
+	if request.TargetMemoryUsage != 0.0 && (request.TargetMemoryUsage > resourceUpperLimit || request.TargetMemoryUsage < resourceLowerLimit) {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "targetMemoryUsage must be between 0.01 ~ 10000, and will be rounded to 2 decimal places",
 		})
@@ -66,7 +62,7 @@ func isValidHpaRequest(request *ui_autoscaler.HpaRequest, resp *restful.Response
 			Reason: "minReplicas must not be empty.",
 		})
 		return false
-	} else if !util.IsValidWithinRange(reflectType, int(request.MinReplicas), "minReplicas", resp) {
+	} else if !util.IsValidWithinRange(reflectType, int(request.MinReplicas), "MinReplicas", resp) {
 		return false
 	}
 	// MaxReplicas int32
@@ -75,25 +71,30 @@ func isValidHpaRequest(request *ui_autoscaler.HpaRequest, resp *restful.Response
 			Reason: "maxReplicas must not be empty.",
 		})
 		return false
-	} else if !util.IsValidWithinRange(reflectType, int(request.MaxReplicas), "maxReplicas", resp) {
+	} else if !util.IsValidWithinRange(reflectType, int(request.MaxReplicas), "MaxReplicas", resp) {
+		return false
+	} else if request.MaxReplicas < request.MinReplicas {
+		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "maxReplicas must not be lower than minReplicas.",
+		})
 		return false
 	}
-	// ScaleUp *scalingRules
+	// ScaleUp *ScalingRules
 	if request.ScaleUp == nil {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "scaleUp must not be empty.",
 		})
 		return false
-	} else if !isValidScalingRules(request.ScaleUp, resp, true) {
+	} else if !isValidScalingRules(request.ScaleUp, resp) {
 		return false
 	}
-	// ScaleDown *scalingRules
+	// ScaleDown *ScalingRules
 	if request.ScaleDown == nil {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "scaleDown must not be empty.",
 		})
 		return false
-	} else if !isValidScalingRules(request.ScaleDown, resp, true) {
+	} else if !isValidScalingRules(request.ScaleDown, resp) {
 		return false
 	}
 	return true
@@ -123,33 +124,33 @@ func isValidHpaModifyRequest(request *ui_autoscaler.ModifyHpaRequest, resp *rest
 		}
 	}
 	// MinReplicas *int32
-	if request.MinReplicas != nil && !util.IsValidWithinRange(reflectType, int(*request.MinReplicas), "minReplicas", resp) {
+	if request.MinReplicas != nil && !util.IsValidWithinRange(reflectType, int(*request.MinReplicas), "MinReplicas", resp) {
 		return false
 	}
 	// MaxReplicas *int32
-	if request.MaxReplicas != nil && !util.IsValidWithinRange(reflectType, int(*request.MaxReplicas), "maxReplicas", resp) {
+	if request.MaxReplicas != nil && !util.IsValidWithinRange(reflectType, int(*request.MaxReplicas), "MaxReplicas", resp) {
 		return false
 	}
-	// ScaleUp *scalingRules
-	if request.ScaleUp != nil && !isValidScalingRules(request.ScaleUp, resp, false) {
+	// ScaleUp *ScalingRules
+	if request.ScaleUp != nil && !isValidScalingRules(request.ScaleUp, resp) {
 		return false
 	}
-	// ScaleDown *scalingRules
-	if request.ScaleDown != nil && !isValidScalingRules(request.ScaleDown, resp, false) {
+	// ScaleDown *ScalingRules
+	if request.ScaleDown != nil && !isValidScalingRules(request.ScaleDown, resp) {
 		return false
 	}
 	return true
 }
 
-func isValidScalingRules(rules *ui_autoscaler.ScalingRules, resp *restful.Response, isNew bool) bool {
+func isValidScalingRules(rules *ui_autoscaler.ScalingRules, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*rules)
 	// StableWindow *int32
-	if rules.StableWindow == nil {
+	if rules.StabilizationWindowSeconds == nil {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "stabilizationWindowSeconds must not be empty.",
 		})
 		return false
-	} else if !util.IsValidWithinRange(reflectType, int(*rules.StableWindow), "stabilizationWindowSeconds", resp) {
+	} else if !util.IsValidWithinRange(reflectType, int(*rules.StabilizationWindowSeconds), "StabilizationWindowSeconds", resp) {
 		return false
 	}
 	// SelectPolicy string
@@ -165,29 +166,25 @@ func isValidScalingRules(rules *ui_autoscaler.ScalingRules, resp *restful.Respon
 		return false
 	}
 	// Policies []ScalingPolicy
-	if rules.Policies == nil && isNew {
+	if rules.Policies == nil {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "policies must not be empty.",
 		})
 		return false
-	} else if !isValidScalingPolicies(rules.Policies, resp, isNew) {
+	} else if !isValidScalingPolicies(rules.Policies, resp) {
 		return false
 	}
 	return true
 }
 
-func isValidScalingPolicies(policies []ui_autoscaler.ScalingPolicy, resp *restful.Response, isNew bool) bool {
-	if len(policies) == 0 && isNew {
+func isValidScalingPolicies(policies []ui_autoscaler.ScalingPolicy, resp *restful.Response) bool {
+	if len(policies) == 0 {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "At least one item must be provided in policies.",
-		})
-		return false
-	} else if len(policies) > 2 {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: "Each type of policy can be set at most once in policies.",
+			Reason: "at least one item must be provided in policies.",
 		})
 		return false
 	}
+	typeMap := make(map[string]bool, 0)
 	for _, policy := range policies {
 		reflectType := reflect.TypeOf(policy)
 		// Type string
@@ -202,13 +199,20 @@ func isValidScalingPolicies(policies []ui_autoscaler.ScalingPolicy, resp *restfu
 			})
 			return false
 		}
+		if _, ok := typeMap[policy.Type]; ok {
+			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+				Reason: "each type must be set at most once in policies.",
+			})
+			return false
+		}
+		typeMap[policy.Type] = true
 		// Value int32
 		if policy.Value == 0 {
 			resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 				Reason: "value must not be empty.",
 			})
 			return false
-		} else if !util.IsValidWithinRange(reflectType, int(policy.Value), "value", resp) {
+		} else if !util.IsValidWithinRange(reflectType, int(policy.Value), "Value", resp) {
 			return false
 		}
 		// PeriodSeconds int32
@@ -217,7 +221,7 @@ func isValidScalingPolicies(policies []ui_autoscaler.ScalingPolicy, resp *restfu
 				Reason: "periodSeconds must not be empty.",
 			})
 			return false
-		} else if !util.IsValidWithinRange(reflectType, int(policy.PeriodSeconds), "periodSeconds", resp) {
+		} else if !util.IsValidWithinRange(reflectType, int(policy.PeriodSeconds), "PeriodSeconds", resp) {
 			return false
 		}
 	}
@@ -228,13 +232,13 @@ func isValidScalingPolicies(policies []ui_autoscaler.ScalingPolicy, resp *restfu
 
 func isValidVpaRequest(request *ui_autoscaler.VpaRequest, resp *restful.Response) bool {
 	reflectType := reflect.TypeOf(*request)
-	// ResourcName string
+	// ResourceName string
 	if request.ResourceName == "" {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "resourceName must not be empty.",
 		})
 		return false
-	} else if !util.IsValidKubernetesString(request.ResourceName, "resourceName", resp) {
+	} else if !util.IsValidKubernetesString(request.ResourceName, "ResourceName", resp) {
 		return false
 	}
 	// UpdateMode string
@@ -255,10 +259,10 @@ func isValidVpaRequest(request *ui_autoscaler.VpaRequest, resp *restful.Response
 			Reason: "minReplicas must not be empty.",
 		})
 		return false
-	} else if !util.IsValidWithinRange(reflectType, int(request.MinReplicas), "minReplicas", resp) {
+	} else if !util.IsValidWithinRange(reflectType, int(request.MinReplicas), "MinReplicas", resp) {
 		return false
 	}
-	// CPolicies []cPolicy
+	// CPolicies []CPolicy
 	if request.CPolicies == nil {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: "containerPolicies must not be empty.",
@@ -282,7 +286,7 @@ func isValidVpaModifyRequest(request *ui_autoscaler.ModifyVpaRequest, resp *rest
 		}
 	}
 	// MinReplicas *int32
-	if request.MinReplicas != nil && !util.IsValidWithinRange(reflectType, int(*request.MinReplicas), "minReplicas", resp) {
+	if request.MinReplicas != nil && !util.IsValidWithinRange(reflectType, int(*request.MinReplicas), "MinReplicas", resp) {
 		return false
 	}
 	// CPolicies []CPolicy
@@ -307,7 +311,7 @@ func isValidContainerPolicies(policies []ui_autoscaler.CPolicy, resp *restful.Re
 				Reason: "containerName must not be empty.",
 			})
 			return false
-		} else if policy.ContainerName != "*" && !util.IsValidKubernetesString(policy.ContainerName, "resourceName", resp) {
+		} else if policy.ContainerName != "*" && !util.IsValidKubernetesString(policy.ContainerName, "ContainerName", resp) {
 			return false
 		}
 		if _, ok := nameMap[policy.ContainerName]; ok {
@@ -336,6 +340,20 @@ func isValidContainerPolicies(policies []ui_autoscaler.CPolicy, resp *restful.Re
 		// MaxAllowed *Resources
 		if policy.MaxAllowed != nil && !isValidAllowedResources(policy.MaxAllowed, "maxAllowed", resp) {
 			return false
+		}
+		if policy.MinAllowed != nil && policy.MaxAllowed != nil {
+			if policy.MinAllowed.Cpu != 0.0 && policy.MaxAllowed.Cpu != 0.0 && policy.MaxAllowed.Cpu < policy.MinAllowed.Cpu {
+				resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+					Reason: "maxAllowed CPU resource must not be lower than minAllowed.",
+				})
+				return false
+			}
+			if policy.MinAllowed.Memory != 0.0 && policy.MaxAllowed.Memory != 0.0 && policy.MaxAllowed.Memory < policy.MinAllowed.Memory {
+				resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+					Reason: "maxAllowed Memory resource must not be lower than minAllowed.",
+				})
+				return false
+			}
 		}
 		// CtrledResources []string
 		if policy.CtrledResources == nil || len(policy.CtrledResources) == 0 {
@@ -377,12 +395,7 @@ func isValidContainerPolicies(policies []ui_autoscaler.CPolicy, resp *restful.Re
 
 func isValidAllowedResources(resources *ui_autoscaler.Resources, fieldName string, resp *restful.Response) bool {
 	// cpu float32
-	if resources.Cpu == 0.0 {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: fieldName + " cpu resource must not be empty.",
-		})
-		return false
-	} else if  resources.Cpu > resourceUpperLimit || resources.Cpu < resourceLowerLimit {
+	if resources.Cpu != 0.0 && (resources.Cpu > resourceUpperLimit || resources.Cpu < resourceLowerLimit) {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: fieldName + " cpu resource must be between 0.01 ~ 10000, and will be rounded to 2 decimal places",
 		})
@@ -391,12 +404,7 @@ func isValidAllowedResources(resources *ui_autoscaler.Resources, fieldName strin
 		resources.Cpu = float32(math.Round(float64(resources.Cpu) * 100) / 100)
 	}
 	// memory float32
-	if resources.Memory == 0.0 {
-		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
-			Reason: fieldName + " memory resource must not be empty.",
-		})
-		return false
-	} else if  resources.Memory > resourceUpperLimit || resources.Memory < resourceLowerLimit {
+	if resources.Memory != 0.0 && (resources.Memory > resourceUpperLimit || resources.Memory < resourceLowerLimit) {
 		resp.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
 			Reason: fieldName + " memory resource must be between 0.01 ~ 10000, and will be rounded to 2 decimal places",
 		})

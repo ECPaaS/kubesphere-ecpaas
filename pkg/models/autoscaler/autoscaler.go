@@ -6,14 +6,20 @@ package autoscaler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
+	"strings"
 
-	autoscaling "k8s.io/api/autoscaling/v2beta2"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
@@ -29,16 +35,13 @@ const (
 	cpuTargetUtilization = "cpuTargetUtilization"
 	memoryCurrentValue = "memoryCurrentValue"
 	memoryTargetValue = "memoryTargetValue"
-
-	//repositoiesPath = "/apis/velero.io/v1/namespaces/velero/backupstoragelocations"
-	//backupsPath = "/apis/velero.io/v1/namespaces/velero/backups"
-	//deleteBackupFilePath = "/apis/velero.io/v1/namespaces/velero/deletebackuprequests"
-	//restoresPath = "/apis/velero.io/v1/namespaces/velero/restores"
+	vpaPath = "/apis/autoscaling.k8s.io/v1/namespaces/%s/verticalpodautoscalers"
+	vpaAPIVersion = "autoscaling.k8s.io/v1"
+	vpaKind = "VerticalPodAutoscaler"
+	unitFactor = 1024 * 1024 // From MiBs to Bs
 )
 
 var trueFlag bool = true
-//var falseFlag bool = false
-
 
 type Interface interface {
 	// HPA
@@ -57,9 +60,9 @@ type Interface interface {
 }
 
 type autoscalerOperator struct {
-	ksclient  kubesphere.Interface
-	k8sclient kubernetes.Interface
-	restclient rest.Interface
+	ksClient   kubesphere.Interface
+	k8sClient  kubernetes.Interface
+	restClient rest.Interface
 }
 
 func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interface {
@@ -70,9 +73,9 @@ func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interfac
 	}
 
 	return &autoscalerOperator{
-		ksclient:   ksclient,
-		k8sclient:  k8sclient,
-		restclient: restclient,
+		ksClient:   ksclient,
+		k8sClient:  k8sclient,
+		restClient: restclient,
 	}
 }
 
@@ -81,7 +84,7 @@ func New(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) Interfac
 func (o *autoscalerOperator) CreateHPA(namespace string, name string, ui_hpa *HpaRequest) (*HpaNameResponse, error) {
 	klog.V(2).Infof("Creating HPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 	// Get deployment, check if any autoscaler is set
-	deployment, err := o.k8sclient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	deployment, err := o.k8sClient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	} else if _, ok := deployment.Annotations[annotationKey]; ok {
@@ -90,7 +93,7 @@ func (o *autoscalerOperator) CreateHPA(namespace string, name string, ui_hpa *Hp
 	}
 
 	// Format HPA
-	hpa := &autoscaling.HorizontalPodAutoscaler{}
+	hpa := &autoscalingv2beta2.HorizontalPodAutoscaler{}
 	hpa.Name = name
 	hpa.Namespace = namespace
 	hpa.Annotations = map[string]string{
@@ -109,7 +112,7 @@ func (o *autoscalerOperator) CreateHPA(namespace string, name string, ui_hpa *Hp
 			Controller: &trueFlag,
 		},
 	}
-	hpa.Spec.ScaleTargetRef = autoscaling.CrossVersionObjectReference{
+	hpa.Spec.ScaleTargetRef = autoscalingv2beta2.CrossVersionObjectReference{
 		APIVersion: "apps/v1",
 		Kind: "Deployment",
 		Name: name,
@@ -120,13 +123,13 @@ func (o *autoscalerOperator) CreateHPA(namespace string, name string, ui_hpa *Hp
 	hpa.Spec.Behavior = createHpaBehaviors(ui_hpa.ScaleUp, ui_hpa.ScaleDown)
 
 	// Create HPA
-	_, err = o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Create(context.Background(), hpa, metav1.CreateOptions{})
+	_, err = o.k8sClient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Create(context.Background(), hpa, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	} else {
 		// PUT deploment annotations
 		deployment.Annotations[annotationKey] = hpaAnnotaitonValue
-		_, err := o.k8sclient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+		_, err := o.k8sClient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +141,7 @@ func (o *autoscalerOperator) CreateHPA(namespace string, name string, ui_hpa *Hp
 func (o *autoscalerOperator) UpdateHPA(namespace string, name string, ui_hpa *ModifyHpaRequest) (*HpaResponse, error) {
 	klog.V(2).Infof("Updating HPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 	// Get deployment, check if HPA is set
-	deployment, err := o.k8sclient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	deployment, err := o.k8sClient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	} else if value, ok := deployment.Annotations[annotationKey]; !ok {
@@ -150,21 +153,25 @@ func (o *autoscalerOperator) UpdateHPA(namespace string, name string, ui_hpa *Mo
 	}
 
 	// Get HPA
-	oldHPA, err := o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	oldHPA, err := o.k8sClient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	newHPA := oldHPA.DeepCopy()
 
 	// Format HPA
-	metrics := make([]autoscaling.MetricSpec, 0)
+	metrics := make([]autoscalingv2beta2.MetricSpec, 0)
 	if ui_hpa.TargetCpuUsage != nil {
 		metrics = append(metrics, createHpaMetrics(*ui_hpa.TargetCpuUsage, 0.0)...)
 		newHPA.Annotations[cpuTargetUtilization] = fmt.Sprint(*ui_hpa.TargetCpuUsage)
+	} else if ui_hpa.TargetMemoryUsage != nil {
+		newHPA.Annotations[cpuTargetUtilization] = ""
 	}
 	if ui_hpa.TargetMemoryUsage != nil {
 		metrics = append(metrics, createHpaMetrics(0, *ui_hpa.TargetMemoryUsage)...)
 		newHPA.Annotations[memoryTargetValue] = fmt.Sprint(*ui_hpa.TargetMemoryUsage) + "Mi"
+	} else if ui_hpa.TargetCpuUsage != nil {
+		newHPA.Annotations[memoryTargetValue] = ""
 	}
 	if len(metrics) != 0 {
 		newHPA.Spec.Metrics = metrics
@@ -182,12 +189,12 @@ func (o *autoscalerOperator) UpdateHPA(namespace string, name string, ui_hpa *Mo
 		newHPA.Spec.Behavior.ScaleDown = createHpaScalingRules(ui_hpa.ScaleDown)
 	}
 	if reflect.DeepEqual(newHPA.Spec, oldHPA.Spec) {
-		// No change, abort
-		return makeHpaResponse(newHPA), nil // No Update
+		// No update, abort
+		return makeHpaResponse(newHPA), nil
 	}
 
 	// Update HPA
-	updatedHPA, err := o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Update(context.Background(), newHPA, metav1.UpdateOptions{})
+	updatedHPA, err := o.k8sClient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Update(context.Background(), newHPA, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +206,7 @@ func (o *autoscalerOperator) GetHPA(namespace string, name string) (*HpaResponse
 	klog.V(2).Infof("Getting HPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 
 	// Get HPA
-	hpa, err := o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	hpa, err := o.k8sClient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +218,7 @@ func (o *autoscalerOperator) DeleteHPA(namespace string, name string) error {
 	klog.V(2).Infof("Deleting HPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 
 	// Delete HPA
-	err := o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
+	err := o.k8sClient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -219,17 +226,29 @@ func (o *autoscalerOperator) DeleteHPA(namespace string, name string) error {
 		return err
 	}
 
+	// Get deployment, remove the annotation
+	deployment, err := o.k8sClient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	} else {
+		delete(deployment.Annotations, annotationKey)
+		_, err := o.k8sClient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func createHpaMetrics(cpu int32, memory float32) []autoscaling.MetricSpec {
-	returnArray := make([]autoscaling.MetricSpec, 0)
+func createHpaMetrics(cpu int32, memory float32) []autoscalingv2beta2.MetricSpec {
+	returnArray := make([]autoscalingv2beta2.MetricSpec, 0)
 	if cpu != 0 {
-		returnArray = append(returnArray, autoscaling.MetricSpec{
-			Type: "Resources",
-			Resource: &autoscaling.ResourceMetricSource{
+		returnArray = append(returnArray, autoscalingv2beta2.MetricSpec{
+			Type: "Resource",
+			Resource: &autoscalingv2beta2.ResourceMetricSource{
 				Name: "cpu",
-				Target: autoscaling.MetricTarget{
+				Target: autoscalingv2beta2.MetricTarget{
 					Type: "Utilization",
 					AverageUtilization: &cpu,
 				},
@@ -239,11 +258,11 @@ func createHpaMetrics(cpu int32, memory float32) []autoscaling.MetricSpec {
 
 	if memory != 0.0 {
 		quantity := resource.MustParse(fmt.Sprint(memory) + "Mi")
-		returnArray = append(returnArray, autoscaling.MetricSpec{
-			Type: "Resources",
-			Resource: &autoscaling.ResourceMetricSource{
+		returnArray = append(returnArray, autoscalingv2beta2.MetricSpec{
+			Type: "Resource",
+			Resource: &autoscalingv2beta2.ResourceMetricSource{
 				Name: "memory",
-				Target: autoscaling.MetricTarget{
+				Target: autoscalingv2beta2.MetricTarget{
 					Type: "AverageValue",
 					AverageValue: &quantity,
 				},
@@ -254,8 +273,8 @@ func createHpaMetrics(cpu int32, memory float32) []autoscaling.MetricSpec {
 	return returnArray
 }
 
-func createHpaBehaviors(up *ScalingRules, down *ScalingRules) *autoscaling.HorizontalPodAutoscalerBehavior {
-	returnBehaviors := &autoscaling.HorizontalPodAutoscalerBehavior{}
+func createHpaBehaviors(up *ScalingRules, down *ScalingRules) *autoscalingv2beta2.HorizontalPodAutoscalerBehavior {
+	returnBehaviors := &autoscalingv2beta2.HorizontalPodAutoscalerBehavior{}
 	if up != nil {
 		returnBehaviors.ScaleUp = createHpaScalingRules(up)
 	}
@@ -267,19 +286,19 @@ func createHpaBehaviors(up *ScalingRules, down *ScalingRules) *autoscaling.Horiz
 	return returnBehaviors
 }
 
-func createHpaScalingRules(rules *ScalingRules) *autoscaling.HPAScalingRules {
-	return &autoscaling.HPAScalingRules{
-		StabilizationWindowSeconds: rules.StableWindow,
-		SelectPolicy: (*autoscaling.ScalingPolicySelect)(&rules.SelectPolicy),
+func createHpaScalingRules(rules *ScalingRules) *autoscalingv2beta2.HPAScalingRules {
+	return &autoscalingv2beta2.HPAScalingRules{
+		StabilizationWindowSeconds: rules.StabilizationWindowSeconds,
+		SelectPolicy: (*autoscalingv2beta2.ScalingPolicySelect)(&rules.SelectPolicy),
 		Policies: createHpaScalingPolicies(rules.Policies),
 	}
 }
 
-func createHpaScalingPolicies(policies []ScalingPolicy) []autoscaling.HPAScalingPolicy {
-	returnPolicies := make([]autoscaling.HPAScalingPolicy, 0)
+func createHpaScalingPolicies(policies []ScalingPolicy) []autoscalingv2beta2.HPAScalingPolicy {
+	returnPolicies := make([]autoscalingv2beta2.HPAScalingPolicy, 0)
 	for _, policy := range policies {
-		returnPolicies = append(returnPolicies, autoscaling.HPAScalingPolicy{
-			Type: autoscaling.HPAScalingPolicyType(policy.Type),
+		returnPolicies = append(returnPolicies, autoscalingv2beta2.HPAScalingPolicy{
+			Type: autoscalingv2beta2.HPAScalingPolicyType(policy.Type),
 			Value: policy.Value,
 			PeriodSeconds: policy.PeriodSeconds,
 		})
@@ -287,9 +306,9 @@ func createHpaScalingPolicies(policies []ScalingPolicy) []autoscaling.HPAScaling
 	return returnPolicies
 }
 
-func makeHpaResponse(hpa *autoscaling.HorizontalPodAutoscaler) *HpaResponse {
+func makeHpaResponse(hpa *autoscalingv2beta2.HorizontalPodAutoscaler) *HpaResponse {
 	cpuUsage, _ := strconv.ParseInt(hpa.Annotations[cpuTargetUtilization], 10, 32)
-	memUsage, _ := strconv.ParseFloat(hpa.Annotations[memoryTargetValue], 32)
+	memUsage, _ := strconv.ParseFloat(strings.TrimSuffix(hpa.Annotations[memoryTargetValue], "Mi"), 32)
 	return &HpaResponse{
 		ResourceName: hpa.Name,
 		TargetCpuUsage: int32(cpuUsage),
@@ -297,19 +316,19 @@ func makeHpaResponse(hpa *autoscaling.HorizontalPodAutoscaler) *HpaResponse {
 		MinReplicas: *hpa.Spec.MinReplicas,
 		MaxReplicas: hpa.Spec.MaxReplicas,
 		ScaleUp: ScalingRules{
-			StableWindow: hpa.Spec.Behavior.ScaleUp.StabilizationWindowSeconds,
+			StabilizationWindowSeconds: hpa.Spec.Behavior.ScaleUp.StabilizationWindowSeconds,
 			SelectPolicy: string(*hpa.Spec.Behavior.ScaleUp.SelectPolicy),
-			Policies: makeHpaPolicies(hpa.Spec.Behavior.ScaleUp.Policies),
+			Policies: makeHpaPoliciesResponse(hpa.Spec.Behavior.ScaleUp.Policies),
 		},
 		ScaleDown: ScalingRules{
-			StableWindow: hpa.Spec.Behavior.ScaleDown.StabilizationWindowSeconds,
+			StabilizationWindowSeconds: hpa.Spec.Behavior.ScaleDown.StabilizationWindowSeconds,
 			SelectPolicy: string(*hpa.Spec.Behavior.ScaleDown.SelectPolicy),
-			Policies: makeHpaPolicies(hpa.Spec.Behavior.ScaleDown.Policies),
+			Policies: makeHpaPoliciesResponse(hpa.Spec.Behavior.ScaleDown.Policies),
 		},
 	}
 }
 
-func makeHpaPolicies(policies []autoscaling.HPAScalingPolicy) []ScalingPolicy {
+func makeHpaPoliciesResponse(policies []autoscalingv2beta2.HPAScalingPolicy) []ScalingPolicy {
 	returnPolicies := make([]ScalingPolicy, 0)
 	for _, policy := range policies {
 		returnPolicies = append(returnPolicies, ScalingPolicy{
@@ -327,7 +346,7 @@ func makeHpaPolicies(policies []autoscaling.HPAScalingPolicy) []ScalingPolicy {
 func (o *autoscalerOperator) CreateVPA(namespace string, name string, ui_vpa *VpaRequest) (*VpaNameResponse, error) {
 	klog.V(2).Infof("Creating VPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 	// Get deployment, check if any autoscaler is set
-	deployment, err := o.k8sclient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	deployment, err := o.k8sClient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	} else if _, ok := deployment.Annotations[annotationKey]; ok {
@@ -336,15 +355,47 @@ func (o *autoscalerOperator) CreateVPA(namespace string, name string, ui_vpa *Vp
 	}
 
 	// Format VPA
+	vpa := &vpav1.VerticalPodAutoscaler{}
+	vpa.APIVersion = vpaAPIVersion
+	vpa.Kind = vpaKind
+	vpa.Name = name
+	vpa.Namespace = namespace
+	vpa.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion: "apps/v1",
+			Kind: "Deployment",
+			Name: name,
+			UID: deployment.UID,
+			BlockOwnerDeletion: &trueFlag,
+			Controller: &trueFlag,
+		},
+	}
+	vpa.Spec.TargetRef = &autoscalingv1.CrossVersionObjectReference{
+		APIVersion: "apps/v1",
+		Kind: "Deployment",
+		Name: name,
+	}
+	vpa.Spec.UpdatePolicy = &vpav1.PodUpdatePolicy{
+		UpdateMode: (*vpav1.UpdateMode)(&ui_vpa.UpdateMode),
+		MinReplicas: &ui_vpa.MinReplicas,
+	}
+	vpa.Spec.ResourcePolicy = &vpav1.PodResourcePolicy{
+		ContainerPolicies: createVpaContainerPolicies(ui_vpa.CPolicies),
+	}
 
 	// Create VPA
-	_, err = o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Create(context.Background(), nil, metav1.CreateOptions{})
+	bytes, err := json.Marshal(vpa)
+	if err != nil {
+		return nil, err
+	}
+	path := fmt.Sprintf(vpaPath, namespace)
+	_, err = o.restClient.Post().AbsPath(path).Body(bytes).DoRaw(context.Background())
 	if err != nil {
 		return nil, err
 	} else {
-		// PUT deploment annotations
+		// PUT deployment annotations
 		deployment.Annotations[annotationKey] = vpaAnnotaitonValue
-		_, err := o.k8sclient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+		_, err := o.k8sClient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -356,7 +407,7 @@ func (o *autoscalerOperator) CreateVPA(namespace string, name string, ui_vpa *Vp
 func (o *autoscalerOperator) UpdateVPA(namespace string, name string, ui_vpa *ModifyVpaRequest) (*VpaResponse, error) {
 	klog.V(2).Infof("Updating VPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 	// Get deployment, check if VPA is set
-	deployment, err := o.k8sclient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	deployment, err := o.k8sClient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	} else if value, ok := deployment.Annotations[annotationKey]; !ok {
@@ -368,47 +419,70 @@ func (o *autoscalerOperator) UpdateVPA(namespace string, name string, ui_vpa *Mo
 	}
 
 	// Get VPA
-	oldHPA, err := o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	path := fmt.Sprintf(vpaPath, namespace) + "/" + name
+	bytes, err := o.restClient.Get().AbsPath(path).DoRaw(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	newHPA := oldHPA.DeepCopy()
+	oldVPA := &vpav1.VerticalPodAutoscaler{}
+	err = json.Unmarshal(bytes, oldVPA)
+	if err != nil {
+		return nil, err
+	}
+	newVPA := oldVPA.DeepCopy()
 
 	// Format VPA
-	//if ui_vpa.UpdateMode != nil { }
-	//if ui_vpa.MinReplicas != nil { }
-	//if ui_vpa.CPolicies != nil { }
-	if reflect.DeepEqual(nil, nil) {
-		// No change, abort
-		return nil, nil // makeVpaResponse(newVPA), nil // No Update
+	if ui_vpa.UpdateMode != nil {
+		newVPA.Spec.UpdatePolicy.UpdateMode = (*vpav1.UpdateMode)(ui_vpa.UpdateMode)
+	}
+	if ui_vpa.MinReplicas != nil {
+		newVPA.Spec.UpdatePolicy.MinReplicas = ui_vpa.MinReplicas
+	}
+	if ui_vpa.CPolicies != nil {
+		newVPA.Spec.ResourcePolicy.ContainerPolicies = createVpaContainerPolicies(ui_vpa.CPolicies)
+	}
+	if reflect.DeepEqual(oldVPA.Spec, newVPA.Spec) {
+		// No update, abort
+		return makeVpaResponse(newVPA), nil
 	}
 
 	// Update VPA
-	_, err = o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Update(context.Background(), newHPA, metav1.UpdateOptions{})
+	bytes, err = json.Marshal(newVPA)
+	if err != nil {
+		return nil, err
+	}
+	_, err = o.restClient.Put().AbsPath(path).Body(bytes).DoRaw(context.Background())
 	if err != nil {
 		return nil, err
 	}
 	
-	return nil, nil // makeVpaResponse(updatedVPA), nil
+	return makeVpaResponse(newVPA), nil
 }
 
 func (o *autoscalerOperator) GetVPA(namespace string, name string) (*VpaResponse, error) {
 	klog.V(2).Infof("Getting VPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 
 	// Get VPA
-	_, err := o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	path := fmt.Sprintf(vpaPath, namespace) + "/" + name
+	bytes, err := o.restClient.Get().AbsPath(path).DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	vpa := &vpav1.VerticalPodAutoscaler{}
+	err = json.Unmarshal(bytes, vpa)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, nil // makeVpaResponse(vpa), nil
+	return makeVpaResponse(vpa), nil
 }
 
 func (o *autoscalerOperator) DeleteVPA(namespace string, name string) error {
 	klog.V(2).Infof("Deleting VPA for deployment: \"%s\" in \"%s\" namespace", name, namespace)
 
 	// Delete VPA
-	err := o.k8sclient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
+	path := fmt.Sprintf(vpaPath, namespace) + "/" + name
+	_, err := o.restClient.Delete().AbsPath(path).DoRaw(context.Background())
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -416,7 +490,95 @@ func (o *autoscalerOperator) DeleteVPA(namespace string, name string) error {
 		return err
 	}
 
+	// Get deployment, remove the annotation
+	deployment, err := o.k8sClient.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	} else {
+		delete(deployment.Annotations, annotationKey)
+		_, err := o.k8sClient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
+func createVpaContainerPolicies(policies []CPolicy) []vpav1.ContainerResourcePolicy {
+	returnArray := make([]vpav1.ContainerResourcePolicy, 0)
+	for _, policy := range policies {
+		returnArray = append(returnArray, vpav1.ContainerResourcePolicy{
+			ContainerName: policy.ContainerName,
+			Mode: (*vpav1.ContainerScalingMode)(&policy.Mode),
+			MinAllowed: createVpaResourceList(policy.MinAllowed),
+			MaxAllowed: createVpaResourceList(policy.MaxAllowed),
+			ControlledResources: createVpaCtrledResources(policy.CtrledResources),
+			ControlledValues: (*vpav1.ContainerControlledValues)(&policy.CtrledValues),
+		})
+	}
+	return returnArray
+}
 
+func createVpaResourceList(resources *Resources) corev1.ResourceList {
+	returnMap := make(map[corev1.ResourceName]resource.Quantity, 0)
+	if resources.Cpu != 0.0 {
+		returnMap[corev1.ResourceCPU] = resource.MustParse(fmt.Sprint(resources.Cpu))
+	}
+	if resources.Memory != 0.0 {
+		memory := math.Round(float64(resources.Memory) * unitFactor) // from MiBs to Bs, and round to whole number
+		returnMap[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%.0f", memory)) // Bs, make sure no .xx
+	}
+	return returnMap
+}
+
+func createVpaCtrledResources(ctrledResources []string) *[]corev1.ResourceName {
+	returnArray := make([]corev1.ResourceName, 0)
+	for _, resource := range ctrledResources {
+		if resource == "cpu" {
+			returnArray = append(returnArray, corev1.ResourceCPU)
+		} else if resource == "memory" {
+			returnArray = append(returnArray, corev1.ResourceMemory)
+		}
+	}
+	return &returnArray
+}
+
+func makeVpaResponse(vpa *vpav1.VerticalPodAutoscaler) *VpaResponse {
+	return &VpaResponse{
+		ResourceName: vpa.Name,
+		UpdateMode: string(*vpa.Spec.UpdatePolicy.UpdateMode),
+		MinReplicas: *vpa.Spec.UpdatePolicy.MinReplicas,
+		CPolicies: makeVpaContainerPoliciesResponse(vpa.Spec.ResourcePolicy.ContainerPolicies),
+	}
+}
+
+func makeVpaContainerPoliciesResponse(policies []vpav1.ContainerResourcePolicy) []CPolicy {
+	returnArray := make([]CPolicy, 0)
+	for _, policy := range policies {
+		returnArray = append(returnArray, CPolicy{
+			ContainerName: policy.ContainerName,
+			Mode: string(*policy.Mode),
+			MinAllowed: makeVpaResourcesResponse(&policy.MinAllowed),
+			MaxAllowed: makeVpaResourcesResponse(&policy.MaxAllowed),
+			CtrledResources: makeVpaCtrledResourcesResponse(policy.ControlledResources),
+			CtrledValues: string(*policy.ControlledValues),
+		})
+	}
+	return returnArray
+}
+
+func makeVpaResourcesResponse(list *corev1.ResourceList) *Resources {
+	return &Resources{
+		Cpu: float32(list.Cpu().AsApproximateFloat64()), // Unit: cores, round to .xx
+		Memory: float32(math.Round(float64(list.Memory().Value()) / unitFactor * 100 ) / 100), // Unit: MiBs, round to .xx
+	}
+}
+
+func makeVpaCtrledResourcesResponse(ctrledResources *[]corev1.ResourceName) []string {
+	returnArray := make([]string, 0)
+	for _, resource := range *ctrledResources {
+		returnArray = append(returnArray, resource.String())
+	}
+	return returnArray
+}
