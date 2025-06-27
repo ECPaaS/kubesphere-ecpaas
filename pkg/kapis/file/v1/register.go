@@ -14,6 +14,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/api"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/constants"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 )
 
 const (
@@ -37,7 +38,7 @@ func AddToContainer(container *restful.Container, k8sclient kubernetes.Interface
 		Param(webservice.FormParameter("pvcName", "PVC name").Required(true)).
 		Param(webservice.FormParameter("targetPath", "Specify the target path where the file is stored in the PVC").Required(true)).
 		Returns(http.StatusOK, api.StatusOK, FileUploadResponse{}).
-		Returns(http.StatusBadRequest, api.StatusBadRequest, nil).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.FileTag}))
 

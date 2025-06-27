@@ -142,12 +142,12 @@ func WaitForJobCompletion(client kubernetes.Interface, namespace, jobName string
 		case <-tick:
 			job, err := client.BatchV1().Jobs(namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
 			if err != nil {
-				return false, errors.New(fmt.Sprintf("Failed to get upload job: %v", err))
+				return false, fmt.Errorf("Failed to get upload job: %v", err)
 			}
 			if job.Status.Succeeded > 0 {
 				return true, nil
 			} else if job.Status.Failed > 0 {
-				return false, errors.New("Upload job failed")
+				return false, fmt.Errorf("Upload job failed")
 			}
 		}
 	}
