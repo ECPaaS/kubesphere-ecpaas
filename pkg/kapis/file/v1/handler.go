@@ -6,7 +6,6 @@ package v1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -91,7 +90,7 @@ func (h *fileHandler) UploadFile(req *restful.Request, resp *restful.Response) {
 	if f, ok := file.(*os.File); ok {
 		tmpFile = f.Name()
 	} else {
-		err := errors.New("Uploaded file is not *os.File")
+		err := fmt.Errorf("Uploaded file is not *os.File")
 		klog.Error(err)
 		resp.WriteHeader(http.StatusInternalServerError)
 		return
@@ -136,7 +135,7 @@ func WaitForJobCompletion(client kubernetes.Interface, namespace, jobName string
 		// The number of minutes for JobTimeout determines how long a job takes
 		// before it's considered to have timed out.
 		case <-timeout:
-			return false, errors.New("Upload job timeout")
+			return false, fmt.Errorf("Upload job timeout")
 
 		// The interval for checking the job status is determined by the number of seconds of JobStatusTick.
 		case <-tick:
