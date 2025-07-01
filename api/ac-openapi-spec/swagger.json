@@ -880,6 +880,68 @@
         }
       }
     },
+    "/kapis/file.ecpaas.io/v1/upload": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "File"
+        ],
+        "summary": "Upload file to PVC",
+        "operationId": "UploadFile",
+        "parameters": [
+          {
+            "type": "file",
+            "description": "File Stream form-data",
+            "name": "file",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The namespace where the PVC is located",
+            "name": "namespace",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "PVC name",
+            "name": "pvcName",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Specify the target path where the file is stored in the PVC",
+            "name": "targetPath",
+            "in": "formData",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.FileUploadResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/k8s.ovn.org/v1/vpcnetwork/gatewayChassisNode": {
       "get": {
         "produces": [
@@ -3555,6 +3617,32 @@
       ],
       "properties": {
         "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "v1.FileUploadResponse": {
+      "required": [
+        "namespace",
+        "pvcName",
+        "targetPath",
+        "jobName"
+      ],
+      "properties": {
+        "jobName": {
+          "description": "The name of the job that uploads the file",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "The namespace where the PVC is located",
+          "type": "string"
+        },
+        "pvcName": {
+          "description": "PVC name",
+          "type": "string"
+        },
+        "targetPath": {
+          "description": "Specify the target path where the file is stored in the PVC",
           "type": "string"
         }
       }
