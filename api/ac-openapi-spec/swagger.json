@@ -880,6 +880,48 @@
         }
       }
     },
+    "/kapis/file.ecpaas.io/v1/downloadModel": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "File"
+        ],
+        "summary": "Download the model file to PVC via Hugging Face Hub",
+        "operationId": "DownloadModel",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.DownloadModelRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.DownloadModelResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/file.ecpaas.io/v1/upload": {
       "post": {
         "consumes": [
@@ -917,7 +959,7 @@
           },
           {
             "type": "string",
-            "description": "Specify the target path where the file is stored in the PVC",
+            "description": "Specify the target path where the file is stored in the PVC. The path must contain the file name and can be renamed",
             "name": "targetPath",
             "in": "formData",
             "required": true
@@ -931,7 +973,10 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
           },
           "500": {
             "description": "Internal Server Error"
@@ -3614,6 +3659,68 @@
       ],
       "properties": {
         "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "v1.DownloadModelRequest": {
+      "required": [
+        "token",
+        "modelName",
+        "namespace",
+        "pvcName",
+        "directory"
+      ],
+      "properties": {
+        "directory": {
+          "description": "Directory to store model files in PVC. If empty, it will be stored in a directory with the same name as the model",
+          "type": "string"
+        },
+        "modelName": {
+          "description": "Model name on Hugging Face Hub. Consists of username and model name (e.g. unsloth/Llama-3.2-3B-Instruct)",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "The namespace where the PVC is located",
+          "type": "string"
+        },
+        "pvcName": {
+          "description": "PVC name",
+          "type": "string"
+        },
+        "token": {
+          "description": "Hugging Face Hub access token",
+          "type": "string"
+        }
+      }
+    },
+    "v1.DownloadModelResponse": {
+      "required": [
+        "modelName",
+        "namespace",
+        "pvcName",
+        "directory",
+        "jobName"
+      ],
+      "properties": {
+        "directory": {
+          "description": "Directory to store model files in PVC",
+          "type": "string"
+        },
+        "jobName": {
+          "description": "The name of the job that uploads the file",
+          "type": "string"
+        },
+        "modelName": {
+          "description": "Model name on Hugging Face Hub",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "The namespace where the PVC is located",
+          "type": "string"
+        },
+        "pvcName": {
+          "description": "PVC name",
           "type": "string"
         }
       }
