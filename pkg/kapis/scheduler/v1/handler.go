@@ -14,20 +14,26 @@ import (
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
+	"kubesphere.io/kubesphere/pkg/kapis/util"
 )
 
 type handler struct {
 	k8sclient kubernetes.Interface
 	ksclient  kubesphere.Interface
+	dynamic   dynamic.Interface
 }
 
-func newHandler(k8sclient kubernetes.Interface, ksclient kubesphere.Interface) *handler {
+func newHandler(k8sclient kubernetes.Interface, ksclient kubesphere.Interface, dynamic dynamic.Interface) *handler {
 	return &handler{
 		k8sclient: k8sclient,
 		ksclient:  ksclient,
+		dynamic:   dynamic,
 	}
 }
 
@@ -38,6 +44,15 @@ type YunikornQueuesResponse struct {
 
 type YunikornQueue struct {
 	Queue string `json:"queue"  description:"Available yunikorn queue"`
+}
+
+type VolcanoQueuesResponse struct {
+	TotalCount int            `json:"total_count" description:"Total number of queues"`
+	Items      []VolcanoQueue `json:"items" description:"Available volcano queues"`
+}
+
+type VolcanoQueue struct {
+	Name string `json:"name"  description:"Available volcano queue"`
 }
 
 type YunikornPatition struct {
@@ -57,20 +72,40 @@ type SchedulerNameResponse struct {
 }
 
 type SchedulerName struct {
-	Name string `json:"name"  description:"Available scheduler name"`
+	Name               string `json:"name"  description:"Available scheduler name"`
+	UseOriginalJobFlow bool   `json:"useOriginalJobFlow"  description:"Indicate whether this scheduler uses the original job creation flow."`
+}
+
+type PriorityClasses struct {
+	Name string `json:"name"  description:"Available priorityClass name"`
+}
+
+type PriorityClassesResponse struct {
+	TotalCount int               `json:"total_count" description:"Total number of priorityClass"`
+	Items      []PriorityClasses `json:"items" description:"Available priorityClass name"`
 }
 
 func (h *handler) ListSchedulerName(request *restful.Request, response *restful.Response) {
 	schedulers := []SchedulerName{
 		{
-			Name: "default-scheduler",
+			Name:               "default-scheduler",
+			UseOriginalJobFlow: true,
 		},
 	}
 
 	// Yunikorn scheduler
 	if isYunikornAvailable(h) {
 		schedulers = append(schedulers, SchedulerName{
-			Name: "yunikorn",
+			Name:               "yunikorn",
+			UseOriginalJobFlow: true,
+		})
+	}
+
+	// Volcano scheduler
+	if isVolcanoAvailable(h) {
+		schedulers = append(schedulers, SchedulerName{
+			Name:               "volcano",
+			UseOriginalJobFlow: false,
 		})
 	}
 
@@ -101,13 +136,39 @@ func isYunikornAvailable(h *handler) bool {
 	return resp.StatusCode == 200
 }
 
+func isVolcanoAvailable(h *handler) bool {
+
+	const (
+		Group   = "batch.volcano.sh"
+		Version = "v1alpha1"
+	)
+
+	gv := Group + "/" + Version
+
+	_, err := h.k8sclient.Discovery().ServerResourcesForGroupVersion(gv)
+
+	if err != nil {
+		klog.Warningf("Volcano not available: %v", err)
+		return false
+	}
+
+	return true
+}
+
 func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful.Response) {
+
+	yunikornQueue := []YunikornQueue{}
 
 	yunikornServiceDNS, err := getYuniKornServiceName(h)
 	if err != nil {
 		klog.Error(err.Error())
 		if errors.IsNotFound(err) {
-			response.WriteError(http.StatusNotFound, err)
+			queuesResponse := YunikornQueuesResponse{
+				TotalCount: len(yunikornQueue),
+				Items:      yunikornQueue,
+			}
+			response.WriteAsJson(queuesResponse)
+			return
 		}
 		response.WriteError(http.StatusInternalServerError, err)
 	}
@@ -116,7 +177,12 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 	if err != nil {
 		klog.Error(err.Error())
 		if errors.IsNotFound(err) {
-			response.WriteError(http.StatusNotFound, err)
+			queuesResponse := YunikornQueuesResponse{
+				TotalCount: len(yunikornQueue),
+				Items:      yunikornQueue,
+			}
+			response.WriteAsJson(queuesResponse)
+			return
 		}
 		response.WriteError(http.StatusInternalServerError, err)
 	}
@@ -130,7 +196,6 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 		}
 		response.WriteError(http.StatusInternalServerError, err)
 	}
-	yunikornQueue := []YunikornQueue{}
 
 	for _, queuename := range queues {
 		yunikornQueue = append(yunikornQueue, YunikornQueue{Queue: queuename})
@@ -139,6 +204,54 @@ func (h *handler) ListYuniKornQueues(request *restful.Request, response *restful
 	queuesResponse := YunikornQueuesResponse{
 		TotalCount: len(yunikornQueue),
 		Items:      yunikornQueue,
+	}
+
+	response.WriteAsJson(queuesResponse)
+}
+
+func (h *handler) ListVolcanoQueues(request *restful.Request, response *restful.Response) {
+	const (
+		Group   = "scheduling.volcano.sh"
+		Version = "v1beta1"
+		Kind    = "queues"
+	)
+
+	gvr := schema.GroupVersionResource{
+		Group:    Group,
+		Version:  Version,
+		Resource: Kind,
+	}
+
+	list, err := h.dynamic.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		response.WriteHeaderAndEntity(http.StatusBadRequest, util.BadRequestError{
+			Reason: "Volcano scheduler is not installed",
+		})
+		return
+	}
+
+	volcanoQueues := []VolcanoQueue{}
+
+	for _, item := range list.Items {
+		name, found, err := unstructured.NestedString(item.Object, "metadata", "name")
+		if err != nil || !found {
+			continue
+		}
+		// root queue shouldn't assign volcao job.
+		if name == "root" {
+			continue
+		}
+
+		queue := VolcanoQueue{
+			Name: name,
+		}
+		volcanoQueues = append(volcanoQueues, queue)
+	}
+
+	queuesResponse := VolcanoQueuesResponse{
+		TotalCount: len(volcanoQueues),
+		Items:      volcanoQueues,
 	}
 
 	response.WriteAsJson(queuesResponse)

@@ -64,7 +64,8 @@ func (r *jobRunner) JobReRun(namespace, jobName, resourceVersion string) error {
 	newJob.ObjectMeta.UID = ""
 	newJob.Annotations["revisions"] = strings.Replace(job.Annotations["revisions"], "running", "unfinished", -1)
 
-	delete(newJob.Spec.Selector.MatchLabels, "controller-uid")
+	delete(newJob.Spec.Selector.MatchLabels, "batch.kubernetes.io/controller-uid")
+	delete(newJob.Spec.Template.ObjectMeta.Labels, "batch.kubernetes.io/controller-uid")
 	delete(newJob.Spec.Template.ObjectMeta.Labels, "controller-uid")
 
 	err = r.deleteJob(namespace, jobName)

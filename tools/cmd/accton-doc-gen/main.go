@@ -19,7 +19,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/informers"
 	autoscalerv1 "kubesphere.io/kubesphere/pkg/kapis/autoscaler/v1"
 	clustersyncv1 "kubesphere.io/kubesphere/pkg/kapis/clustersync/v1"
-	qosv1alpha1 "kubesphere.io/kubesphere/pkg/kapis/qos/v1alpha1"
+	filev1 "kubesphere.io/kubesphere/pkg/kapis/file/v1"
 	schedulerv1 "kubesphere.io/kubesphere/pkg/kapis/scheduler/v1"
 	virtualizationv1 "kubesphere.io/kubesphere/pkg/kapis/virtualization/v1"
 	volumev1alpha1 "kubesphere.io/kubesphere/pkg/kapis/volume/v1alpha1"
@@ -86,9 +86,9 @@ func generateSwaggerJson() []byte {
 	urlruntime.Must(vpcv1.AddToContainer(container, informerFactory, nil, nil))
 	urlruntime.Must(volumev1alpha1.AddToContainer(container, nil, nil, nil))
 	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, nil, nil, nil, informerFactory))
-	urlruntime.Must(schedulerv1.AddToContainer(container, nil, nil))
+	urlruntime.Must(schedulerv1.AddToContainer(container, nil, nil, nil))
 	urlruntime.Must(clustersyncv1.AddToContainer(container, nil, nil))
-	urlruntime.Must(qosv1alpha1.AddToContainer(container, nil, nil, nil))
+	urlruntime.Must(filev1.AddToContainer(container, nil,))
 	urlruntime.Must(autoscalerv1.AddToContainer(container, nil, nil))
 
 	config := restfulspec.Config{
