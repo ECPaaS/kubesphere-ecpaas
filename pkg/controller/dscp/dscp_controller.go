@@ -518,14 +518,14 @@ func generateIptablesDscpCommand(dscpIpMap map[string][]string, updateFlag bool)
 		// When a Pod is first created, a custom iptable chain must be added and connected to the default POSTROUTING chain.
 		commands = append(commands, "iptables -t mangle -N ACCTONDSCP && iptables -t mangle -A POSTROUTING -j ACCTONDSCP")
 	} else {
-		// When updating iptables due to ConfigMap changes, 
+		// When updating iptables due to ConfigMap changes,
 		// only the rules in the custom chain are deleted in advance to facilitate subsequent rule updates.
 		commands = append(commands, "iptables -t mangle -F ACCTONDSCP")
 	}
 
 	for dscp, podIps := range dscpIpMap {
 	    for _, ip := range podIps {
-	        markPacket := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -d %s -j MARK --set-mark %s", ip, dscp)
+	        markPacket := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -d %s -j MARK --or-mark %s", ip, dscp)
             commands = append(commands, markPacket)
 	    }
 	    setDscp := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -m mark --mark %s -j DSCP --set-dscp %s", dscp, dscp)
@@ -824,7 +824,7 @@ func execSinglePodIptables(c *Controller, pod *corev1.Pod, isPodDelete bool) {
 			// Check if the Pod has an IP address
 			if !pod.Spec.HostNetwork && pod.Status.PodIP != "" {
 				iptablesPodIp := pod.Status.PodIP + "/32"
-				command := fmt.Sprintf("iptables -t mangle %s -d %s -j MARK --set-mark %s", param, iptablesPodIp, ns.DSCP)
+				command := fmt.Sprintf("iptables -t mangle %s -d %s -j MARK --or-mark %s", param, iptablesPodIp, ns.DSCP)
 				klog.Infof("%s: %s/%s (%s)", describe, pod.Namespace, pod.Name, pod.Status.PodIP)
 				executeCommandInPod(c.k8sclient, strings.Fields(command))
 				return
