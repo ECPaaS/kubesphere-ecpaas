@@ -68,12 +68,14 @@ import (
 	"kubesphere.io/kubesphere/pkg/informers"
 	alertingv1 "kubesphere.io/kubesphere/pkg/kapis/alerting/v1"
 	alertingv2alpha1 "kubesphere.io/kubesphere/pkg/kapis/alerting/v2alpha1"
+	autoscalerv1 "kubesphere.io/kubesphere/pkg/kapis/autoscaler/v1"
 	clusterkapisv1alpha1 "kubesphere.io/kubesphere/pkg/kapis/cluster/v1alpha1"
 	clustersyncv1 "kubesphere.io/kubesphere/pkg/kapis/clustersync/v1"
 	configv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/config/v1alpha2"
 	"kubesphere.io/kubesphere/pkg/kapis/crd"
 	kapisdevops "kubesphere.io/kubesphere/pkg/kapis/devops"
 	edgeruntimev1alpha1 "kubesphere.io/kubesphere/pkg/kapis/edgeruntime/v1alpha1"
+	filev1 "kubesphere.io/kubesphere/pkg/kapis/file/v1"
 	gatewayv1alpha1 "kubesphere.io/kubesphere/pkg/kapis/gateway/v1alpha1"
 	iamapi "kubesphere.io/kubesphere/pkg/kapis/iam/v1alpha2"
 	kubeedgev1alpha1 "kubesphere.io/kubesphere/pkg/kapis/kubeedge/v1alpha1"
@@ -88,7 +90,6 @@ import (
 	openpitrixv2alpha1 "kubesphere.io/kubesphere/pkg/kapis/openpitrix/v2alpha1"
 	operationsv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/operations/v1alpha2"
 	qosv1alpha1 "kubesphere.io/kubesphere/pkg/kapis/qos/v1alpha1"
-	filev1 "kubesphere.io/kubesphere/pkg/kapis/file/v1"
 	resourcesv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha2"
 	resourcev1alpha3 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha3"
 	schedulerv1 "kubesphere.io/kubesphere/pkg/kapis/scheduler/v1"
@@ -295,6 +296,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 	urlruntime.Must(clustersyncv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 	urlruntime.Must(qosv1alpha1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.KubernetesClient.Dynamic()))
 	urlruntime.Must(filev1.AddToContainer(s.container, s.KubernetesClient.Kubernetes()))
+	urlruntime.Must(autoscalerv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 }
 
 // installCRDAPIs Install CRDs to the KAPIs with List and Get options

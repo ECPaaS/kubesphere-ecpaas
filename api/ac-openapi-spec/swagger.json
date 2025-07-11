@@ -15,6 +15,354 @@
     "version": "v0.0.0"
   },
   "paths": {
+    "/kapis/autoscaler.ecpaas.io/v1/namespaces/{namespace}/hpa": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler HPA"
+        ],
+        "summary": "Create HPA",
+        "operationId": "CreateHPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/autoscaler.HpaRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/autoscaler.HpaNameResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/autoscaler.ecpaas.io/v1/namespaces/{namespace}/hpa/{name}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler HPA"
+        ],
+        "summary": "Get HPA",
+        "operationId": "GetHPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "hpa name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/autoscaler.HpaResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provided will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler HPA"
+        ],
+        "summary": "Update HPA",
+        "operationId": "UpdateHPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "hpa name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/autoscaler.ModifyHpaRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler HPA"
+        ],
+        "summary": "Delete HPA",
+        "operationId": "DeleteHPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "hpa name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/autoscaler.ecpaas.io/v1/namespaces/{namespace}/vpa": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler VPA"
+        ],
+        "summary": "Create VPA",
+        "operationId": "CreateVPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/autoscaler.VpaRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/autoscaler.VpaNameResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/autoscaler.ecpaas.io/v1/namespaces/{namespace}/vpa/{name}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler VPA"
+        ],
+        "summary": "Get VPA",
+        "operationId": "GetVPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpa name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/autoscaler.VpaResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "description": "Any parameters which are not provided will not be changed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler VPA"
+        ],
+        "summary": "Update VPA",
+        "operationId": "UpdateVPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpa name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/autoscaler.ModifyVpaRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Autoscaler VPA"
+        ],
+        "summary": "Delete VPA",
+        "operationId": "DeleteVPA",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace name",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "vpa name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/kapis/clustersync.ecpaas.io/v1/backup": {
       "get": {
         "produces": [
@@ -2682,6 +3030,370 @@
     }
   },
   "definitions": {
+    "autoscaler.HpaNameResponse": {
+      "required": [
+        "resourceName"
+      ],
+      "properties": {
+        "resourceName": {
+          "description": "HPA name, and the name of the target deployment.",
+          "type": "string"
+        }
+      }
+    },
+    "autoscaler.HpaRequest": {
+      "required": [
+        "resourceName",
+        "minReplicas",
+        "maxReplicas",
+        "scaleUp",
+        "scaleDown"
+      ],
+      "properties": {
+        "maxReplicas": {
+          "description": "Set the maximum number of pod replicas allowed. Cannot be set lower than the minimum replicas.",
+          "type": "integer",
+          "format": "int32",
+          "default": 1,
+          "maximum": 2147483647,
+          "minimum": 1
+        },
+        "minReplicas": {
+          "description": "Set the minimum number of pod replicas allowed.",
+          "type": "integer",
+          "format": "int32",
+          "default": 1,
+          "maximum": 2147483647,
+          "minimum": 1
+        },
+        "resourceName": {
+          "description": "HPA name, use the name of the target deployment. Must be unique. Valid characters: a-z, 0-9, and -(hyphen). And must start and end with an alphanumeric character.",
+          "type": "string",
+          "maximum": 253
+        },
+        "scaleDown": {
+          "description": "Scale down object, to configure the scaling down behavior.",
+          "$ref": "#/definitions/autoscaler.scalingRules"
+        },
+        "scaleUp": {
+          "description": "Scale up object, to configure the scaling up behavior.",
+          "$ref": "#/definitions/autoscaler.scalingRules"
+        },
+        "targetCpuUsage": {
+          "description": "Target CPU usage, in percentages. At least one of CPU or memory taget usage must be set.",
+          "type": "integer",
+          "format": "int32",
+          "default": 80,
+          "maximum": 100,
+          "minimum": 1
+        },
+        "targetMemoryUsage": {
+          "description": "Target memory usage, in MiBs. At least one of CPU or memory taget usage must be set.",
+          "type": "number",
+          "format": "float",
+          "maximum": 10000,
+          "minimum": 0.01
+        }
+      }
+    },
+    "autoscaler.HpaResponse": {
+      "required": [
+        "resourceName",
+        "targetCpuUsage",
+        "targetMemoryUsage",
+        "minReplicas",
+        "maxReplicas",
+        "scaleUp",
+        "scaleDown"
+      ],
+      "properties": {
+        "maxReplicas": {
+          "description": "Maxnimum number of pod replicas allowed.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "minReplicas": {
+          "description": "Minimum number of pod replicas allowed.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "resourceName": {
+          "description": "HPA name, and the name of the target deployment. Unique key.",
+          "type": "string"
+        },
+        "scaleDown": {
+          "description": "Scale down object, to configure the scaling down behavior.",
+          "$ref": "#/definitions/autoscaler.scalingRules"
+        },
+        "scaleUp": {
+          "description": "Scale up object, to configure the scaling up behavior.",
+          "$ref": "#/definitions/autoscaler.scalingRules"
+        },
+        "targetCpuUsage": {
+          "description": "Target CPU usage, in percentages.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetMemoryUsage": {
+          "description": "Target memory usage, in MiBs.",
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "autoscaler.ModifyHpaRequest": {
+      "properties": {
+        "maxReplicas": {
+          "description": "Set the maximum number of pod replicas allowed. Cannot be set lower than the minimum replicas.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2147483647,
+          "minimum": 1
+        },
+        "minReplicas": {
+          "description": "Set the minimum number of pod replicas allowed.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2147483647,
+          "minimum": 1
+        },
+        "scaleDown": {
+          "description": "Scale down object, to configure the scaling down behavior.",
+          "$ref": "#/definitions/autoscaler.scalingRules"
+        },
+        "scaleUp": {
+          "description": "Scale up object, to configure the scaling up behavior.",
+          "$ref": "#/definitions/autoscaler.scalingRules"
+        },
+        "targetCpuUsage": {
+          "description": "Target CPU usage, in percentages. At least one of CPU or memory taget usage must be set.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 100,
+          "minimum": 1
+        },
+        "targetMemoryUsage": {
+          "description": "Target memory usage, in MiBs. At least one of CPU or memory taget usage must be set.",
+          "type": "number",
+          "format": "float",
+          "maximum": 10000,
+          "minimum": 0.01
+        }
+      }
+    },
+    "autoscaler.ModifyVpaRequest": {
+      "properties": {
+        "containerPolicies": {
+          "description": "Container resource policy array. This array may have multiple policies; each policy corresponds to 1 unique container name. If this array is provided, must not remove the wildcard policy in the array when updating VPA.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/autoscaler.cPolicy"
+          }
+        },
+        "minReplicas": {
+          "description": "Minimum number of replicas needed to update pod resources. If set to 1, service provided by pod may be interrupted due to pod recreation.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2147483647,
+          "minimum": 1
+        },
+        "updateMode": {
+          "description": "Controls the way autoscaler applies changes to the pod resources. 'Initial' mode will only apply changes on pod creation. 'Auto' mode not only applies changes on pod creation but also will try to delete and recreate pod to apply changes. 'Off' mode will turn off updating function. Available input: Initial, Auto, Off",
+          "type": "string"
+        }
+      }
+    },
+    "autoscaler.VpaNameResponse": {
+      "required": [
+        "resourceName"
+      ],
+      "properties": {
+        "resourceName": {
+          "description": "VPA name, and the name of the target deployment.",
+          "type": "string"
+        }
+      }
+    },
+    "autoscaler.VpaRequest": {
+      "required": [
+        "resourceName",
+        "updateMode",
+        "minReplicas",
+        "containerPolicies"
+      ],
+      "properties": {
+        "containerPolicies": {
+          "description": "Container resource policy array. This array may have multiple policies; each policy corresponds to 1 unique container name. A wildcard policy must be specified in the array when creating VPA.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/autoscaler.cPolicy"
+          }
+        },
+        "minReplicas": {
+          "description": "Minimum number of replicas needed to update pod resources. If set to 1, service provided by pod may be interrupted due to pod recreation.",
+          "type": "integer",
+          "format": "int32",
+          "default": 2,
+          "maximum": 2147483647,
+          "minimum": 1
+        },
+        "resourceName": {
+          "description": "VPA name, use the name of the target deployment. Must be unique. Valid characters: a-z, 0-9, and -(hyphen). And must start and end with an alphanumeric character.",
+          "type": "string",
+          "maximum": 253
+        },
+        "updateMode": {
+          "description": "Controls the way autoscaler applies changes to the pod resources. 'Initial' mode will only apply changes on pod creation. 'Auto' mode not only applies changes on pod creation but also will try to delete and recreate pod to apply changes. 'Off' mode will turn off updating function. Available input: Initial, Auto, Off",
+          "type": "string",
+          "default": "Auto"
+        }
+      }
+    },
+    "autoscaler.VpaResponse": {
+      "required": [
+        "resourceName",
+        "updateMode",
+        "minReplicas",
+        "containerPolicies"
+      ],
+      "properties": {
+        "containerPolicies": {
+          "description": "Container resource policy array. This array may have multiple policies; each policy corresponds to 1 unique container name. Must have at least one wildcard policy in the array when creating VPA.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/autoscaler.cPolicy"
+          }
+        },
+        "minReplicas": {
+          "description": "Minimum number of replicas needed to update pod resources. If set to 1, service provided by pod may be interrupted due to pod recreation.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "resourceName": {
+          "description": "VPA name, and the name of the target deployment.",
+          "type": "string"
+        },
+        "updateMode": {
+          "description": "Controls the way autoscaler applies changes to the pod resources. 'Initial' mode will only apply changes on pod creation. 'Auto' mode not only applies changes on pod creation but also will try to delete and recreate pod to apply changes. 'Off' mode will turn off updating function.",
+          "type": "string"
+        }
+      }
+    },
+    "autoscaler.cPolicy": {
+      "required": [
+        "containerName",
+        "mode",
+        "minAllowed",
+        "maxAllowed",
+        "controlledResources",
+        "controlledValues"
+      ],
+      "properties": {
+        "containerName": {
+          "description": "Container name for this policy. Unique key.",
+          "type": "string",
+          "maximum": 64
+        },
+        "controlledResources": {
+          "description": "Array of strings, must not be empty. Specifies which resource types will be controlled by autoscaler. Available input: cpu, memory",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "controlledValues": {
+          "description": "Specifies which resource values should be controlled. Available input: RequestsAndLimits, RequestsOnly",
+          "type": "string",
+          "default": "RequestsAndLimits"
+        },
+        "maxAllowed": {
+          "description": "Specify the maximum resources can be assigned to container. Can be an empty object.",
+          "$ref": "#/definitions/autoscaler.resources"
+        },
+        "minAllowed": {
+          "description": "Specify the minimum resources can be assigned to container. Can be an empty object.",
+          "$ref": "#/definitions/autoscaler.resources"
+        },
+        "mode": {
+          "description": "Whether autoscaler is enabled in this policy. Available input: Auto, Off",
+          "type": "string",
+          "default": "Auto"
+        }
+      }
+    },
+    "autoscaler.resources": {
+      "properties": {
+        "cpu": {
+          "description": "Minimum/Maximum amount of cpu resource that can be assigned to the container, unit is cores. If not set, autoscaler will assign as low/high as possible resource to the container.",
+          "type": "number",
+          "format": "float",
+          "maximum": 10000,
+          "minimum": 0.01
+        },
+        "memory": {
+          "description": "Minimum/Maximum amount of memory resources that can be assigned to the container unit is MiBs. If not set, autoscaler will assign as low/high as possible resource to the container.",
+          "type": "number",
+          "format": "float",
+          "maximum": 10000,
+          "minimum": 0.01
+        }
+      }
+    },
+    "autoscaler.scalingPolicy": {
+      "required": [
+        "type",
+        "value",
+        "periodSeconds"
+      ],
+      "properties": {
+        "periodSeconds": {
+          "description": "PeriodSeconds specifies the window of time for which the policy should hold true.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 1800,
+          "minimum": 1
+        },
+        "type": {
+          "description": "Type is used to specify the scaling policy. Unique key. Available input: Pods, Percent",
+          "type": "string"
+        },
+        "value": {
+          "description": "Value contains the amount of change which is permitted by the policy. In numbers or percentages.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2147483647,
+          "minimum": 1
+        }
+      }
+    },
+    "autoscaler.scalingRules": {
+      "required": [
+        "stabilizationWindowSeconds",
+        "selectPolicy",
+        "policies"
+      ],
+      "properties": {
+        "policies": {
+          "description": "A list of potential scaling policies which can be used during scaling. At least one item must be set, and each type can be set at most once.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/autoscaler.scalingPolicy"
+          }
+        },
+        "selectPolicy": {
+          "description": "To specify which policy should be used. Available input: Max, Min, Disabled",
+          "type": "string",
+          "default": "Max"
+        },
+        "stabilizationWindowSeconds": {
+          "description": "The number of seconds for which past recommendations should be considered while scaling up. Unit is second. Default: 0 when scaling up; 300 when scaling down.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 3600,
+          "minimum": 0
+        }
+      }
+    },
     "clustersync.BackupFileResponse": {
       "required": [
         "backupFileName",

@@ -157,6 +157,8 @@ const (
 	ClusterSyncRestoreTag       = "Cluster Sync Restore"
 	ClusterSyncRestoreRecordTag = "Cluster Sync Restore-record"
 	ClusterSyncScheduleTag      = "Cluster Sync Schedule"
+	AutoscalerHpaTag            = "Autoscaler HPA"
+	AutoscalerVpaTag            = "Autoscaler VPA"
 
 	MinioImageTag = "Minio Images"
 	QoSTag        = "QoS"
