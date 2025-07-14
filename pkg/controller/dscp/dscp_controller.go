@@ -54,6 +54,9 @@ const (
 
 	// DSCP ConfigMap yaml data
 	configMapYamlData = "k8s_dscp_config.yaml"
+
+	// When marking DSCP, only 6 bits are required because the value range is 0 to 63.
+	dscpMask = "/63"
 )
 
 type NamespaceDscp struct {
@@ -524,12 +527,13 @@ func generateIptablesDscpCommand(dscpIpMap map[string][]string, updateFlag bool)
 	}
 
 	for dscp, podIps := range dscpIpMap {
-	    for _, ip := range podIps {
-	        markPacket := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -d %s -j MARK --or-mark %s", ip, dscp)
-            commands = append(commands, markPacket)
-	    }
-	    setDscp := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -m mark --mark %s -j DSCP --set-dscp %s", dscp, dscp)
-	    commands = append(commands, setDscp)
+		for _, ip := range podIps {
+			markPacket := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -d %s -j MARK --or-mark %s", ip, dscp)
+			commands = append(commands, markPacket)
+		}
+		markValue := dscp + dscpMask
+		setDscp := fmt.Sprintf("iptables -t mangle -A ACCTONDSCP -m mark --mark %s -j DSCP --set-dscp %s", markValue, dscp)
+		commands = append(commands, setDscp)
 	}
 
 	// "sleep infinity" is added to prevent DaemonSet from continuously re-establishing Pods
@@ -540,7 +544,7 @@ func generateIptablesDscpCommand(dscpIpMap map[string][]string, updateFlag bool)
 		return []string{fullCommandStr}
 	} else {
 		fullCommandStr := strings.Join(commands, " && ")
-    	return []string{"sh", "-c", fullCommandStr}
+		return []string{"sh", "-c", fullCommandStr}
 	}
 }
 
