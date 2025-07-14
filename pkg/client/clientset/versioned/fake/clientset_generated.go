@@ -43,6 +43,8 @@ import (
 	fakenetworkv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/network/v1alpha1/fake"
 	notificationv2beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/notification/v2beta1"
 	fakenotificationv2beta1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/notification/v2beta1/fake"
+	pvcviewerv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/pvcviewer/v1alpha1"
+	fakepvcviewerv1alpha1 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/pvcviewer/v1alpha1/fake"
 	quotav1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/quota/v1alpha2"
 	fakequotav1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/quota/v1alpha2/fake"
 	servicemeshv1alpha2 "kubesphere.io/kubesphere/pkg/client/clientset/versioned/typed/servicemesh/v1alpha2"
@@ -151,6 +153,11 @@ func (c *Clientset) NetworkV1alpha1() networkv1alpha1.NetworkV1alpha1Interface {
 // NotificationV2beta1 retrieves the NotificationV2beta1Client
 func (c *Clientset) NotificationV2beta1() notificationv2beta1.NotificationV2beta1Interface {
 	return &fakenotificationv2beta1.FakeNotificationV2beta1{Fake: &c.Fake}
+}
+
+// PvcviewerV1alpha1 retrieves the PvcviewerV1alpha1Client
+func (c *Clientset) PvcviewerV1alpha1() pvcviewerv1alpha1.PvcviewerV1alpha1Interface {
+	return &fakepvcviewerv1alpha1.FakePvcviewerV1alpha1{Fake: &c.Fake}
 }
 
 // QuotaV1alpha2 retrieves the QuotaV1alpha2Client
