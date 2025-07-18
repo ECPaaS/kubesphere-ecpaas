@@ -6,17 +6,17 @@ package pvcviewer
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	pvcviewerv1alpha1 "kubesphere.io/api/pvcviewer/v1alpha1"
@@ -55,6 +55,12 @@ const (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PVCViewerReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if r.Client == nil {
+		r.Client = mgr.GetClient()
+	}
+	if r.Scheme == nil {
+		r.Scheme = mgr.GetScheme()
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&pvcviewerv1alpha1.PVCViewer{}).
 		// This controller manages, i.e. creates these kinds for a PVCViewer
@@ -66,8 +72,6 @@ func (r *PVCViewerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
 	instance := &pvcviewerv1alpha1.PVCViewer{}
 	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
 		// Created objects are automatically garbage collected if parent is deleted
@@ -77,11 +81,11 @@ func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is being deleted
 		// Do nothing as the resources are automatically garbage collected
-		log.Info("PVCViewer is being deleted")
+		klog.Info("PVCViewer is being deleted")
 
 		// Keep on reconciling status until the finalizer is removed
-		if err := r.reconcileStatus(ctx, log, instance.Name, instance.Namespace); err != nil {
-			log.Error(err, "Error while reconciling status")
+		if err := r.reconcileStatus(ctx, instance.Name, instance.Namespace); err != nil {
+			klog.Errorf("Error while reconciling status: %v", err)
 			return ctrl.Result{}, err
 		}
 
@@ -94,18 +98,18 @@ func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		partOfLabelKey:   partOfLabelValue,
 	}
 
-	if err := r.reconcileDeployment(ctx, log, instance, commonLabels); err != nil {
-		log.Error(err, "Error while reconciling deployment")
+	if err := r.reconcileDeployment(ctx, instance, commonLabels); err != nil {
+		klog.Errorf("Error while reconciling deployment: %v", err)
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileService(ctx, log, instance, commonLabels); err != nil {
-		log.Error(err, "Error while reconciling service")
+	if err := r.reconcileService(ctx, instance, commonLabels); err != nil {
+		klog.Errorf("Error while reconciling service: %v", err)
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileStatus(ctx, log, instance.Name, instance.Namespace); err != nil {
-		log.Error(err, "Error while reconciling status")
+	if err := r.reconcileStatus(ctx, instance.Name, instance.Namespace); err != nil {
+		klog.Errorf("Error while reconciling status: %v", err)
 		return ctrl.Result{}, err
 	}
 
@@ -113,7 +117,7 @@ func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 // Creates or updates the deployment as defined by the viewer's podSpec
-func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, log logr.Logger, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) error {
+func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourcePrefix + viewer.Name,
@@ -129,6 +133,8 @@ func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, log logr.
 		createDeployment = true
 	}
 
+	original := deployment.DeepCopy()
+
 	var (
 		// Do not change affinity or rwoClaims by default
 		affinity = deployment.Spec.Template.Spec.Affinity
@@ -137,7 +143,7 @@ func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, log logr.
 	)
 
 	if determineAffinity {
-		if newAffinity, err := r.generateAffinity(ctx, log, viewer); err != nil {
+		if newAffinity, err := r.generateAffinity(ctx, viewer); err != nil {
 			return err
 		} else if newAffinity != nil {
 			// Only set the affinity if it is not nil - we wouldn't win anything by restarting without affinity
@@ -166,15 +172,15 @@ func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, log logr.
 	}
 
 	if createDeployment {
-		log.Info("Creating Deployment")
+		klog.Info("Creating Deployment")
 		return r.Create(ctx, deployment)
 	}
-	log.Info("Updating Deployment")
-	return r.Update(ctx, deployment)
+	klog.V(2).Info("Updating Deployment")
+	return r.Patch(ctx, deployment, client.MergeFrom(original))
 }
 
 // Creates or updates the service as defined by the viewer's service
-func (r *PVCViewerReconciler) reconcileService(ctx context.Context, log logr.Logger, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) error {
+func (r *PVCViewerReconciler) reconcileService(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) error {
 	if viewer.Spec.Networking == (pvcviewerv1alpha1.Networking{}) {
 		return nil
 	}
@@ -194,7 +200,9 @@ func (r *PVCViewerReconciler) reconcileService(ctx context.Context, log logr.Log
 		createService = true
 	}
 
-	service.Spec.Type = "ClusterIP"
+	original := service.DeepCopy()
+
+	service.Spec.Type = "NodePort"
 	service.Spec.Selector = commonLabels
 	service.Spec.Ports = []corev1.ServicePort{
 		{
@@ -209,23 +217,32 @@ func (r *PVCViewerReconciler) reconcileService(ctx context.Context, log logr.Log
 	}
 
 	if createService {
-		log.Info("Creating Service")
+		klog.Info("Creating Service")
 		return r.Create(ctx, service)
 	}
-	log.Info("Updating Service")
-	return r.Update(ctx, service)
+	klog.V(2).Info("Updating Service")
+	return r.Patch(ctx, service, client.MergeFrom(original))
 }
 
 // Computes and updates the status of the PVCViewer
-func (r *PVCViewerReconciler) reconcileStatus(ctx context.Context, log logr.Logger, viewerName string, viewerNamespace string) error {
+func (r *PVCViewerReconciler) reconcileStatus(ctx context.Context, viewerName string, viewerNamespace string) error {
 	viewer := &pvcviewerv1alpha1.PVCViewer{}
 	if err := r.Get(ctx, types.NamespacedName{Name: viewerName, Namespace: viewerNamespace}, viewer); err != nil {
 		return err
 	}
 
+	service := &corev1.Service{}
+	if err := r.Get(ctx, types.NamespacedName{Name: resourcePrefix + viewer.Name, Namespace: viewer.Namespace}, service); err != nil {
+		klog.Info("Could not find Service for status update")
+		viewer.Status.ServiceIP = nil
+	} else {
+		serviceIp := fmt.Sprintf("%s:%d", service.Spec.ClusterIP, service.Spec.Ports[0].NodePort)
+		viewer.Status.ServiceIP = &serviceIp
+	}
+
 	deployment := &appsv1.Deployment{}
 	if err := r.Get(ctx, types.NamespacedName{Name: resourcePrefix + viewer.Name, Namespace: viewer.Namespace}, deployment); err != nil {
-		log.Info("Could not find Deployment for status update")
+		klog.Info("Could not find Deployment for status update")
 		viewer.Status.Ready = false
 	} else {
 		viewer.Status.Ready = *deployment.Spec.Replicas == deployment.Status.ReadyReplicas
@@ -238,18 +255,18 @@ func (r *PVCViewerReconciler) reconcileStatus(ctx context.Context, log logr.Logg
 		}
 	}
 
-	log.Info("Updating status")
+	klog.V(2).Info("Updating status")
 	return r.Client.Status().Update(ctx, viewer)
 }
 
 // Generates the affinity to be used for the deployment
 // In case no affinity should be used (e.g. RWOScheduling is disabled) or updated, nil is returned
-func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, log logr.Logger, viewer *pvcviewerv1alpha1.PVCViewer) (*corev1.Affinity, error) {
+func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer) (*corev1.Affinity, error) {
 	// Check if the viewer's PVC is RWO access mode
 	pvc := &corev1.PersistentVolumeClaim{}
 	if err := r.Get(ctx, types.NamespacedName{Name: viewer.Spec.PVC, Namespace: viewer.Namespace}, pvc); err != nil {
 		if apierrs.IsNotFound(err) {
-			log.Info("Omitting Affinity: PVC not found")
+			klog.Info("Omitting Affinity: PVC not found")
 			// Should we return an error here or suppress it and let the Deployment fail?
 			// Latter might be better and more visible to the user
 			return nil, nil
@@ -258,7 +275,7 @@ func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, log logr.Log
 	}
 
 	if len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteOnce {
-		log.Info("Omitting Affinity: PVC is not RWO")
+		klog.Info("Omitting Affinity: PVC is not RWO")
 		return nil, nil
 	}
 
@@ -278,12 +295,12 @@ func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, log logr.Log
 				if volume.PersistentVolumeClaim.ClaimName == pvc.Name {
 					if nodeName != nil {
 						// Rather than throwing an error, we just omit the affinity, leaving the current deployment's affinity unchanged
-						log.Info("Omitting Affinity: Viewer references RWO volumes on multiple nodes",
+						klog.Info("Omitting Affinity: Viewer references RWO volumes on multiple nodes",
 							"nodes", []string{*nodeName, pod.Spec.NodeName})
 						return nil, nil
 					}
 					if pod.Spec.NodeName == "" {
-						log.Info("Omitting Affinity: Viewer references RWO volume on pod without nodeName")
+						klog.Info("Omitting Affinity: Viewer references RWO volume on pod without nodeName")
 						return nil, nil
 					}
 					nodeName = &pod.Spec.NodeName
@@ -293,7 +310,7 @@ func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, log logr.Log
 	}
 
 	if nodeName == nil {
-		log.Info("Omitting Affinity: PVC not used by other Pods")
+		klog.Info("Omitting Affinity: PVC not used by other Pods")
 		return nil, nil
 	}
 

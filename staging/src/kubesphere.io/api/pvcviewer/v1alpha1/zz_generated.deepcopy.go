@@ -132,6 +132,11 @@ func (in *PVCViewerStatus) DeepCopyInto(out *PVCViewerStatus) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.ServiceIP != nil {
+		in, out := &in.ServiceIP, &out.ServiceIP
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

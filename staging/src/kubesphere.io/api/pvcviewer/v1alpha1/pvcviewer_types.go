@@ -39,18 +39,6 @@ type Networking struct {
 	// Specifies the application's target port used by the Deployment's Service.
 	// +optional
 	TargetPort intstr.IntOrString `json:"targetPort"`
-	// Specifies the prefix to the virtual service's 'prefix' field.
-	// The controller will suffix '/namespace/name' to this prefix.
-	// +optional
-	BasePrefix string `json:"basePrefix"`
-	// Specifies the virtual service's 'rewrite' field.
-	// If omitted, the controller will set the 'rewrite' field to the same
-	// value as the 'prefix' field.
-	// +optional
-	Rewrite string `json:"rewrite,omitempty"`
-	// The timeout for the virtual service's 'timeout' field.
-	// +optional
-	Timeout string `json:"timeout,omitempty"`
 }
 
 // PVCViewerStatus defines the observed state of PVCViewer
@@ -62,6 +50,9 @@ type PVCViewerStatus struct {
 	// i.e. Replicas==ReadyReplicas
 	// +kubebuilder:default:=false
 	Ready bool `json:"ready"`
+
+	// Display the service IP and node port of the PVC viewer
+	ServiceIP *string `json:"serviceIp,omitempty"`
 }
 
 // +kubebuilder:object:root=true

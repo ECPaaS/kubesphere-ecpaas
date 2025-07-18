@@ -40,16 +40,6 @@ spec:
                 description: Specifies custom networking specification for the underlying
                   Service and VirtualService resources
                 properties:
-                  basePrefix:
-                    description: Specifies the prefix to the virtual service's 'prefix'
-                      field. The controller will suffix '/namespace/name' to this
-                      prefix.
-                    type: string
-                  rewrite:
-                    description: Specifies the virtual service's 'rewrite' field.
-                      If omitted, the controller will set the 'rewrite' field to the
-                      same value as the 'prefix' field.
-                    type: string
                   targetPort:
                     anyOf:
                     - type: integer
@@ -57,9 +47,6 @@ spec:
                     description: Specifies the application's target port used by the
                       Deployment's Service.
                     x-kubernetes-int-or-string: true
-                  timeout:
-                    description: The timeout for the virtual service's 'timeout' field.
-                    type: string
                 type: object
               podSpec:
                 description: "TODO infer default values if PodSpec is empty Specifies
@@ -6510,6 +6497,9 @@ spec:
                 description: Ready defines if the viewer is ready to be used, i.e.
                   Replicas==ReadyReplicas
                 type: boolean
+              serviceIp:
+                description: Display the service IP and node port of the PVC viewer
+                type: string
             required:
             - ready
             type: object
