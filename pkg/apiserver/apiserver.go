@@ -295,7 +295,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 		s.KubernetesClient.KubeSphere(), s.EventsClient, s.LoggingClient, s.AuditingClient, amOperator, imOperator, rbacAuthorizer, s.MonitoringClient, s.RuntimeCache, s.Config.MeteringOptions, s.OpenpitrixClient))
 	urlruntime.Must(clustersyncv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 	urlruntime.Must(qosv1alpha1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.KubernetesClient.Dynamic()))
-	urlruntime.Must(filev1.AddToContainer(s.container, s.KubernetesClient.Kubernetes()))
+	urlruntime.Must(filev1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 	urlruntime.Must(autoscalerv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 }
 

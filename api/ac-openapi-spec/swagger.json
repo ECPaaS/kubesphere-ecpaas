@@ -1239,7 +1239,7 @@
         "tags": [
           "File"
         ],
-        "summary": "Download the model file to PVC via Hugging Face Hub",
+        "summary": "Download AI model file to PVC via Hugging Face Hub",
         "operationId": "DownloadModel",
         "parameters": [
           {
@@ -1263,6 +1263,125 @@
             "schema": {
               "$ref": "#/definitions/util.BadRequestError"
             }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/file.ecpaas.io/v1/pvcViewer": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "File"
+        ],
+        "summary": "List all PVC viewer information",
+        "operationId": "ListPVCViewerInfo",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.ListPVCViewerResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/kapis/file.ecpaas.io/v1/pvcViewer/namespaces/{namespace}/persistentvolumeclaims/{pvc}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "File"
+        ],
+        "summary": "Get PVC viewer information",
+        "operationId": "GetPVCViewerInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of the namespace",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "PVC name",
+            "name": "pvc",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/v1.PVCViewerResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "File"
+        ],
+        "summary": "Enable or disable the PVC viewer feature",
+        "operationId": "PVCViewer",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of the namespace",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "PVC name",
+            "name": "pvc",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1.ModifyPVCViewerRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -3072,6 +3191,48 @@
     }
   },
   "definitions": {
+    "autoscaler.CPolicy": {
+      "required": [
+        "containerName",
+        "mode",
+        "minAllowed",
+        "maxAllowed",
+        "controlledResources",
+        "controlledValues"
+      ],
+      "properties": {
+        "containerName": {
+          "description": "Container name for this policy. Unique key.",
+          "type": "string",
+          "maximum": 64
+        },
+        "controlledResources": {
+          "description": "Array of strings, must not be empty. Specifies which resource types will be controlled by autoscaler. Available input: cpu, memory",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "controlledValues": {
+          "description": "Specifies which resource values should be controlled. Available input: RequestsAndLimits, RequestsOnly",
+          "type": "string",
+          "default": "RequestsAndLimits"
+        },
+        "maxAllowed": {
+          "description": "Specify the maximum resources can be assigned to container. Can be an empty object.",
+          "$ref": "#/definitions/autoscaler.Resources"
+        },
+        "minAllowed": {
+          "description": "Specify the minimum resources can be assigned to container. Can be an empty object.",
+          "$ref": "#/definitions/autoscaler.Resources"
+        },
+        "mode": {
+          "description": "Whether autoscaler is enabled in this policy. Available input: Auto, Off",
+          "type": "string",
+          "default": "Auto"
+        }
+      }
+    },
     "autoscaler.HpaNameResponse": {
       "required": [
         "resourceName"
@@ -3115,11 +3276,11 @@
         },
         "scaleDown": {
           "description": "Scale down object, to configure the scaling down behavior.",
-          "$ref": "#/definitions/autoscaler.scalingRules"
+          "$ref": "#/definitions/autoscaler.ScalingRules"
         },
         "scaleUp": {
           "description": "Scale up object, to configure the scaling up behavior.",
-          "$ref": "#/definitions/autoscaler.scalingRules"
+          "$ref": "#/definitions/autoscaler.ScalingRules"
         },
         "targetCpuUsage": {
           "description": "Target CPU usage, in percentages. At least one of CPU or memory taget usage must be set.",
@@ -3165,11 +3326,11 @@
         },
         "scaleDown": {
           "description": "Scale down object, to configure the scaling down behavior.",
-          "$ref": "#/definitions/autoscaler.scalingRules"
+          "$ref": "#/definitions/autoscaler.ScalingRules"
         },
         "scaleUp": {
           "description": "Scale up object, to configure the scaling up behavior.",
-          "$ref": "#/definitions/autoscaler.scalingRules"
+          "$ref": "#/definitions/autoscaler.ScalingRules"
         },
         "targetCpuUsage": {
           "description": "Target CPU usage, in percentages.",
@@ -3201,11 +3362,11 @@
         },
         "scaleDown": {
           "description": "Scale down object, to configure the scaling down behavior.",
-          "$ref": "#/definitions/autoscaler.scalingRules"
+          "$ref": "#/definitions/autoscaler.ScalingRules"
         },
         "scaleUp": {
           "description": "Scale up object, to configure the scaling up behavior.",
-          "$ref": "#/definitions/autoscaler.scalingRules"
+          "$ref": "#/definitions/autoscaler.ScalingRules"
         },
         "targetCpuUsage": {
           "description": "Target CPU usage, in percentages. At least one of CPU or memory taget usage must be set.",
@@ -3229,7 +3390,7 @@
           "description": "Container resource policy array. This array may have multiple policies; each policy corresponds to 1 unique container name. If this array is provided, must not remove the wildcard policy in the array when updating VPA.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/autoscaler.cPolicy"
+            "$ref": "#/definitions/autoscaler.CPolicy"
           }
         },
         "minReplicas": {
@@ -3242,6 +3403,79 @@
         "updateMode": {
           "description": "Controls the way autoscaler applies changes to the pod resources. 'Initial' mode will only apply changes on pod creation. 'Auto' mode not only applies changes on pod creation but also will try to delete and recreate pod to apply changes. 'Off' mode will turn off updating function. Available input: Initial, Auto, Off",
           "type": "string"
+        }
+      }
+    },
+    "autoscaler.Resources": {
+      "properties": {
+        "cpu": {
+          "description": "Minimum/Maximum amount of cpu resource that can be assigned to the container, unit is cores. If not set, autoscaler will assign as low/high as possible resource to the container.",
+          "type": "number",
+          "format": "float",
+          "maximum": 10000,
+          "minimum": 0.01
+        },
+        "memory": {
+          "description": "Minimum/Maximum amount of memory resources that can be assigned to the container unit is MiBs. If not set, autoscaler will assign as low/high as possible resource to the container.",
+          "type": "number",
+          "format": "float",
+          "maximum": 10000,
+          "minimum": 0.01
+        }
+      }
+    },
+    "autoscaler.ScalingPolicy": {
+      "required": [
+        "type",
+        "value",
+        "periodSeconds"
+      ],
+      "properties": {
+        "periodSeconds": {
+          "description": "PeriodSeconds specifies the window of time for which the policy should hold true.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 1800,
+          "minimum": 1
+        },
+        "type": {
+          "description": "Type is used to specify the scaling policy. Unique key. Available input: Pods, Percent",
+          "type": "string"
+        },
+        "value": {
+          "description": "Value contains the amount of change which is permitted by the policy. In numbers or percentages.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2147483647,
+          "minimum": 1
+        }
+      }
+    },
+    "autoscaler.ScalingRules": {
+      "required": [
+        "stabilizationWindowSeconds",
+        "selectPolicy",
+        "policies"
+      ],
+      "properties": {
+        "policies": {
+          "description": "A list of potential scaling policies which can be used during scaling. At least one item must be set, and each type can be set at most once.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/autoscaler.ScalingPolicy"
+          }
+        },
+        "selectPolicy": {
+          "description": "To specify which policy should be used. Available input: Max, Min, Disabled",
+          "type": "string",
+          "default": "Max"
+        },
+        "stabilizationWindowSeconds": {
+          "description": "The number of seconds for which past recommendations should be considered while scaling up. Unit is second. Default: 0 when scaling up; 300 when scaling down.",
+          "type": "integer",
+          "format": "int32",
+          "maximum": 3600,
+          "minimum": 0
         }
       }
     },
@@ -3268,7 +3502,7 @@
           "description": "Container resource policy array. This array may have multiple policies; each policy corresponds to 1 unique container name. A wildcard policy must be specified in the array when creating VPA.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/autoscaler.cPolicy"
+            "$ref": "#/definitions/autoscaler.CPolicy"
           }
         },
         "minReplicas": {
@@ -3303,7 +3537,7 @@
           "description": "Container resource policy array. This array may have multiple policies; each policy corresponds to 1 unique container name. Must have at least one wildcard policy in the array when creating VPA.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/autoscaler.cPolicy"
+            "$ref": "#/definitions/autoscaler.CPolicy"
           }
         },
         "minReplicas": {
@@ -3318,121 +3552,6 @@
         "updateMode": {
           "description": "Controls the way autoscaler applies changes to the pod resources. 'Initial' mode will only apply changes on pod creation. 'Auto' mode not only applies changes on pod creation but also will try to delete and recreate pod to apply changes. 'Off' mode will turn off updating function.",
           "type": "string"
-        }
-      }
-    },
-    "autoscaler.cPolicy": {
-      "required": [
-        "containerName",
-        "mode",
-        "minAllowed",
-        "maxAllowed",
-        "controlledResources",
-        "controlledValues"
-      ],
-      "properties": {
-        "containerName": {
-          "description": "Container name for this policy. Unique key.",
-          "type": "string",
-          "maximum": 64
-        },
-        "controlledResources": {
-          "description": "Array of strings, must not be empty. Specifies which resource types will be controlled by autoscaler. Available input: cpu, memory",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "controlledValues": {
-          "description": "Specifies which resource values should be controlled. Available input: RequestsAndLimits, RequestsOnly",
-          "type": "string",
-          "default": "RequestsAndLimits"
-        },
-        "maxAllowed": {
-          "description": "Specify the maximum resources can be assigned to container. Can be an empty object.",
-          "$ref": "#/definitions/autoscaler.resources"
-        },
-        "minAllowed": {
-          "description": "Specify the minimum resources can be assigned to container. Can be an empty object.",
-          "$ref": "#/definitions/autoscaler.resources"
-        },
-        "mode": {
-          "description": "Whether autoscaler is enabled in this policy. Available input: Auto, Off",
-          "type": "string",
-          "default": "Auto"
-        }
-      }
-    },
-    "autoscaler.resources": {
-      "properties": {
-        "cpu": {
-          "description": "Minimum/Maximum amount of cpu resource that can be assigned to the container, unit is cores. If not set, autoscaler will assign as low/high as possible resource to the container.",
-          "type": "number",
-          "format": "float",
-          "maximum": 10000,
-          "minimum": 0.01
-        },
-        "memory": {
-          "description": "Minimum/Maximum amount of memory resources that can be assigned to the container unit is MiBs. If not set, autoscaler will assign as low/high as possible resource to the container.",
-          "type": "number",
-          "format": "float",
-          "maximum": 10000,
-          "minimum": 0.01
-        }
-      }
-    },
-    "autoscaler.scalingPolicy": {
-      "required": [
-        "type",
-        "value",
-        "periodSeconds"
-      ],
-      "properties": {
-        "periodSeconds": {
-          "description": "PeriodSeconds specifies the window of time for which the policy should hold true.",
-          "type": "integer",
-          "format": "int32",
-          "maximum": 1800,
-          "minimum": 1
-        },
-        "type": {
-          "description": "Type is used to specify the scaling policy. Unique key. Available input: Pods, Percent",
-          "type": "string"
-        },
-        "value": {
-          "description": "Value contains the amount of change which is permitted by the policy. In numbers or percentages.",
-          "type": "integer",
-          "format": "int32",
-          "maximum": 2147483647,
-          "minimum": 1
-        }
-      }
-    },
-    "autoscaler.scalingRules": {
-      "required": [
-        "stabilizationWindowSeconds",
-        "selectPolicy",
-        "policies"
-      ],
-      "properties": {
-        "policies": {
-          "description": "A list of potential scaling policies which can be used during scaling. At least one item must be set, and each type can be set at most once.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/autoscaler.scalingPolicy"
-          }
-        },
-        "selectPolicy": {
-          "description": "To specify which policy should be used. Available input: Max, Min, Disabled",
-          "type": "string",
-          "default": "Max"
-        },
-        "stabilizationWindowSeconds": {
-          "description": "The number of seconds for which past recommendations should be considered while scaling up. Unit is second. Default: 0 when scaling up; 300 when scaling down.",
-          "type": "integer",
-          "format": "int32",
-          "maximum": 3600,
-          "minimum": 0
         }
       }
     },
@@ -4377,11 +4496,9 @@
     },
     "v1.DownloadModelRequest": {
       "required": [
-        "token",
         "modelName",
         "namespace",
-        "pvcName",
-        "directory"
+        "pvcName"
       ],
       "properties": {
         "directory": {
@@ -4476,6 +4593,37 @@
         }
       }
     },
+    "v1.ListPVCViewerResponse": {
+      "required": [
+        "total_count",
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "description": "List of PVC viewer informations. Key is items[].id",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1.PVCViewerResponse"
+          }
+        },
+        "total_count": {
+          "description": "Total number of PVC viewer informations",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1.ModifyPVCViewerRequest": {
+      "required": [
+        "enable"
+      ],
+      "properties": {
+        "enable": {
+          "description": "Enable or disable the PVC viewer",
+          "type": "boolean"
+        }
+      }
+    },
     "v1.ObjectStatus": {
       "required": [
         "fileHas"
@@ -4511,6 +4659,42 @@
           "description": "Size in bytes of the image",
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "v1.PVCViewerResponse": {
+      "required": [
+        "id",
+        "enable",
+        "ready",
+        "namespace",
+        "pvcName",
+        "serviceIp"
+      ],
+      "properties": {
+        "enable": {
+          "description": "Enable or disable the PVC viewer",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "PVC ID",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "The namespace where the PVC is located",
+          "type": "string"
+        },
+        "pvcName": {
+          "description": "PVC name",
+          "type": "string"
+        },
+        "ready": {
+          "description": "Ready defines if the viewer is ready to be used",
+          "type": "boolean"
+        },
+        "serviceIp": {
+          "description": "The node IP and port of the node where the PVC viewer is located",
+          "type": "string"
         }
       }
     },

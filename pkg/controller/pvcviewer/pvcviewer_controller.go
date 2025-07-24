@@ -78,24 +78,24 @@ func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
+	commonLabels := map[string]string{
+		nameLabelKey:     instance.Name,
+		instanceLabelKey: resourcePrefix + instance.Name,
+		partOfLabelKey:   partOfLabelValue,
+	}
+
 	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is being deleted
 		// Do nothing as the resources are automatically garbage collected
 		klog.Info("PVCViewer is being deleted")
 
 		// Keep on reconciling status until the finalizer is removed
-		if err := r.reconcileStatus(ctx, instance.Name, instance.Namespace); err != nil {
+		if err := r.reconcileStatus(ctx, instance.Name, instance.Namespace, commonLabels); err != nil {
 			klog.Errorf("Error while reconciling status: %v", err)
 			return ctrl.Result{}, err
 		}
 
 		return reconcile.Result{}, nil
-	}
-
-	commonLabels := map[string]string{
-		nameLabelKey:     instance.Name,
-		instanceLabelKey: resourcePrefix + instance.Name,
-		partOfLabelKey:   partOfLabelValue,
 	}
 
 	if err := r.reconcileDeployment(ctx, instance, commonLabels); err != nil {
@@ -108,7 +108,7 @@ func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileStatus(ctx, instance.Name, instance.Namespace); err != nil {
+	if err := r.reconcileStatus(ctx, instance.Name, instance.Namespace, commonLabels); err != nil {
 		klog.Errorf("Error while reconciling status: %v", err)
 		return ctrl.Result{}, err
 	}
@@ -225,20 +225,13 @@ func (r *PVCViewerReconciler) reconcileService(ctx context.Context, viewer *pvcv
 }
 
 // Computes and updates the status of the PVCViewer
-func (r *PVCViewerReconciler) reconcileStatus(ctx context.Context, viewerName string, viewerNamespace string) error {
+func (r *PVCViewerReconciler) reconcileStatus(ctx context.Context, viewerName string, viewerNamespace string, commonLabels map[string]string) error {
 	viewer := &pvcviewerv1alpha1.PVCViewer{}
 	if err := r.Get(ctx, types.NamespacedName{Name: viewerName, Namespace: viewerNamespace}, viewer); err != nil {
 		return err
 	}
 
-	service := &corev1.Service{}
-	if err := r.Get(ctx, types.NamespacedName{Name: resourcePrefix + viewer.Name, Namespace: viewer.Namespace}, service); err != nil {
-		klog.Info("Could not find Service for status update")
-		viewer.Status.ServiceIP = nil
-	} else {
-		serviceIp := fmt.Sprintf("%s:%d", service.Spec.ClusterIP, service.Spec.Ports[0].NodePort)
-		viewer.Status.ServiceIP = &serviceIp
-	}
+	viewer.Status.ServiceIP = r.generateServiceIP(ctx, viewer, commonLabels)
 
 	deployment := &appsv1.Deployment{}
 	if err := r.Get(ctx, types.NamespacedName{Name: resourcePrefix + viewer.Name, Namespace: viewer.Namespace}, deployment); err != nil {
@@ -334,4 +327,49 @@ func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, viewer *pvcv
 		},
 	}
 	return affinity, nil
+}
+
+func (r *PVCViewerReconciler) generateServiceIP(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) *string {
+	service := &corev1.Service{}
+	if err := r.Get(ctx, types.NamespacedName{Name: resourcePrefix + viewer.Name, Namespace: viewer.Namespace}, service); err != nil {
+		klog.Info("Could not find Service for status update")
+		return nil
+	} else {
+		// Find the Pod corresponding to the Deployment
+		podList := &corev1.PodList{}
+		if err := r.List(ctx, podList, client.InNamespace(viewer.Namespace),
+			client.MatchingLabels(commonLabels)); err != nil || len(podList.Items) == 0 {
+			klog.Info("No Pod found for Deployment")
+			return nil
+		} else {
+			pod := podList.Items[0]
+			nodeName := pod.Spec.NodeName
+
+			// Query Node IP based on Node name
+			node := &corev1.Node{}
+			if err := r.Get(ctx, types.NamespacedName{Name: nodeName}, node); err != nil {
+				klog.Infof("Failed to get Node: %v", err)
+				return nil
+			} else {
+				var nodeIP string
+				// Get only the internal IP of the node
+				for _, addr := range node.Status.Addresses {
+					if addr.Type == corev1.NodeInternalIP {
+						nodeIP = addr.Address
+						break
+					}
+				}
+
+				// Combining Node IP and Node port
+				if nodeIP != "" && len(service.Spec.Ports) > 0 {
+					nodePort := service.Spec.Ports[0].NodePort
+					ip := fmt.Sprintf("%s:%d", nodeIP, nodePort)
+					return &ip
+				} else {
+					klog.Info("Node IP or port not found")
+					return nil
+				}
+			}
+		}
+	}
 }

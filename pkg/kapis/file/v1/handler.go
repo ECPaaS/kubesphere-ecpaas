@@ -15,11 +15,15 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/google/uuid"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	v1 "k8s.io/api/core/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
+	pvcviewerv1alpha1 "kubesphere.io/api/pvcviewer/v1alpha1"
 )
 
 const (
@@ -27,21 +31,27 @@ const (
 	JobStatusTick = 2    // Check status of the job every 2 seconds.
 	JobBackoffLimit = 0  // Retry of the job isn't allowed and the status is directly marked as failed.
 	JobTtlAfterFin = 60  // When the job is completed, it will be cleared after 60 seconds.
+
+	PVCViewerInitialDelaySeconds = 2
+	PVCViewerPeriodSeconds = 10
+	PVCViewerServiceTargetPort = 8080
 )
 
 type fileHandler struct {
+	ksclient  kubesphere.Interface
 	k8sClient kubernetes.Interface
 }
 
-func newHandler(k8sclient kubernetes.Interface) fileHandler {
+func newHandler(ksclient kubesphere.Interface, k8sclient kubernetes.Interface) fileHandler {
 	return fileHandler{
+		ksclient:  ksclient,
 		k8sClient: k8sclient,
 	}
 }
 
 type FileUploadResponse struct {
 	Namespace  string `json:"namespace" description:"The namespace where the PVC is located"`
-	PvcName    string `json:"pvcName" description:"PVC name"`
+	PVCName    string `json:"pvcName" description:"PVC name"`
 	TargetPath string `json:"targetPath" description:"Specify the target path where the file is stored in the PVC"`
 	JobName    string `json:"jobName" description:"The name of the job that uploads the file"`
 }
@@ -50,16 +60,34 @@ type DownloadModelRequest struct {
 	Token     string `json:"token,omitempty" description:"Hugging Face Hub access token"`
 	ModelName string `json:"modelName" description:"Model name on Hugging Face Hub. Consists of username and model name (e.g. unsloth/Llama-3.2-3B-Instruct)"`
 	Namespace string `json:"namespace" description:"The namespace where the PVC is located"`
-	PvcName   string `json:"pvcName" description:"PVC name"`
+	PVCName   string `json:"pvcName" description:"PVC name"`
 	Directory string `json:"directory,omitempty" description:"Directory to store model files in PVC. If empty, it will be stored in a directory with the same name as the model"`
 }
 
 type DownloadModelResponse struct {
 	ModelName  string `json:"modelName" description:"Model name on Hugging Face Hub"`
 	Namespace  string `json:"namespace" description:"The namespace where the PVC is located"`
-	PvcName    string `json:"pvcName" description:"PVC name"`
+	PVCName    string `json:"pvcName" description:"PVC name"`
 	Directory  string `json:"directory" description:"Directory to store model files in PVC"`
 	JobName    string `json:"jobName" description:"The name of the job that uploads the file"`
+}
+
+type ModifyPVCViewerRequest struct {
+	Enable *bool  `json:"enable" description:"Enable or disable the PVC viewer"`
+}
+
+type ListPVCViewerResponse struct {
+	TotalCount int                 `json:"total_count" description:"Total number of PVC viewer informations"`
+	Items      []PVCViewerResponse `json:"items" description:"List of PVC viewer informations. Key is items[].id"`
+}
+
+type PVCViewerResponse struct {
+	ID        string `json:"id" description:"PVC ID"`
+	Enable    bool   `json:"enable" description:"Enable or disable the PVC viewer"`
+	Ready     bool   `json:"ready" description:"Ready defines if the viewer is ready to be used"`
+	Namespace string `json:"namespace" description:"The namespace where the PVC is located"`
+	PVCName   string `json:"pvcName" description:"PVC name"`
+	ServiceIP string `json:"serviceIp" description:"The node IP and port of the node where the PVC viewer is located"`
 }
 
 func (h *fileHandler) UploadFile(req *restful.Request, resp *restful.Response) {
@@ -114,7 +142,7 @@ func (h *fileHandler) UploadFile(req *restful.Request, resp *restful.Response) {
 
 	// Uploader job needs to be located on the same node as the "ks-apiserver" pod.
 	// Make sure both can mount the same hostpath /tmp directory.
-	pods, _ := h.k8sClient.CoreV1().Pods("kubesphere-system").List(context.TODO(), metav1.ListOptions{
+	pods, _ := h.k8sClient.CoreV1().Pods("kubesphere-system").List(context.Background(), metav1.ListOptions{
 		LabelSelector: "app=ks-apiserver",
 	})
 
@@ -128,7 +156,7 @@ func (h *fileHandler) UploadFile(req *restful.Request, resp *restful.Response) {
 	// Create uploader job
 	jobName := "file-upload-" + uuid.New().String()[0:6]
 	jobObj := GenerateUploaderJob(jobName, nodeName, pvcName, tmpFile, targetPath)
-	_, err = h.k8sClient.BatchV1().Jobs(namespace).Create(context.TODO(), jobObj, metav1.CreateOptions{})
+	_, err = h.k8sClient.BatchV1().Jobs(namespace).Create(context.Background(), jobObj, metav1.CreateOptions{})
 	if err != nil {
 		klog.Error(err)
 		resp.WriteHeader(http.StatusInternalServerError)
@@ -141,7 +169,7 @@ func (h *fileHandler) UploadFile(req *restful.Request, resp *restful.Response) {
 	if success {
 		uploadInfo := FileUploadResponse{
 			Namespace:  namespace,
-			PvcName:    pvcName,
+			PVCName:    pvcName,
 			TargetPath: targetPath,
 			JobName:    jobName,
 		}
@@ -172,7 +200,7 @@ func (h *fileHandler) DownloadModel(req *restful.Request, resp *restful.Response
 	if model.Namespace == "" {
 		missingFields = append(missingFields, "namespace")
 	}
-	if model.PvcName == "" {
+	if model.PVCName == "" {
 		missingFields = append(missingFields, "pvcName")
 	}
 	if len(missingFields) > 0 {
@@ -193,8 +221,8 @@ func (h *fileHandler) DownloadModel(req *restful.Request, resp *restful.Response
 
 	// Create download model job
 	jobName := "download-model-" + uuid.New().String()[0:6]
-	jobObj := GenerateDownloadModelJob(jobName, model.PvcName, model.Token, model.ModelName, model.Directory)
-	_, err = h.k8sClient.BatchV1().Jobs(model.Namespace).Create(context.TODO(), jobObj, metav1.CreateOptions{})
+	jobObj := GenerateDownloadModelJob(jobName, model.PVCName, model.Token, model.ModelName, model.Directory)
+	_, err = h.k8sClient.BatchV1().Jobs(model.Namespace).Create(context.Background(), jobObj, metav1.CreateOptions{})
 	if err != nil {
 		klog.Error(err)
 		resp.WriteHeader(http.StatusInternalServerError)
@@ -203,12 +231,153 @@ func (h *fileHandler) DownloadModel(req *restful.Request, resp *restful.Response
 		downloadModelInfo := DownloadModelResponse{
 			ModelName: model.ModelName,
 			Namespace: model.Namespace,
-			PvcName:   model.PvcName,
+			PVCName:   model.PVCName,
 			Directory: model.Directory,
 			JobName:   jobName,
 		}
 		resp.WriteEntity(downloadModelInfo)
 	}
+}
+
+func (h *fileHandler) PVCViewer(req *restful.Request, resp *restful.Response) {
+	namespaceName := req.PathParameter("namespace")
+	pvcName := req.PathParameter("pvc")
+	_, err := h.k8sClient.CoreV1().PersistentVolumeClaims(namespaceName).Get(context.Background(), pvcName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			resp.WriteHeader(http.StatusNotFound)
+		} else {
+			resp.WriteHeader(http.StatusInternalServerError)
+		}
+		klog.Error(err)
+		return
+	}
+
+	// Extract the parameter fields in the request
+	var pvcViewer ModifyPVCViewerRequest
+	err = req.ReadEntity(&pvcViewer)
+	if err != nil {
+		klog.Error(err)
+		resp.WriteError(http.StatusBadRequest, err)
+		return
+	}
+
+	if pvcViewer.Enable == nil {
+		resp.WriteErrorString(http.StatusBadRequest, "Missing enable field")
+		return
+	}
+
+	if *pvcViewer.Enable {
+		// Add PVC viewer custom resource
+		pvcViewerObj := GeneratePVCViewerCR(pvcName)
+		if _, err := h.ksclient.PvcviewerV1alpha1().PVCViewers(namespaceName).Create(context.Background(), pvcViewerObj, metav1.CreateOptions{}); err != nil {
+			klog.Error(err)
+			resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// Delete PVC viewer custom resource
+		if err := h.ksclient.PvcviewerV1alpha1().PVCViewers(namespaceName).Delete(context.Background(), pvcName, metav1.DeleteOptions{}); err != nil {
+			klog.Error(err)
+			resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	resp.WriteEntity(http.StatusOK)
+}
+
+func (h *fileHandler) ListPVCViewerInfo(req *restful.Request, resp *restful.Response) {
+	klog.V(2).Infof("Listing PVC viewer information")
+	namespaces, err := h.k8sClient.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+    if err != nil {
+		klog.Error(err)
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+    }
+
+	responseSlice := make([]PVCViewerResponse, 0)
+	for _, ns := range namespaces.Items {
+		pvcs, err := h.k8sClient.CoreV1().PersistentVolumeClaims(ns.Name).List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			klog.Error(err)
+			continue
+		}
+		for _, pvc := range pvcs.Items {
+			pvcViewerEnable := false
+			pvcViewerReady := false
+			pvcViewerServiceIP := ""
+
+			pvcViewer, err := h.ksclient.PvcviewerV1alpha1().PVCViewers(ns.Name).Get(context.Background(), pvc.Name, metav1.GetOptions{})
+			if err != nil {
+				if !apierrors.IsNotFound(err) {
+					klog.Error(err)
+				}
+			} else {
+				pvcViewerEnable = true
+				pvcViewerReady = pvcViewer.Status.Ready
+				if pvcViewer.Status.ServiceIP != nil {
+					pvcViewerServiceIP = *pvcViewer.Status.ServiceIP
+				}
+			}
+
+			response := PVCViewerResponse{
+				ID:        string(pvc.UID),
+				Enable:    pvcViewerEnable,
+				Ready:     pvcViewerReady,
+				Namespace: ns.Name,
+				PVCName:   pvc.Name,
+				ServiceIP: pvcViewerServiceIP,
+			}
+			responseSlice = append(responseSlice, response)
+		}
+    }
+	resp.WriteEntity(ListPVCViewerResponse{TotalCount: len(responseSlice), Items: responseSlice})
+}
+
+func (h *fileHandler) GetPVCViewerInfo(req *restful.Request, resp *restful.Response) {
+	klog.V(2).Infof("Get PVC viewer information")
+	namespaceName := req.PathParameter("namespace")
+	pvcName := req.PathParameter("pvc")
+
+	pvc, err := h.k8sClient.CoreV1().PersistentVolumeClaims(namespaceName).Get(context.Background(), pvcName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			resp.WriteHeader(http.StatusNotFound)
+		} else {
+			resp.WriteHeader(http.StatusInternalServerError)
+		}
+		klog.Error(err)
+		return
+	}
+
+	pvcViewerEnable := false
+	pvcViewerReady := false
+	pvcViewerServiceIP := ""
+
+	pvcViewer, err := h.ksclient.PvcviewerV1alpha1().PVCViewers(namespaceName).Get(context.Background(), pvcName, metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.Error(err)
+			resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+		pvcViewerEnable = true
+		pvcViewerReady = pvcViewer.Status.Ready
+		if pvcViewer.Status.ServiceIP != nil {
+			pvcViewerServiceIP = *pvcViewer.Status.ServiceIP
+		}
+	}
+
+	response := PVCViewerResponse{
+		ID:        string(pvc.UID),
+		Enable:    pvcViewerEnable,
+		Ready:     pvcViewerReady,
+		Namespace: namespaceName,
+		PVCName:   pvcName,
+		ServiceIP: pvcViewerServiceIP,
+	}
+	resp.WriteEntity(response)
 }
 
 func WaitForJobCompletion(client kubernetes.Interface, namespace, jobName string) (bool, error) {
@@ -223,7 +392,7 @@ func WaitForJobCompletion(client kubernetes.Interface, namespace, jobName string
 
 		// The interval for checking the job status is determined by the number of seconds of JobStatusTick.
 		case <-tick:
-			job, err := client.BatchV1().Jobs(namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
+			job, err := client.BatchV1().Jobs(namespace).Get(context.Background(), jobName, metav1.GetOptions{})
 			if err != nil {
 				return false, fmt.Errorf("Failed to get upload job: %v", err)
 			}
@@ -310,6 +479,50 @@ func GenerateDownloadModelJob(name, pvcName, token, modelName, directory string)
 					},
 				},
 			},
+		},
+	}
+}
+
+func GeneratePVCViewerCR(pvcName string) *pvcviewerv1alpha1.PVCViewer {
+	return &pvcviewerv1alpha1.PVCViewer{
+		ObjectMeta: metav1.ObjectMeta{Name: pvcName},
+		Spec: pvcviewerv1alpha1.PVCViewerSpec{
+			PVC: pvcName,
+			PodSpec: v1.PodSpec{
+				Volumes: []v1.Volume{
+					{Name: "viewer-volume", VolumeSource: v1.VolumeSource{PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{ClaimName: pvcName}}},
+				},
+				Containers: []v1.Container{
+					{
+						Name:  "pvc-viewer",
+						Image: "filebrowser/filebrowser:v2.25.0",
+						Env: []v1.EnvVar{
+							{Name:  "FB_ADDRESS", Value: "0.0.0.0"},
+							{Name:  "FB_PORT", Value: "8080"},
+							{Name:  "FB_DATABASE", Value: "/tmp/filebrowser.db"},
+							{Name:  "FB_NOAUTH", Value: "true"},
+						},
+						VolumeMounts: []v1.VolumeMount{
+							{Name: "viewer-volume", MountPath: "/srv"},
+						},
+						WorkingDir: "/srv",
+						Resources: v1.ResourceRequirements{},
+						ReadinessProbe: &v1.Probe{
+							InitialDelaySeconds: PVCViewerInitialDelaySeconds,
+							PeriodSeconds: PVCViewerPeriodSeconds,
+							Handler: v1.Handler{
+								TCPSocket: &v1.TCPSocketAction{
+									Port: intstr.FromInt(PVCViewerServiceTargetPort),
+								},
+							},
+						},
+					},
+				},
+			},
+			Networking: pvcviewerv1alpha1.Networking{
+				TargetPort: intstr.FromInt(PVCViewerServiceTargetPort),
+			},
+			RWOScheduling: true,
 		},
 	}
 }
