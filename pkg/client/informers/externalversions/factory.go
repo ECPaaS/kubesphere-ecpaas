@@ -37,6 +37,7 @@ import (
 	internalinterfaces "kubesphere.io/kubesphere/pkg/client/informers/externalversions/internalinterfaces"
 	network "kubesphere.io/kubesphere/pkg/client/informers/externalversions/network"
 	notification "kubesphere.io/kubesphere/pkg/client/informers/externalversions/notification"
+	pvcviewer "kubesphere.io/kubesphere/pkg/client/informers/externalversions/pvcviewer"
 	quota "kubesphere.io/kubesphere/pkg/client/informers/externalversions/quota"
 	servicemesh "kubesphere.io/kubesphere/pkg/client/informers/externalversions/servicemesh"
 	storage "kubesphere.io/kubesphere/pkg/client/informers/externalversions/storage"
@@ -194,6 +195,7 @@ type SharedInformerFactory interface {
 	Iam() iam.Interface
 	Network() network.Interface
 	Notification() notification.Interface
+	File() pvcviewer.Interface
 	Quota() quota.Interface
 	Servicemesh() servicemesh.Interface
 	Storage() storage.Interface
@@ -233,6 +235,10 @@ func (f *sharedInformerFactory) Network() network.Interface {
 
 func (f *sharedInformerFactory) Notification() notification.Interface {
 	return notification.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) File() pvcviewer.Interface {
+	return pvcviewer.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Quota() quota.Interface {

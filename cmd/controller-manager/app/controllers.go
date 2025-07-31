@@ -39,6 +39,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/controller/openpitrix/helmcategory"
 	"kubesphere.io/kubesphere/pkg/controller/openpitrix/helmrelease"
 	"kubesphere.io/kubesphere/pkg/controller/openpitrix/helmrepo"
+	"kubesphere.io/kubesphere/pkg/controller/pvcviewer"
 	"kubesphere.io/kubesphere/pkg/controller/quota"
 	"kubesphere.io/kubesphere/pkg/controller/serviceaccount"
 	"kubesphere.io/kubesphere/pkg/controller/user"
@@ -128,6 +129,7 @@ var allControllers = []string{
 	"diskvolume",
 	"imagetemplate",
 	"dscp",
+	"pvcviewer",
 }
 
 // setup all available controllers one by one
@@ -574,6 +576,12 @@ func addAllControllers(mgr manager.Manager, client k8s.Client, informerFactory i
 			kubernetesInformer.Apps().V1().DaemonSets(),
 			kubernetesInformer.Core().V1().Pods())
 		addController(mgr, "dscp", dscpController)
+	}
+
+	// "PVC viewer" controller
+	if cmOptions.IsControllerEnabled("pvcviewer") {
+		pvcViewerReconciler := &pvcviewer.PVCViewerReconciler{}
+		addControllerWithSetup(mgr, "pvcviewer", pvcViewerReconciler)
 	}
 
 	// log all controllers process result

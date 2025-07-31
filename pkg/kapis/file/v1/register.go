@@ -15,6 +15,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/constants"
 	"kubesphere.io/kubesphere/pkg/kapis/util"
+	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
 )
 
 const (
@@ -23,9 +24,9 @@ const (
 
 var GroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
 
-func AddToContainer(container *restful.Container, k8sclient kubernetes.Interface) error {
+func AddToContainer(container *restful.Container, ksclient kubesphere.Interface, k8sclient kubernetes.Interface) error {
 	webservice := runtime.NewWebService(GroupVersion)
-	handler := newHandler(k8sclient)
+	handler := newHandler(ksclient, k8sclient)
 
 	formData := webservice.FormParameter("file", "File Stream form-data").Required(true)
 	formData.DataType("file")
@@ -52,6 +53,36 @@ func AddToContainer(container *restful.Container, k8sclient kubernetes.Interface
 		Reads(DownloadModelRequest{}).
 		Returns(http.StatusOK, api.StatusOK, DownloadModelResponse{}).
 		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.FileTag}))
+
+	webservice.Route(webservice.PUT("/pvcViewer/namespaces/{namespace}/persistentvolumeclaims/{pvc}").
+		To(handler.PVCViewer).
+		Doc("Enable or disable the PVC viewer feature").
+		Consumes("application/json").
+		Param(webservice.PathParameter("namespace", "The name of the namespace").DataType("string").Required(true)).
+		Param(webservice.PathParameter("pvc", "PVC name").DataType("string").Required(true)).
+		Reads(TogglePVCViewerRequest{}).
+		Returns(http.StatusOK, api.StatusOK, nil).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
+		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.FileTag}))
+
+	webservice.Route(webservice.GET("/pvcViewer").
+		To(handler.ListPVCViewerInfo).
+		Doc("List all PVC viewer information").
+		Returns(http.StatusOK, api.StatusOK, ListPVCViewerResponse{}).
+		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.FileTag}))
+
+	webservice.Route(webservice.GET("/pvcViewer/namespaces/{namespace}/persistentvolumeclaims/{pvc}").
+		To(handler.GetPVCViewerInfo).
+		Doc("Get PVC viewer information").
+		Param(webservice.PathParameter("namespace", "The name of the namespace").DataType("string").Required(true)).
+		Param(webservice.PathParameter("pvc", "PVC name").DataType("string").Required(true)).
+		Returns(http.StatusOK, api.StatusOK, PVCViewerResponse{}).
+		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusInternalServerError, api.StatusInternalServerError, nil).
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.FileTag}))
 

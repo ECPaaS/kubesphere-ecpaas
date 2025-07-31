@@ -88,7 +88,7 @@ func generateSwaggerJson() []byte {
 	urlruntime.Must(virtualizationv1.AddToContainer(container, nil, nil, nil, nil, informerFactory))
 	urlruntime.Must(schedulerv1.AddToContainer(container, nil, nil, nil))
 	urlruntime.Must(clustersyncv1.AddToContainer(container, nil, nil))
-	urlruntime.Must(filev1.AddToContainer(container, nil,))
+	urlruntime.Must(filev1.AddToContainer(container, nil, nil))
 	urlruntime.Must(autoscalerv1.AddToContainer(container, nil, nil))
 
 	config := restfulspec.Config{
