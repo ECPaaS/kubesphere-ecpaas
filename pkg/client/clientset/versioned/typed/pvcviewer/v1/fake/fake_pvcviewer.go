@@ -27,34 +27,34 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
-	v1alpha1 "kubesphere.io/api/pvcviewer/v1alpha1"
+	pvcviewerv1 "kubesphere.io/api/pvcviewer/v1"
 )
 
 // FakePVCViewers implements PVCViewerInterface
 type FakePVCViewers struct {
-	Fake *FakePvcviewerV1alpha1
+	Fake *FakeFileV1
 	ns   string
 }
 
-var pvcviewersResource = schema.GroupVersionResource{Group: "pvcviewer.ecpaas.io", Version: "v1alpha1", Resource: "pvcviewers"}
+var pvcviewersResource = schema.GroupVersionResource{Group: "file.ecpaas.io", Version: "v1", Resource: "pvcviewers"}
 
-var pvcviewersKind = schema.GroupVersionKind{Group: "pvcviewer.ecpaas.io", Version: "v1alpha1", Kind: "PVCViewer"}
+var pvcviewersKind = schema.GroupVersionKind{Group: "file.ecpaas.io", Version: "v1", Kind: "PVCViewer"}
 
 // Get takes name of the pVCViewer, and returns the corresponding pVCViewer object, and an error if there is any.
-func (c *FakePVCViewers) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PVCViewer, err error) {
+func (c *FakePVCViewers) Get(ctx context.Context, name string, options v1.GetOptions) (result *pvcviewerv1.PVCViewer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(pvcviewersResource, c.ns, name), &v1alpha1.PVCViewer{})
+		Invokes(testing.NewGetAction(pvcviewersResource, c.ns, name), &pvcviewerv1.PVCViewer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.PVCViewer), err
+	return obj.(*pvcviewerv1.PVCViewer), err
 }
 
 // List takes label and field selectors, and returns the list of PVCViewers that match those selectors.
-func (c *FakePVCViewers) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.PVCViewerList, err error) {
+func (c *FakePVCViewers) List(ctx context.Context, opts v1.ListOptions) (result *pvcviewerv1.PVCViewerList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(pvcviewersResource, pvcviewersKind, c.ns, opts), &v1alpha1.PVCViewerList{})
+		Invokes(testing.NewListAction(pvcviewersResource, pvcviewersKind, c.ns, opts), &pvcviewerv1.PVCViewerList{})
 
 	if obj == nil {
 		return nil, err
@@ -64,8 +64,8 @@ func (c *FakePVCViewers) List(ctx context.Context, opts v1.ListOptions) (result 
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.PVCViewerList{ListMeta: obj.(*v1alpha1.PVCViewerList).ListMeta}
-	for _, item := range obj.(*v1alpha1.PVCViewerList).Items {
+	list := &pvcviewerv1.PVCViewerList{ListMeta: obj.(*pvcviewerv1.PVCViewerList).ListMeta}
+	for _, item := range obj.(*pvcviewerv1.PVCViewerList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -81,43 +81,43 @@ func (c *FakePVCViewers) Watch(ctx context.Context, opts v1.ListOptions) (watch.
 }
 
 // Create takes the representation of a pVCViewer and creates it.  Returns the server's representation of the pVCViewer, and an error, if there is any.
-func (c *FakePVCViewers) Create(ctx context.Context, pVCViewer *v1alpha1.PVCViewer, opts v1.CreateOptions) (result *v1alpha1.PVCViewer, err error) {
+func (c *FakePVCViewers) Create(ctx context.Context, pVCViewer *pvcviewerv1.PVCViewer, opts v1.CreateOptions) (result *pvcviewerv1.PVCViewer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(pvcviewersResource, c.ns, pVCViewer), &v1alpha1.PVCViewer{})
+		Invokes(testing.NewCreateAction(pvcviewersResource, c.ns, pVCViewer), &pvcviewerv1.PVCViewer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.PVCViewer), err
+	return obj.(*pvcviewerv1.PVCViewer), err
 }
 
 // Update takes the representation of a pVCViewer and updates it. Returns the server's representation of the pVCViewer, and an error, if there is any.
-func (c *FakePVCViewers) Update(ctx context.Context, pVCViewer *v1alpha1.PVCViewer, opts v1.UpdateOptions) (result *v1alpha1.PVCViewer, err error) {
+func (c *FakePVCViewers) Update(ctx context.Context, pVCViewer *pvcviewerv1.PVCViewer, opts v1.UpdateOptions) (result *pvcviewerv1.PVCViewer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(pvcviewersResource, c.ns, pVCViewer), &v1alpha1.PVCViewer{})
+		Invokes(testing.NewUpdateAction(pvcviewersResource, c.ns, pVCViewer), &pvcviewerv1.PVCViewer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.PVCViewer), err
+	return obj.(*pvcviewerv1.PVCViewer), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePVCViewers) UpdateStatus(ctx context.Context, pVCViewer *v1alpha1.PVCViewer, opts v1.UpdateOptions) (*v1alpha1.PVCViewer, error) {
+func (c *FakePVCViewers) UpdateStatus(ctx context.Context, pVCViewer *pvcviewerv1.PVCViewer, opts v1.UpdateOptions) (*pvcviewerv1.PVCViewer, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(pvcviewersResource, "status", c.ns, pVCViewer), &v1alpha1.PVCViewer{})
+		Invokes(testing.NewUpdateSubresourceAction(pvcviewersResource, "status", c.ns, pVCViewer), &pvcviewerv1.PVCViewer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.PVCViewer), err
+	return obj.(*pvcviewerv1.PVCViewer), err
 }
 
 // Delete takes name of the pVCViewer and deletes it. Returns an error if one occurs.
 func (c *FakePVCViewers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(pvcviewersResource, c.ns, name), &v1alpha1.PVCViewer{})
+		Invokes(testing.NewDeleteAction(pvcviewersResource, c.ns, name), &pvcviewerv1.PVCViewer{})
 
 	return err
 }
@@ -126,17 +126,17 @@ func (c *FakePVCViewers) Delete(ctx context.Context, name string, opts v1.Delete
 func (c *FakePVCViewers) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(pvcviewersResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.PVCViewerList{})
+	_, err := c.Fake.Invokes(action, &pvcviewerv1.PVCViewerList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched pVCViewer.
-func (c *FakePVCViewers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.PVCViewer, err error) {
+func (c *FakePVCViewers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *pvcviewerv1.PVCViewer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(pvcviewersResource, c.ns, name, pt, data, subresources...), &v1alpha1.PVCViewer{})
+		Invokes(testing.NewPatchSubresourceAction(pvcviewersResource, c.ns, name, pt, data, subresources...), &pvcviewerv1.PVCViewer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.PVCViewer), err
+	return obj.(*pvcviewerv1.PVCViewer), err
 }

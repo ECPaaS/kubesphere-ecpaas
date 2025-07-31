@@ -62,7 +62,7 @@ func AddToContainer(container *restful.Container, ksclient kubesphere.Interface,
 		Consumes("application/json").
 		Param(webservice.PathParameter("namespace", "The name of the namespace").DataType("string").Required(true)).
 		Param(webservice.PathParameter("pvc", "PVC name").DataType("string").Required(true)).
-		Reads(ModifyPVCViewerRequest{}).
+		Reads(TogglePVCViewerRequest{}).
 		Returns(http.StatusOK, api.StatusOK, nil).
 		Returns(http.StatusNotFound, api.StatusNotFound, nil).
 		Returns(http.StatusBadRequest, api.StatusBadRequest, util.BadRequestError{}).

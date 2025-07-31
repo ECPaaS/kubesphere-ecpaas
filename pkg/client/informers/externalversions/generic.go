@@ -32,7 +32,7 @@ import (
 	v1alpha2 "kubesphere.io/api/iam/v1alpha2"
 	networkv1alpha1 "kubesphere.io/api/network/v1alpha1"
 	v2beta1 "kubesphere.io/api/notification/v2beta1"
-	pvcviewerv1alpha1 "kubesphere.io/api/pvcviewer/v1alpha1"
+	pvcviewerv1 "kubesphere.io/api/pvcviewer/v1"
 	quotav1alpha2 "kubesphere.io/api/quota/v1alpha2"
 	servicemeshv1alpha2 "kubesphere.io/api/servicemesh/v1alpha2"
 	storagev1alpha1 "kubesphere.io/api/storage/v1alpha1"
@@ -111,6 +111,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1alpha3.SchemeGroupVersion.WithResource("pipelines"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Devops().V1alpha3().Pipelines().Informer()}, nil
 
+		// Group=file.ecpaas.io, Version=v1
+	case pvcviewerv1.SchemeGroupVersion.WithResource("pvcviewers"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.File().V1().PVCViewers().Informer()}, nil
+
 		// Group=iam.kubesphere.io, Version=v1alpha2
 	case v1alpha2.SchemeGroupVersion.WithResource("globalroles"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Iam().V1alpha2().GlobalRoles().Informer()}, nil
@@ -152,10 +156,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Notification().V2beta1().Configs().Informer()}, nil
 	case v2beta1.SchemeGroupVersion.WithResource("receivers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Notification().V2beta1().Receivers().Informer()}, nil
-
-		// Group=pvcviewer.ecpaas.io, Version=v1alpha1
-	case pvcviewerv1alpha1.SchemeGroupVersion.WithResource("pvcviewers"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Pvcviewer().V1alpha1().PVCViewers().Informer()}, nil
 
 		// Group=quota.kubesphere.io, Version=v1alpha2
 	case quotav1alpha2.SchemeGroupVersion.WithResource("resourcequotas"):

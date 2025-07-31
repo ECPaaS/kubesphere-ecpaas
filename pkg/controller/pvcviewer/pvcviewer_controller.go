@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	pvcviewerv1alpha1 "kubesphere.io/api/pvcviewer/v1alpha1"
+	pvcviewerv1 "kubesphere.io/api/pvcviewer/v1"
 )
 
 // PVCViewerReconciler reconciles a PVCViewer object
@@ -40,19 +40,6 @@ const (
 	servicePort         = int32(80)
 )
 
-// Default permissions for the PVCViewer
-// +kubebuilder:rbac:groups=kubeflow.org,resources=pvcviewers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kubeflow.org,resources=pvcviewers/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kubeflow.org,resources=pvcviewers/finalizers,verbs=update
-
-// Add permissions to create child resources
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update
-// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update
-
-// Add permissions to read external resources
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
-// +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *PVCViewerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.Client == nil {
@@ -62,7 +49,7 @@ func (r *PVCViewerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.Scheme = mgr.GetScheme()
 	}
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&pvcviewerv1alpha1.PVCViewer{}).
+		For(&pvcviewerv1.PVCViewer{}).
 		// This controller manages, i.e. creates these kinds for a PVCViewer
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
@@ -72,7 +59,7 @@ func (r *PVCViewerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	instance := &pvcviewerv1alpha1.PVCViewer{}
+	instance := &pvcviewerv1.PVCViewer{}
 	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
 		// Created objects are automatically garbage collected if parent is deleted
 		return reconcile.Result{}, client.IgnoreNotFound(err)
@@ -117,7 +104,7 @@ func (r *PVCViewerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 // Creates or updates the deployment as defined by the viewer's podSpec
-func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) error {
+func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, viewer *pvcviewerv1.PVCViewer, commonLabels map[string]string) error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourcePrefix + viewer.Name,
@@ -180,8 +167,8 @@ func (r *PVCViewerReconciler) reconcileDeployment(ctx context.Context, viewer *p
 }
 
 // Creates or updates the service as defined by the viewer's service
-func (r *PVCViewerReconciler) reconcileService(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) error {
-	if viewer.Spec.Networking == (pvcviewerv1alpha1.Networking{}) {
+func (r *PVCViewerReconciler) reconcileService(ctx context.Context, viewer *pvcviewerv1.PVCViewer, commonLabels map[string]string) error {
+	if viewer.Spec.Networking == (pvcviewerv1.Networking{}) {
 		return nil
 	}
 
@@ -226,12 +213,16 @@ func (r *PVCViewerReconciler) reconcileService(ctx context.Context, viewer *pvcv
 
 // Computes and updates the status of the PVCViewer
 func (r *PVCViewerReconciler) reconcileStatus(ctx context.Context, viewerName string, viewerNamespace string, commonLabels map[string]string) error {
-	viewer := &pvcviewerv1alpha1.PVCViewer{}
+	viewer := &pvcviewerv1.PVCViewer{}
 	if err := r.Get(ctx, types.NamespacedName{Name: viewerName, Namespace: viewerNamespace}, viewer); err != nil {
 		return err
 	}
 
 	viewer.Status.ServiceIP = r.generateServiceIP(ctx, viewer, commonLabels)
+	if viewer.Status.ServiceIP == nil {
+		viewer.Status.Ready = false
+		return nil
+	}
 
 	deployment := &appsv1.Deployment{}
 	if err := r.Get(ctx, types.NamespacedName{Name: resourcePrefix + viewer.Name, Namespace: viewer.Namespace}, deployment); err != nil {
@@ -254,7 +245,7 @@ func (r *PVCViewerReconciler) reconcileStatus(ctx context.Context, viewerName st
 
 // Generates the affinity to be used for the deployment
 // In case no affinity should be used (e.g. RWOScheduling is disabled) or updated, nil is returned
-func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer) (*corev1.Affinity, error) {
+func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, viewer *pvcviewerv1.PVCViewer) (*corev1.Affinity, error) {
 	// Check if the viewer's PVC is RWO access mode
 	pvc := &corev1.PersistentVolumeClaim{}
 	if err := r.Get(ctx, types.NamespacedName{Name: viewer.Spec.PVC, Namespace: viewer.Namespace}, pvc); err != nil {
@@ -329,7 +320,7 @@ func (r *PVCViewerReconciler) generateAffinity(ctx context.Context, viewer *pvcv
 	return affinity, nil
 }
 
-func (r *PVCViewerReconciler) generateServiceIP(ctx context.Context, viewer *pvcviewerv1alpha1.PVCViewer, commonLabels map[string]string) *string {
+func (r *PVCViewerReconciler) generateServiceIP(ctx context.Context, viewer *pvcviewerv1.PVCViewer, commonLabels map[string]string) *string {
 	service := &corev1.Service{}
 	if err := r.Get(ctx, types.NamespacedName{Name: resourcePrefix + viewer.Name, Namespace: viewer.Namespace}, service); err != nil {
 		klog.Info("Could not find Service for status update")

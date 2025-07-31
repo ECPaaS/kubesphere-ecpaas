@@ -195,7 +195,7 @@ type SharedInformerFactory interface {
 	Iam() iam.Interface
 	Network() network.Interface
 	Notification() notification.Interface
-	Pvcviewer() pvcviewer.Interface
+	File() pvcviewer.Interface
 	Quota() quota.Interface
 	Servicemesh() servicemesh.Interface
 	Storage() storage.Interface
@@ -237,7 +237,7 @@ func (f *sharedInformerFactory) Notification() notification.Interface {
 	return notification.New(f, f.namespace, f.tweakListOptions)
 }
 
-func (f *sharedInformerFactory) Pvcviewer() pvcviewer.Interface {
+func (f *sharedInformerFactory) File() pvcviewer.Interface {
 	return pvcviewer.New(f, f.namespace, f.tweakListOptions)
 }
 

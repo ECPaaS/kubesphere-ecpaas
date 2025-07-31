@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: ""
   creationTimestamp: null
-  name: pvcviewers.pvcviewer.ecpaas.io
+  name: pvcviewers.file.ecpaas.io
 spec:
-  group: pvcviewer.ecpaas.io
+  group: file.ecpaas.io
   names:
     kind: PVCViewer
     listKind: PVCViewerList
@@ -16,7 +16,7 @@ spec:
     singular: pvcviewer
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: PVCViewer is the Schema for the pvcviewers API

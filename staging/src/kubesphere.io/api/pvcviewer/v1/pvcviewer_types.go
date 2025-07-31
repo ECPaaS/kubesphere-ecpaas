@@ -2,7 +2,7 @@
  Copyright(c) 2025-present Accton. All rights reserved. www.accton.com.tw
  */
 
-package v1alpha1
+package v1
 
 import (
 	appsv1 "k8s.io/api/apps/v1"

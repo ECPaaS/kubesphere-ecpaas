@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	kubesphere "kubesphere.io/kubesphere/pkg/client/clientset/versioned"
-	pvcviewerv1alpha1 "kubesphere.io/api/pvcviewer/v1alpha1"
+	pvcviewerv1 "kubesphere.io/api/pvcviewer/v1"
 )
 
 const (
@@ -72,8 +72,8 @@ type DownloadModelResponse struct {
 	JobName    string `json:"jobName" description:"The name of the job that uploads the file"`
 }
 
-type ModifyPVCViewerRequest struct {
-	Enable *bool  `json:"enable" description:"Enable or disable the PVC viewer"`
+type TogglePVCViewerRequest struct {
+	Enabled *bool `json:"enable" description:"Enable or disable the PVC viewer"`
 }
 
 type ListPVCViewerResponse struct {
@@ -83,7 +83,7 @@ type ListPVCViewerResponse struct {
 
 type PVCViewerResponse struct {
 	ID        string `json:"id" description:"PVC ID"`
-	Enable    bool   `json:"enable" description:"Enable or disable the PVC viewer"`
+	Enabled   bool   `json:"enable" description:"Enable or disable the PVC viewer"`
 	Ready     bool   `json:"ready" description:"Ready defines if the viewer is ready to be used"`
 	Namespace string `json:"namespace" description:"The namespace where the PVC is located"`
 	PVCName   string `json:"pvcName" description:"PVC name"`
@@ -254,7 +254,7 @@ func (h *fileHandler) PVCViewer(req *restful.Request, resp *restful.Response) {
 	}
 
 	// Extract the parameter fields in the request
-	var pvcViewer ModifyPVCViewerRequest
+	var pvcViewer TogglePVCViewerRequest
 	err = req.ReadEntity(&pvcViewer)
 	if err != nil {
 		klog.Error(err)
@@ -262,22 +262,22 @@ func (h *fileHandler) PVCViewer(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	if pvcViewer.Enable == nil {
+	if pvcViewer.Enabled == nil {
 		resp.WriteErrorString(http.StatusBadRequest, "Missing enable field")
 		return
 	}
 
-	if *pvcViewer.Enable {
+	if *pvcViewer.Enabled {
 		// Add PVC viewer custom resource
 		pvcViewerObj := GeneratePVCViewerCR(pvcName)
-		if _, err := h.ksclient.PvcviewerV1alpha1().PVCViewers(namespaceName).Create(context.Background(), pvcViewerObj, metav1.CreateOptions{}); err != nil {
+		if _, err := h.ksclient.FileV1().PVCViewers(namespaceName).Create(context.Background(), pvcViewerObj, metav1.CreateOptions{}); err != nil {
 			klog.Error(err)
 			resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	} else {
 		// Delete PVC viewer custom resource
-		if err := h.ksclient.PvcviewerV1alpha1().PVCViewers(namespaceName).Delete(context.Background(), pvcName, metav1.DeleteOptions{}); err != nil {
+		if err := h.ksclient.FileV1().PVCViewers(namespaceName).Delete(context.Background(), pvcName, metav1.DeleteOptions{}); err != nil {
 			klog.Error(err)
 			resp.WriteHeader(http.StatusInternalServerError)
 			return
@@ -303,17 +303,17 @@ func (h *fileHandler) ListPVCViewerInfo(req *restful.Request, resp *restful.Resp
 			continue
 		}
 		for _, pvc := range pvcs.Items {
-			pvcViewerEnable := false
+			pvcViewerEnabled := false
 			pvcViewerReady := false
 			pvcViewerServiceIP := ""
 
-			pvcViewer, err := h.ksclient.PvcviewerV1alpha1().PVCViewers(ns.Name).Get(context.Background(), pvc.Name, metav1.GetOptions{})
+			pvcViewer, err := h.ksclient.FileV1().PVCViewers(ns.Name).Get(context.Background(), pvc.Name, metav1.GetOptions{})
 			if err != nil {
 				if !apierrors.IsNotFound(err) {
 					klog.Error(err)
 				}
 			} else {
-				pvcViewerEnable = true
+				pvcViewerEnabled = true
 				pvcViewerReady = pvcViewer.Status.Ready
 				if pvcViewer.Status.ServiceIP != nil {
 					pvcViewerServiceIP = *pvcViewer.Status.ServiceIP
@@ -322,7 +322,7 @@ func (h *fileHandler) ListPVCViewerInfo(req *restful.Request, resp *restful.Resp
 
 			response := PVCViewerResponse{
 				ID:        string(pvc.UID),
-				Enable:    pvcViewerEnable,
+				Enabled:   pvcViewerEnabled,
 				Ready:     pvcViewerReady,
 				Namespace: ns.Name,
 				PVCName:   pvc.Name,
@@ -350,11 +350,11 @@ func (h *fileHandler) GetPVCViewerInfo(req *restful.Request, resp *restful.Respo
 		return
 	}
 
-	pvcViewerEnable := false
+	pvcViewerEnabled := false
 	pvcViewerReady := false
 	pvcViewerServiceIP := ""
 
-	pvcViewer, err := h.ksclient.PvcviewerV1alpha1().PVCViewers(namespaceName).Get(context.Background(), pvcName, metav1.GetOptions{})
+	pvcViewer, err := h.ksclient.FileV1().PVCViewers(namespaceName).Get(context.Background(), pvcName, metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			klog.Error(err)
@@ -362,7 +362,7 @@ func (h *fileHandler) GetPVCViewerInfo(req *restful.Request, resp *restful.Respo
 			return
 		}
 	} else {
-		pvcViewerEnable = true
+		pvcViewerEnabled = true
 		pvcViewerReady = pvcViewer.Status.Ready
 		if pvcViewer.Status.ServiceIP != nil {
 			pvcViewerServiceIP = *pvcViewer.Status.ServiceIP
@@ -371,7 +371,7 @@ func (h *fileHandler) GetPVCViewerInfo(req *restful.Request, resp *restful.Respo
 
 	response := PVCViewerResponse{
 		ID:        string(pvc.UID),
-		Enable:    pvcViewerEnable,
+		Enabled:   pvcViewerEnabled,
 		Ready:     pvcViewerReady,
 		Namespace: namespaceName,
 		PVCName:   pvcName,
@@ -483,10 +483,10 @@ func GenerateDownloadModelJob(name, pvcName, token, modelName, directory string)
 	}
 }
 
-func GeneratePVCViewerCR(pvcName string) *pvcviewerv1alpha1.PVCViewer {
-	return &pvcviewerv1alpha1.PVCViewer{
+func GeneratePVCViewerCR(pvcName string) *pvcviewerv1.PVCViewer {
+	return &pvcviewerv1.PVCViewer{
 		ObjectMeta: metav1.ObjectMeta{Name: pvcName},
-		Spec: pvcviewerv1alpha1.PVCViewerSpec{
+		Spec: pvcviewerv1.PVCViewerSpec{
 			PVC: pvcName,
 			PodSpec: v1.PodSpec{
 				Volumes: []v1.Volume{
@@ -519,7 +519,7 @@ func GeneratePVCViewerCR(pvcName string) *pvcviewerv1alpha1.PVCViewer {
 					},
 				},
 			},
-			Networking: pvcviewerv1alpha1.Networking{
+			Networking: pvcviewerv1.Networking{
 				TargetPort: intstr.FromInt(PVCViewerServiceTargetPort),
 			},
 			RWOScheduling: true,

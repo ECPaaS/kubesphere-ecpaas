@@ -2,12 +2,12 @@
 Copyright(c) 2025-present Accton. All rights reserved. www.accton.com.tw
 */
 
-// Package v1alpha1 contains API Schema definitions for the pvcviewer v1alpha1 API group.
+// Package v1 contains API Schema definitions for the pvcviewer v1 API group.
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
 // +k8s:defaulter-gen=TypeMeta
-// +groupName=pvcviewer.ecpaas.io
-package v1alpha1
+// +groupName=file.ecpaas.io
+package v1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,7 +16,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects.
-	SchemeGroupVersion = schema.GroupVersion{Group: "pvcviewer.ecpaas.io", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "file.ecpaas.io", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
