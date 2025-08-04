@@ -89,6 +89,7 @@ import (
 	openpitrixv1 "kubesphere.io/kubesphere/pkg/kapis/openpitrix/v1"
 	openpitrixv2alpha1 "kubesphere.io/kubesphere/pkg/kapis/openpitrix/v2alpha1"
 	operationsv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/operations/v1alpha2"
+	pvcv1 "kubesphere.io/kubesphere/pkg/kapis/pvc/v1"
 	qosv1alpha1 "kubesphere.io/kubesphere/pkg/kapis/qos/v1alpha1"
 	resourcesv1alpha2 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha2"
 	resourcev1alpha3 "kubesphere.io/kubesphere/pkg/kapis/resources/v1alpha3"
@@ -297,6 +298,7 @@ func (s *APIServer) installKubeSphereAPIs(stopCh <-chan struct{}) {
 	urlruntime.Must(qosv1alpha1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes(), s.KubernetesClient.Dynamic()))
 	urlruntime.Must(filev1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 	urlruntime.Must(autoscalerv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
+	urlruntime.Must(pvcv1.AddToContainer(s.container, s.KubernetesClient.KubeSphere(), s.KubernetesClient.Kubernetes()))
 }
 
 // installCRDAPIs Install CRDs to the KAPIs with List and Get options

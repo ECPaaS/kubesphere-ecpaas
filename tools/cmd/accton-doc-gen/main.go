@@ -20,6 +20,7 @@ import (
 	autoscalerv1 "kubesphere.io/kubesphere/pkg/kapis/autoscaler/v1"
 	clustersyncv1 "kubesphere.io/kubesphere/pkg/kapis/clustersync/v1"
 	filev1 "kubesphere.io/kubesphere/pkg/kapis/file/v1"
+	pvcv1 "kubesphere.io/kubesphere/pkg/kapis/pvc/v1"
 	schedulerv1 "kubesphere.io/kubesphere/pkg/kapis/scheduler/v1"
 	virtualizationv1 "kubesphere.io/kubesphere/pkg/kapis/virtualization/v1"
 	volumev1alpha1 "kubesphere.io/kubesphere/pkg/kapis/volume/v1alpha1"
@@ -90,6 +91,7 @@ func generateSwaggerJson() []byte {
 	urlruntime.Must(clustersyncv1.AddToContainer(container, nil, nil))
 	urlruntime.Must(filev1.AddToContainer(container, nil, nil))
 	urlruntime.Must(autoscalerv1.AddToContainer(container, nil, nil))
+	urlruntime.Must(pvcv1.AddToContainer(container, nil, nil))
 
 	config := restfulspec.Config{
 		WebServices:                   container.RegisteredWebServices(),

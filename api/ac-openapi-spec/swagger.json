@@ -1366,7 +1366,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1.ModifyPVCViewerRequest"
+              "$ref": "#/definitions/v1.TogglePVCViewerRequest"
             }
           }
         ],
@@ -1975,6 +1975,59 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/kapis/pvc.ecpaas.io/v1/clone/namespaces/{namespace}/pvc/{name}": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Persistent Volume Claim"
+        ],
+        "summary": "Clone PVC",
+        "operationId": "ClonePVC",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "PVC namespace",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "PVC name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pvc.PVCCloneRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/pvc.PVCNameResponse"
+            }
+          },
+          "403": {
+            "description": "Invalid format",
+            "schema": {
+              "$ref": "#/definitions/util.BadRequestError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
@@ -4484,6 +4537,82 @@
         }
       }
     },
+    "pvc.NodeSelector": {
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "description": "NodeSelector key(unique key). Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), .(dot), and /(slash). Must start and end with a letter or number. The maximum length of each key is 63 characters (if the key contains a domain name, the maximum domain name length is 253 characters plus 1 for seperation(/)).",
+          "type": "string",
+          "maximum": 317,
+          "minimum": 1
+        },
+        "value": {
+          "description": "NodeSelector value. Valid characters: A-Z, a-z, 0-9, -(hyphen), _(underscore), and .(dot). Must start and end with an alphanumeric charactor. Can be empty string.",
+          "type": "string",
+          "maximum": 63
+        }
+      }
+    },
+    "pvc.PVCCloneRequest": {
+      "required": [
+        "newName",
+        "namespace",
+        "storageClass",
+        "size",
+        "accessModes"
+      ],
+      "properties": {
+        "accessModes": {
+          "description": "Access mode for the new PVC, at least one mode should be picked. Available option: ReadWriteOnce, ReadOnlyMany, ReadWriteMany",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "namespace": {
+          "description": "Namespace in which the new PVC will be created in.",
+          "type": "string"
+        },
+        "newName": {
+          "description": "New PVC name. Must be unique. Valid characters: a-z, 0-9, and -(hyphen). And must start and end with an alphanumeric character.",
+          "type": "string",
+          "maximum": 253
+        },
+        "node_selector": {
+          "description": "Node selector of the pod to create PVC.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pvc.NodeSelector"
+          }
+        },
+        "size": {
+          "description": "Size of the new PVC, unit is GiBs.",
+          "type": "integer",
+          "format": "int32",
+          "default": 10,
+          "maximum": 2048,
+          "minimum": 1
+        },
+        "storageClass": {
+          "description": "Storage class of the new PVC.",
+          "type": "string"
+        }
+      }
+    },
+    "pvc.PVCNameResponse": {
+      "required": [
+        "newName"
+      ],
+      "properties": {
+        "newName": {
+          "description": "New PVC name.",
+          "type": "string"
+        }
+      }
+    },
     "util.BadRequestError": {
       "required": [
         "reason"
@@ -4613,17 +4742,6 @@
         }
       }
     },
-    "v1.ModifyPVCViewerRequest": {
-      "required": [
-        "enable"
-      ],
-      "properties": {
-        "enable": {
-          "description": "Enable or disable the PVC viewer",
-          "type": "boolean"
-        }
-      }
-    },
     "v1.ObjectStatus": {
       "required": [
         "fileHas"
@@ -4731,6 +4849,17 @@
           "description": "Total number of scheduler",
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "v1.TogglePVCViewerRequest": {
+      "required": [
+        "enable"
+      ],
+      "properties": {
+        "enable": {
+          "description": "Enable or disable the PVC viewer",
+          "type": "boolean"
         }
       }
     },

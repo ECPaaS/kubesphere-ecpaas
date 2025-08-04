@@ -39,6 +39,7 @@ import (
 	"kubesphere.io/kubesphere/pkg/controller/openpitrix/helmcategory"
 	"kubesphere.io/kubesphere/pkg/controller/openpitrix/helmrelease"
 	"kubesphere.io/kubesphere/pkg/controller/openpitrix/helmrepo"
+	"kubesphere.io/kubesphere/pkg/controller/pvc"
 	"kubesphere.io/kubesphere/pkg/controller/pvcviewer"
 	"kubesphere.io/kubesphere/pkg/controller/quota"
 	"kubesphere.io/kubesphere/pkg/controller/serviceaccount"
@@ -129,6 +130,7 @@ var allControllers = []string{
 	"diskvolume",
 	"imagetemplate",
 	"dscp",
+	"pvcclonerequest",
 	"pvcviewer",
 }
 
@@ -582,6 +584,12 @@ func addAllControllers(mgr manager.Manager, client k8s.Client, informerFactory i
 	if cmOptions.IsControllerEnabled("pvcviewer") {
 		pvcViewerReconciler := &pvcviewer.PVCViewerReconciler{}
 		addControllerWithSetup(mgr, "pvcviewer", pvcViewerReconciler)
+	}
+
+	// "PVC clone request" controller
+	if cmOptions.IsControllerEnabled("pvcclonerequest") {
+		pvcCloneRequestReconciler := &pvc.Reconciler{}
+		addControllerWithSetup(mgr, "pvcclonerequest", pvcCloneRequestReconciler)
 	}
 
 	// log all controllers process result
