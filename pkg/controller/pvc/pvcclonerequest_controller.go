@@ -109,7 +109,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		// If target pod completes, save log and mark completed.
 		// If target pod being deleted, interrupt cloning and clean up.
 		targetPod := &corev1.Pod{}
-		targetPodName := cloneRequest.Spec.TargetPVCName + targetPodSuffix + string(cloneRequest.UID) // <pvc>-creator-<UID>
+		targetPodName := cloneRequest.Spec.TargetPVCName + targetPodSuffix + string(cloneRequest.UID) // <targetPVC>-creator-<UID>
 		if err := r.Get(rootCtx, types.NamespacedName{Name: targetPodName, Namespace: cloneRequest.Spec.TargetPVCNamespace}, targetPod); err != nil {
 			if errors.IsNotFound(err) {
 				klog.Infof("target pod for cloning is deleted, abort")
@@ -146,12 +146,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 }
 
-func (r *Reconciler) createTargetPVC(request *pvcv1.PVCCloneRequest) error {
+func (r *Reconciler) createTargetPVC(cloneRequest *pvcv1.PVCCloneRequest) error {
 	newPVC := &corev1.PersistentVolumeClaim{}
-	newPVC.Name = request.Spec.TargetPVCName
-	newPVC.Namespace = request.Spec.TargetPVCNamespace
-	newPVC.Spec.AccessModes = createAccessModes(request.Spec.AccessModes)
-	newPVC.Spec.Resources.Requests = createResourceList(request.Spec.Size)
+	newPVC.Name = cloneRequest.Spec.TargetPVCName
+	newPVC.Namespace = cloneRequest.Spec.TargetPVCNamespace
+	newPVC.Spec.AccessModes = createAccessModes(cloneRequest.Spec.AccessModes)
+	newPVC.Spec.Resources.Requests = createResourceList(cloneRequest.Spec.Size)
 	if err := r.Create(context.Background(), newPVC); err != nil {
 		return err
 	} else {
@@ -173,11 +173,11 @@ func createResourceList(size int) corev1.ResourceList {
 	return returnMap
 }
 
-func (r *Reconciler) createClonePods(request *pvcv1.PVCCloneRequest) error {
+func (r *Reconciler) createClonePods(cloneRequest *pvcv1.PVCCloneRequest) error {
 	// Source Pod
 	sourcePod := &corev1.Pod{}
-	sourcePod.Name = request.Spec.SourcePVCName + sourcePodSuffix + string(request.UID) // <sourcePVC>-cloner-<UID>
-	sourcePod.Namespace = request.Spec.SourcePVCNamespace
+	sourcePod.Name = cloneRequest.Spec.SourcePVCName + sourcePodSuffix + string(cloneRequest.UID) // <sourcePVC>-cloner-<UID>
+	sourcePod.Namespace = cloneRequest.Spec.SourcePVCNamespace
 	sourcePod.Spec.Containers = []corev1.Container{
 		{
 			Name: containerName,
@@ -198,7 +198,7 @@ func (r *Reconciler) createClonePods(request *pvcv1.PVCCloneRequest) error {
 			Name: "source",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: request.Spec.SourcePVCName,
+					ClaimName: cloneRequest.Spec.SourcePVCName,
 				},
 			},
 		},
@@ -212,11 +212,11 @@ func (r *Reconciler) createClonePods(request *pvcv1.PVCCloneRequest) error {
 
 	// Target Pod
 	targetPod := &corev1.Pod{}
-	targetPod.Name = request.Spec.TargetPVCName + targetPodSuffix + string(request.UID) // <targetPVC>-creator-<UID>
-	targetPod.Namespace = request.Spec.TargetPVCNamespace
+	targetPod.Name = cloneRequest.Spec.TargetPVCName + targetPodSuffix + string(cloneRequest.UID) // <targetPVC>-creator-<UID>
+	targetPod.Namespace = cloneRequest.Spec.TargetPVCNamespace
 	targetPod.Spec.RestartPolicy = corev1.RestartPolicyNever
 	// <pvc>-service-<UID>.<namespace>
-	serviceNamespacedName := request.Spec.SourcePVCName + serviceSuffix + string(request.UID) + "." + request.Spec.SourcePVCNamespace
+	serviceNamespacedName := cloneRequest.Spec.SourcePVCName + serviceSuffix + string(cloneRequest.UID) + "." + cloneRequest.Spec.SourcePVCNamespace
 	targetPod.Spec.Containers = []corev1.Container{
 		{
 			Name: containerName,
@@ -237,12 +237,12 @@ func (r *Reconciler) createClonePods(request *pvcv1.PVCCloneRequest) error {
 			Name: "target",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: request.Spec.TargetPVCName,
+					ClaimName: cloneRequest.Spec.TargetPVCName,
 				},
 			},
 		},
 	}
-	targetPod.Spec.NodeSelector = request.Spec.NodeSelector
+	targetPod.Spec.NodeSelector = cloneRequest.Spec.NodeSelector
 	if err := r.Create(context.Background(), targetPod); err != nil {
 		return err
 	}
@@ -250,10 +250,10 @@ func (r *Reconciler) createClonePods(request *pvcv1.PVCCloneRequest) error {
 	return nil
 }
 
-func (r *Reconciler) createCloneService(request *pvcv1.PVCCloneRequest) error {
+func (r *Reconciler) createCloneService(cloneRequest *pvcv1.PVCCloneRequest) error {
 	service := &corev1.Service{}
-	service.Name = request.Spec.SourcePVCName + serviceSuffix + string(request.UID) // <pvc>-service-<UID>
-	service.Namespace = request.Spec.SourcePVCNamespace
+	service.Name = cloneRequest.Spec.SourcePVCName + serviceSuffix + string(cloneRequest.UID) // <sourcePVC>-service-<UID>
+	service.Namespace = cloneRequest.Spec.SourcePVCNamespace
 	service.Spec.Type = corev1.ServiceTypeClusterIP
 	service.Spec.Ports = []corev1.ServicePort{
 		{
@@ -262,7 +262,7 @@ func (r *Reconciler) createCloneService(request *pvcv1.PVCCloneRequest) error {
 		},
 	}
 	service.Spec.Selector = map[string]string{
-		serviceSelector: request.Spec.SourcePVCName + sourcePodSuffix + string(request.UID), // <pvc>-cloner-<UID>
+		serviceSelector: cloneRequest.Spec.SourcePVCName + sourcePodSuffix + string(cloneRequest.UID), // <sourcePVC>-cloner-<UID>
 	}
 	if err := r.Create(context.Background(), service); err != nil {
 		return err
@@ -271,11 +271,11 @@ func (r *Reconciler) createCloneService(request *pvcv1.PVCCloneRequest) error {
 	}
 }
 
-func (r *Reconciler) deleteClonePods(request *pvcv1.PVCCloneRequest) {
+func (r *Reconciler) deleteClonePods(cloneRequest *pvcv1.PVCCloneRequest) {
 	// Source Pod
 	sourcePod := &corev1.Pod{}
-	sourcePodName := request.Spec.SourcePVCName + sourcePodSuffix + string(request.UID) // <sourcePVC>-cloner-<UID>
-	err := r.Get(context.Background(), types.NamespacedName{Name: sourcePodName, Namespace: request.Spec.SourcePVCNamespace}, sourcePod)
+	sourcePodName := cloneRequest.Spec.SourcePVCName + sourcePodSuffix + string(cloneRequest.UID) // <sourcePVC>-cloner-<UID>
+	err := r.Get(context.Background(), types.NamespacedName{Name: sourcePodName, Namespace: cloneRequest.Spec.SourcePVCNamespace}, sourcePod)
 	if err == nil {
 		if err := r.Delete(context.Background(), sourcePod); err != nil {
 			klog.Infof("error deleting source pod \"%s\" in \"%s\": %s", sourcePod.Name, sourcePod.Namespace, err.Error())
@@ -287,8 +287,8 @@ func (r *Reconciler) deleteClonePods(request *pvcv1.PVCCloneRequest) {
 
 	// Target Pod
 	targetPod := &corev1.Pod{}
-	targetPodName := request.Spec.TargetPVCName + targetPodSuffix + string(request.UID) // <targetPVC>-creator-<UID>
-	err = r.Get(context.Background(), types.NamespacedName{Name: targetPodName, Namespace: request.Spec.TargetPVCNamespace}, targetPod)
+	targetPodName := cloneRequest.Spec.TargetPVCName + targetPodSuffix + string(cloneRequest.UID) // <targetPVC>-creator-<UID>
+	err = r.Get(context.Background(), types.NamespacedName{Name: targetPodName, Namespace: cloneRequest.Spec.TargetPVCNamespace}, targetPod)
 	if err == nil {
 		if err := r.Delete(context.Background(), targetPod); err != nil {
 			klog.Infof("error deleting target pod \"%s\" in \"%s\": %s", targetPod.Name, targetPod.Namespace, err.Error())
@@ -299,10 +299,10 @@ func (r *Reconciler) deleteClonePods(request *pvcv1.PVCCloneRequest) {
 	}
 }
 
-func (r *Reconciler) deleteCloneService(request *pvcv1.PVCCloneRequest) {
+func (r *Reconciler) deleteCloneService(cloneRequest *pvcv1.PVCCloneRequest) {
 	service := &corev1.Service{}
-	serviceName := request.Spec.SourcePVCName + serviceSuffix + string(request.UID) // <pvc>-service-<UID>
-	err := r.Get(context.Background(), types.NamespacedName{Name: serviceName, Namespace: request.Spec.SourcePVCNamespace}, service)
+	serviceName := cloneRequest.Spec.SourcePVCName + serviceSuffix + string(cloneRequest.UID) // <sourcePVC>-service-<UID>
+	err := r.Get(context.Background(), types.NamespacedName{Name: serviceName, Namespace: cloneRequest.Spec.SourcePVCNamespace}, service)
 	if err == nil {
 		if err := r.Delete(context.Background(), service); err != nil {
 			klog.Infof("error deleting clone service \"%s\" in \"%s\": %s", service.Name, service.Namespace, err.Error())
@@ -313,7 +313,7 @@ func (r *Reconciler) deleteCloneService(request *pvcv1.PVCCloneRequest) {
 	}
 }
 
-func (r *Reconciler) updateLogs(podName string, podNamespace string, request *pvcv1.PVCCloneRequest) error {
+func (r *Reconciler) updateLogs(podName string, podNamespace string, cloneRequest *pvcv1.PVCCloneRequest) error {
 	restConfig := ctrl.GetConfigOrDie()
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
@@ -338,7 +338,7 @@ func (r *Reconciler) updateLogs(podName string, podNamespace string, request *pv
 		return err
 	}
 
-	err = r.updatePVCAnnotation(request.Spec.TargetPVCName, request.Spec.TargetPVCNamespace, string(logData))
+	err = r.updatePVCAnnotation(cloneRequest.Spec.TargetPVCName, cloneRequest.Spec.TargetPVCNamespace, string(logData))
 	if err != nil {
 		klog.Infof("error updating PVC, give up logs: %s", err.Error())
 		return err
@@ -363,7 +363,7 @@ func (r *Reconciler) updatePVCAnnotation(name string, namespace string, content 
 	return nil
 }
 
-func (r *Reconciler) changePhase(phase string, request *pvcv1.PVCCloneRequest) error {
-	request.Status.Phase = phase
-	return r.Status().Update(context.Background(), request)
+func (r *Reconciler) changePhase(phase string, cloneRequest *pvcv1.PVCCloneRequest) error {
+	cloneRequest.Status.Phase = phase
+	return r.Status().Update(context.Background(), cloneRequest)
 }
