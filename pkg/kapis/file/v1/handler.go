@@ -500,7 +500,6 @@ func GeneratePVCViewerCR(pvcName string) *pvcviewerv1.PVCViewer {
 							{Name:  "FB_ADDRESS", Value: "0.0.0.0"},
 							{Name:  "FB_PORT", Value: "8080"},
 							{Name:  "FB_DATABASE", Value: "/tmp/filebrowser.db"},
-							{Name:  "FB_NOAUTH", Value: "true"},
 						},
 						VolumeMounts: []v1.VolumeMount{
 							{Name: "viewer-volume", MountPath: "/srv"},
