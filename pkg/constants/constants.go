@@ -159,6 +159,7 @@ const (
 	ClusterSyncScheduleTag      = "Cluster Sync Schedule"
 	AutoscalerHpaTag            = "Autoscaler HPA"
 	AutoscalerVpaTag            = "Autoscaler VPA"
+	PVCTag                      = "Persistent Volume Claim"
 
 	MinioImageTag = "Minio Images"
 	QoSTag        = "QoS"
