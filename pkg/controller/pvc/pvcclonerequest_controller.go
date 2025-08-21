@@ -34,13 +34,14 @@ const (
 	podImage = "alpine:latest"
 	containerName = "cloner"
 	sourcePodSuffix = "-cloner-"
-	sourcePodCommand = "apk add --no-cache rsync > /dev/null; echo -e '[source]\npath = /source' >> /etc/rsyncd.conf; rsync --daemon --no-detach"
+	sourcePodCommand = "apk add --no-cache rsync > /dev/null; echo -e 'uid = root\ngid = root\n\n[source]\npath = /source' >> /etc/rsyncd.conf; rsync --daemon --no-detach"
 	targetPodSuffix = "-creator-"
 	targetPodCommand = "apk add --no-cache rsync > /dev/null; until rsync rsync://%s 2> /dev/null; do :; sleep 2; done; rsync -avh rsync://%s/source /target/ || :"
 	serviceSuffix = "-service-"
 	serviceSelector = "rsync-server"
 	rsyncPort = 873
 	pvcAnnotationKey = "ecpaas.io/pvc-clone-result"
+	hostnameKey = "kubernetes.io/hostname"
 )
 
 // Reconciler reconciles a PVCCloneRequest object
@@ -206,6 +207,11 @@ func (r *Reconciler) createClonePods(cloneRequest *pvcv1.PVCCloneRequest) error 
 	sourcePod.Labels = map[string]string{
 		serviceSelector: sourcePod.Name, // so the service can match this exact pod
 	}
+	if nodeName := r.checkSourcePVCNode(cloneRequest); nodeName != "" {
+		sourcePod.Spec.NodeSelector = map[string]string{
+			hostnameKey: nodeName,
+		}
+	}
 	if err := r.Create(context.Background(), sourcePod); err != nil {
 		return err
 	}
@@ -366,4 +372,41 @@ func (r *Reconciler) updatePVCAnnotation(name string, namespace string, content 
 func (r *Reconciler) changePhase(phase string, cloneRequest *pvcv1.PVCCloneRequest) error {
 	cloneRequest.Status.Phase = phase
 	return r.Status().Update(context.Background(), cloneRequest)
+}
+
+// If source PVC's accessMode is not RWX or ROX, the source pod should be on the same node as existed pod(s) that is using source PVC
+func (r *Reconciler) checkSourcePVCNode(cloneRequest *pvcv1.PVCCloneRequest) string {
+	sourcePVC := &corev1.PersistentVolumeClaim{}
+	sourcePVCName := cloneRequest.Spec.SourcePVCName
+	sourcePVCNamespace := cloneRequest.Spec.SourcePVCNamespace
+	sourcePVCNamespacedName := types.NamespacedName{Name: sourcePVCName, Namespace: sourcePVCNamespace}
+	if err := r.Get(context.Background(), sourcePVCNamespacedName, sourcePVC); err != nil {
+		klog.Infof("error getting source PVC \"%s\" in \"%s\": %s", sourcePVCName, sourcePVCNamespace, err.Error())
+		return ""
+	}
+	for _, mode := range sourcePVC.Spec.AccessModes {
+		if mode == corev1.ReadOnlyMany || mode == corev1.ReadWriteMany {
+			return ""
+		}
+	}
+
+	pods := &corev1.PodList{}
+	if err := r.List(context.Background(), pods, &client.ListOptions{Namespace: sourcePVCNamespace}); err != nil {
+		klog.Infof("error getting pods in \"%s\": %s", sourcePVCNamespace, err.Error())
+		return ""
+	}
+	// Loop all running pods in source PVC's namespace
+	for _, pod := range pods.Items {
+		if pod.Status.Phase == corev1.PodRunning {
+			// Loop all volume of the pod, check if the pod is using the source PVC
+			for _, volume := range pod.Spec.Volumes {
+				podPVC := volume.PersistentVolumeClaim
+				// If the pod is using source PVC, return the node name of the pod
+				if podPVC != nil && podPVC.ClaimName == sourcePVCName {
+					return pod.Spec.NodeName
+				}
+			}
+		}
+	}
+	return ""
 }
