@@ -153,11 +153,8 @@ func (r *Reconciler) createTargetPVC(cloneRequest *pvcv1.PVCCloneRequest) error 
 	newPVC.Namespace = cloneRequest.Spec.TargetPVCNamespace
 	newPVC.Spec.AccessModes = createAccessModes(cloneRequest.Spec.AccessModes)
 	newPVC.Spec.Resources.Requests = createResourceList(cloneRequest.Spec.Size)
-	if err := r.Create(context.Background(), newPVC); err != nil {
-		return err
-	} else {
-		return nil
-	}
+	newPVC.Spec.StorageClassName = &cloneRequest.Spec.StorageClass
+	return r.Create(context.Background(), newPVC)
 }
 
 func createAccessModes(modes []string) []corev1.PersistentVolumeAccessMode {
